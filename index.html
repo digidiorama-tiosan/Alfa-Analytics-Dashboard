@@ -236,6 +236,10 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
   .chart-title { font-size: 13.5px; font-weight: 600; color: var(--text); }
   .chart-subtitle { font-size: 11.5px; color: var(--text2); margin-top: 2px; font-weight: 400; }
   .chart-tag { font-size: 10.5px; padding: 2px 8px; border-radius: 20px; border: 1px solid var(--border2); color: var(--text2); font-weight: 500; white-space: nowrap; }
+  .chart-dl-btn { flex-shrink:0; margin-left:8px; width:26px; height:26px; display:inline-flex; align-items:center; justify-content:center; padding:0; border:1px solid var(--border2); border-radius:6px; background:var(--surface2); color:var(--text3); cursor:pointer; transition:all .15s; opacity:0; }
+  .chart-card:hover .chart-dl-btn { opacity:1; }
+  .chart-dl-btn:hover { color:var(--accent); border-color:var(--accent); background:rgba(88,166,255,0.08); }
+  .chart-dl-btn svg { width:14px; height:14px; }
   .chart-wrap { position: relative; }
 
   /* TABLE */
@@ -5553,6 +5557,36 @@ let rawSalesRows = [];
 //  CHART REGISTRY (for destroy/re-render)
 // ══════════════════════════════════════════════
 const chartInstances = {};
+// Unduh satu chart sebagai PNG (latar solid agar teks abu-abu tetap terbaca)
+function downloadChartPNG(id){
+  const src=document.getElementById(id);
+  if(!src||!chartInstances[id]){ return; }
+  const scale=2;
+  const w=src.width, h=src.height;
+  const tmp=document.createElement('canvas'); tmp.width=w; tmp.height=h;
+  const tctx=tmp.getContext('2d');
+  tctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--surface').trim()||'#161b22';
+  tctx.fillRect(0,0,w,h);
+  tctx.drawImage(src,0,0,w,h);
+  // judul kartu sebagai nama file
+  let name=id; const card=src.closest('.chart-card'); const t=card&&card.querySelector('.chart-title');
+  if(t) name=t.textContent.trim().replace(/[^\w\u00C0-\u024F -]+/g,'').replace(/\s+/g,'_').slice(0,60)||id;
+  const a=document.createElement('a');
+  a.href=tmp.toDataURL('image/png'); a.download=name+'.png';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+// Sisipkan tombol unduh ke header kartu chart (sekali per kartu)
+function attachChartDownload(id){
+  const ctx=document.getElementById(id); if(!ctx)return;
+  const card=ctx.closest('.chart-card'); if(!card)return;
+  const hdr=card.querySelector('.chart-header'); if(!hdr||hdr.querySelector('.chart-dl-btn'))return;
+  const btn=document.createElement('button');
+  btn.className='chart-dl-btn'; btn.title='Download PNG'; btn.type='button';
+  btn.setAttribute('data-chart-id',id);
+  btn.onclick=function(e){e.stopPropagation();downloadChartPNG(id);};
+  btn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1v9M4.5 6.5L8 10l3.5-3.5M2 13.5h12"/></svg>';
+  hdr.appendChild(btn);
+}
 function destroyChart(id) {
   if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
 }
@@ -5566,6 +5600,7 @@ function makeChart(id, config) {
   }
   applyChartSetup();
   chartInstances[id] = new Chart(ctx, config);
+  try{ attachChartDownload(id); }catch(_){}
   return chartInstances[id];
 }
 
