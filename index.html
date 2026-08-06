@@ -6865,10 +6865,11 @@ function renderDemoPivot() {
   const P=D.demo_pivot;
   if(!P || !Object.keys(P).length){ if(wrap)wrap.style.display='none'; if(title)title.style.display='none'; return; }
   if(wrap)wrap.style.display=''; if(title)title.style.display='';
+  const MONTHS_ORDER=['January','February','March','April','May','June','July','August','September','October','November','December'];
   // bulan yang benar-benar ada data, urut kalender
   const monthSet=new Set();
   Object.values(P).forEach(gMap=>Object.values(gMap).forEach(mMap=>Object.keys(mMap).forEach(m=>monthSet.add(m))));
-  const months=monthNames.filter(m=>monthSet.has(m));
+  const months=MONTHS_ORDER.filter(m=>monthSet.has(m));
   const marital=Object.keys(P);                          // Married, Single, …
   const genders=['Female','Male'].filter(g=>marital.some(ms=>P[ms][g])).concat(
     [...new Set(marital.flatMap(ms=>Object.keys(P[ms])))].filter(g=>g!=='Female'&&g!=='Male'));
