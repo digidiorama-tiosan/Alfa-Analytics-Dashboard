@@ -3429,13 +3429,11 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:6px 0 18px">
       <div style="display:flex;flex-direction:column;gap:5px">
         <label style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Category / product keyword or code</label>
-        <input type="text" id="rtCatSearch" placeholder="e.g. rokok, susu, 1511, 10001…" autocomplete="off" oninput="renderRtCategory()" style="width:280px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 13px;color:var(--text);font-family:var(--font);font-size:14px;font-weight:600">
+        <input type="text" id="rtCatSearch" placeholder="e.g. 271, 112, rokok…" autocomplete="off" oninput="renderRtCategory()" value="271" style="width:280px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 13px;color:var(--text);font-family:var(--font);font-size:14px;font-weight:600">
       </div>
       <div style="display:flex;gap:7px;flex-wrap:wrap">
-        <button class="filter-btn" onclick="rcSet('rokok')">rokok</button>
-        <button class="filter-btn" onclick="rcSet('susu')">susu</button>
-        <button class="filter-btn" onclick="rcSet('mie')">mie</button>
-        <button class="filter-btn" onclick="rcSet('minyak')">minyak</button>
+        <button class="filter-btn" onclick="rcSet('271')">Rokok 271</button>
+        <button class="filter-btn" onclick="rcSet('112')">Minyak 112</button>
       </div>
     </div>
     <div class="stats-grid">
