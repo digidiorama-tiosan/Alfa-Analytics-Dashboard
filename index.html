@@ -14229,6 +14229,23 @@ function peStatusBadge(s){
   return m[s]||s;
 }
 
+// Parser tanggal toleran: ISO, DD/MM/YYYY (Indonesia, day-first), DD-MM-YYYY,
+// serial Excel, dsb. Return epoch-ms atau null. Dipakai untuk scoping periode juklak.
+function pfParseDate(v){
+  if(v==null)return null;
+  if(v instanceof Date)return isNaN(v)?null:v.getTime();
+  const s=String(v).trim(); if(!s)return null;
+  // Serial Excel (angka murni ~ 20000–60000)
+  if(/^\d{4,6}(\.\d+)?$/.test(s)){const n=parseFloat(s);if(n>10000&&n<80000)return Math.round((n-25569)*864e5);}
+  // ISO YYYY-MM-DD / YYYY/MM/DD
+  let m=s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+  if(m){const d=new Date(+m[1],+m[2]-1,+m[3]);return isNaN(d)?null:d.getTime();}
+  // DD/MM/YYYY atau DD-MM-YYYY (day-first) — konvensi ID/BD
+  m=s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/);
+  if(m){let dd=+m[1],mm=+m[2],yy=+m[3];if(yy<100)yy+=2000;if(mm>12&&dd<=12){const t=dd;dd=mm;mm=t;}const d=new Date(yy,mm-1,dd);return isNaN(d)?null:d.getTime();}
+  const d=new Date(s);return isNaN(d)?null:d.getTime();
+}
+
 // Forward-fill No Juklak / No SKP yang kosong dari baris di atasnya (pola Excel
 // merged-cell: nomor hanya ditulis di baris PLU pertama tiap juklak, sisanya kosong).
 // Hasil di-cache; dipakai bersama oleh Cari No Juklak & Rekap Juklak.
@@ -14432,7 +14449,7 @@ function renderJuklakLookup(){
   });
 
   // Rentang tanggal aktif juklak yang cocok (agar sales tidak diratakan ke luar periode promo)
-  const _pms=v=>{const d=new Date(String(v==null?'':v).trim());return isNaN(d)?null:d.getTime();};
+  const _pms=v=>pfParseDate(v);
   let jkS=null,jkE=null;
   matched.forEach(r=>{
     const s=jCols.startDate?_pms(r[jCols.startDate]):null, e=jCols.endDate?_pms(r[jCols.endDate]):null;
@@ -14448,7 +14465,7 @@ function renderJuklakLookup(){
   }
   // Batasi ke rentang tanggal aktif juklak (kalau ada tanggal & tidak sedang filter 1 bulan tertentu)
   if((jkS!=null||jkE!=null)&&sCols.date){
-    srows=srows.filter(r=>{const sd=new Date(String(r[sCols.date]||'').trim()).getTime();if(isNaN(sd))return true;if(jkS!=null&&sd<jkS)return false;if(jkE!=null&&sd>jkE+864e5-1)return false;return true;});
+    srows=srows.filter(r=>{const sd=pfParseDate(r[sCols.date]);if(sd==null)return true;if(jkS!=null&&sd<jkS)return false;if(jkE!=null&&sd>jkE+864e5-1)return false;return true;});
   }
   // Agregasi sales per PLU dan per toko (hanya PLU yang ada di juklak ini)
   const perPlu=new Map(); const perStore=new Map();
@@ -14557,7 +14574,7 @@ function renderJuklakRecap(){
   const jkMeta=new Map(); // key juklak -> {juklak,skp,plus:Set}
   const jukF=jklRowsFilled();   // No Juklak/SKP sudah di-carry-down (pola Excel merged-cell)
   const jkRange=new Map(); // jkKey -> {s:ms|null, e:ms|null} rentang tanggal aktif juklak
-  const _pms=v=>{const d=new Date(String(v==null?'':v).trim());return isNaN(d)?null:d.getTime();};
+  const _pms=v=>pfParseDate(v);
   jukF.forEach(r=>{
     const raw=String(r[jCols.code]||'').trim(); if(!raw)return;
     const key=raw.replace(/^0+/,'')||raw;
@@ -14587,8 +14604,8 @@ function renderJuklakRecap(){
     // ke bulan di luar periode promo). Kalau juklak tak punya tanggal → hitung semua.
     const rg=jkRange.get(info.jkKey);
     if(rg&&(rg.s!=null||rg.e!=null)&&sCols.date){
-      const sd=new Date(String(r[sCols.date]||'').trim()).getTime();
-      if(!isNaN(sd)){
+      const sd=pfParseDate(r[sCols.date]);
+      if(sd!=null){
         if(rg.s!=null&&sd<rg.s)return;
         if(rg.e!=null&&sd>rg.e+864e5-1)return; // inklusif sampai akhir hari end date
       }
