@@ -223,10 +223,10 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 
   /* CHART CARDS */
   .charts-grid { display: grid; gap: 16px; margin-bottom: 20px; }
-  .charts-grid.cols-2 { grid-template-columns: 1fr 1fr; }
-  .charts-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
-  .charts-grid.cols-1-2 { grid-template-columns: 1fr 2fr; }
-  .charts-grid.cols-2-1 { grid-template-columns: 2fr 1fr; }
+  .charts-grid.cols-2 { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  .charts-grid.cols-3 { grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr); }
+  .charts-grid.cols-1-2 { grid-template-columns: minmax(0,1fr) minmax(0,2fr); }
+  .charts-grid.cols-2-1 { grid-template-columns: minmax(0,2fr) minmax(0,1fr); }
   .chart-card {
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
     padding: 20px; transition: border-color 0.15s;
@@ -1694,6 +1694,14 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l3-4 3 2 2-5 3 3"/><circle cx="13" cy="4" r="2"/></svg>
           Promo Effectiveness
         </button>
+        <button class="nav-item" onclick="showPanel('juklak-lookup',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+          Cari No Juklak
+        </button>
+        <button class="nav-item" onclick="showPanel('juklak-recap',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M6 6v8"/></svg>
+          Rekap Juklak
+        </button>
         <button class="nav-item" onclick="showPanel('promo-contribution',this)">
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10s2-5 6-5 6 5 6 5-2 5-6 5-6-5-6-5z"/><circle cx="8" cy="10" r="2"/></svg>
           Promo vs Sales
@@ -2754,6 +2762,138 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     <div class="chart-card">
       <div class="chart-header"><div><div class="chart-title">Category Share</div><div class="chart-subtitle">Relative contribution</div></div></div>
       <div class="progress-list" id="memCatProgress"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PANEL: CARI NO JUKLAK (Juklak Lookup)
+════════════════════════════════════════════════════════ -->
+<div id="panel-juklak-lookup" class="panel">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Cari No Juklak</div>
+      <div class="page-subtitle">Ketik nomor juklak / SKP → tampilkan PLU, deskripsi, dan sales per toko</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn-dl" id="jkl-dl" onclick="downloadExcelJuklakLookup()" style="display:none">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg>Export Excel
+      </button>
+    </div>
+  </div>
+
+  <div class="store-filter-bar" style="margin-bottom:16px">
+    <span class="filter-label">No Juklak / SKP</span>
+    <input type="text" class="filter-select" id="jklSearch" placeholder="ketik nomor juklak / SKP…" autocomplete="off" list="jklDatalist" oninput="renderJuklakLookup()" style="min-width:240px;font-family:var(--mono)">
+    <datalist id="jklDatalist"></datalist>
+    <span class="filter-label" style="margin-left:8px">Filter Bulan</span>
+    <select class="filter-select" id="jklMonthSel" onchange="renderJuklakLookup()" style="min-width:150px"><option value="ALL">Semua Bulan</option></select>
+    <button class="filter-btn" onclick="document.getElementById('jklSearch').value='';renderJuklakLookup()" style="margin-left:auto">✕ Clear</button>
+  </div>
+
+  <div id="jkl-empty" class="empty-state" style="padding:48px 20px;text-align:center;color:var(--text3)">
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px">Ketik nomor juklak untuk mulai</div>
+    <div style="font-size:12.5px">Data dibaca dari Juklak aktif + Data Sales. Ketik sebagian nomor untuk melihat saran.</div>
+  </div>
+
+  <div id="jkl-result" style="display:none">
+    <div class="stats-grid" id="jkl-kpi" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px"></div>
+
+    <div class="section-title">PLU dalam Juklak ini</div>
+    <div class="chart-card" style="margin-bottom:20px">
+      <div class="table-wrap">
+        <table class="data-table" id="jklPluTable">
+          <thead><tr>
+            <th>PLU</th><th>Deskripsi</th><th>Kategori</th>
+            <th class="right">Harga Normal</th><th class="right">Harga Promo</th><th class="right">Disc %</th>
+            <th class="right">Qty Terjual</th><th class="right">Net Sales</th><th class="right"># Toko</th>
+          </tr></thead>
+          <tbody id="jklPluBody"></tbody>
+          <tfoot id="jklPluFoot"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="section-title">Sales per Toko</div>
+    <div class="chart-card">
+      <div class="table-wrap">
+        <table class="data-table" id="jklStoreTable">
+          <thead><tr>
+            <th>Kode Toko</th><th class="right">Qty</th><th class="right"># Struk</th>
+            <th class="right">Net Sales</th><th class="right"># PLU Terjual</th><th class="right">% Kontribusi</th>
+          </tr></thead>
+          <tbody id="jklStoreBody"></tbody>
+          <tfoot id="jklStoreFoot"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PANEL: REKAP JUKLAK (Sales per Juklak + rekap bulanan)
+════════════════════════════════════════════════════════ -->
+<div id="panel-juklak-recap" class="panel">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Rekap Juklak</div>
+      <div class="page-subtitle">Sales per juklak — No Juklak, No SKP, Qty, Net Sales, Margin, dan rekap per bulan</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn-dl" id="jkr-dl" onclick="downloadExcelJuklakRecap()" style="display:none">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg>Export Excel
+      </button>
+    </div>
+  </div>
+
+  <div class="store-filter-bar" style="margin-bottom:16px">
+    <span class="filter-label">Filter Bulan</span>
+    <select class="filter-select" id="jkrMonthSel" onchange="renderJuklakRecap()" style="min-width:150px"><option value="ALL">Semua Bulan</option></select>
+    <span class="filter-label" style="margin-left:8px">Urutkan</span>
+    <select class="filter-select" id="jkrSort" onchange="renderJuklakRecap()" style="min-width:150px">
+      <option value="net">Net Sales tertinggi</option>
+      <option value="margin">Margin tertinggi</option>
+      <option value="qty">Qty tertinggi</option>
+      <option value="juklak">No Juklak</option>
+    </select>
+    <input type="text" class="filter-select" id="jkrSearch" placeholder="cari no juklak / skp…" autocomplete="off" oninput="renderJuklakRecap()" style="min-width:180px;font-family:var(--mono);margin-left:auto">
+  </div>
+
+  <div id="jkr-empty" class="empty-state" style="padding:48px 20px;text-align:center;color:var(--text3)">
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px">Memuat rekap…</div>
+    <div style="font-size:12.5px">Butuh Data Juklak aktif + Data Sales.</div>
+  </div>
+
+  <div id="jkr-result" style="display:none">
+    <div class="stats-grid" id="jkr-kpi" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px"></div>
+
+    <div class="section-title">Sales per Juklak</div>
+    <div class="chart-card" style="margin-bottom:20px">
+      <div class="table-wrap">
+        <table class="data-table" id="jkrTable">
+          <thead><tr>
+            <th>No Juklak</th><th>No SKP</th><th class="right"># PLU</th>
+            <th class="right">Qty</th><th class="right">Net Sales</th><th class="right">COGS</th>
+            <th class="right">Margin</th><th class="right">GM %</th><th class="right"># Toko</th>
+          </tr></thead>
+          <tbody id="jkrBody"></tbody>
+          <tfoot id="jkrFoot"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="section-title">Rekap per Bulan</div>
+    <div class="chart-card">
+      <div class="table-wrap">
+        <table class="data-table" id="jkrMonthTable">
+          <thead><tr>
+            <th>Bulan</th><th class="right"># Juklak Aktif</th><th class="right">Qty</th>
+            <th class="right">Net Sales</th><th class="right">COGS</th><th class="right">Margin</th><th class="right">GM %</th>
+          </tr></thead>
+          <tbody id="jkrMonthBody"></tbody>
+          <tfoot id="jkrMonthFoot"></tfoot>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -5810,6 +5950,8 @@ function renderPanel(id) {
     case 'mem-retention': renderRetention(); break;
     case 'mem-category': renderMemCategory(); break;
     case 'promo-effectiveness': renderPromoEffectiveness(); break;
+    case 'juklak-lookup': renderJuklakLookup(); break;
+    case 'juklak-recap': renderJuklakRecap(); break;
     case 'promo-contribution': renderPromoContrib(); break;
     case 'promo-member': renderPromoMember(); break;
     case 'promo-items': renderPromoItems(); break;
@@ -12637,7 +12779,7 @@ const PANEL_GROUP_MAP = {
   'mem-vs-promo':'grp-members','mem-trend':'grp-members','mem-database':'grp-members','mem-homestore':'grp-members',
   'mem-demo':'grp-members','mem-transactions':'grp-members','mem-retention':'grp-members',
   'mem-category':'grp-members',
-  'promo-effectiveness':'grp-marketing','promo-contribution':'grp-marketing','promo-member':'grp-marketing','promo-items':'grp-marketing',
+  'promo-effectiveness':'grp-marketing','juklak-lookup':'grp-marketing','juklak-recap':'grp-marketing','promo-contribution':'grp-marketing','promo-member':'grp-marketing','promo-items':'grp-marketing',
   'promo-categories':'grp-marketing','basket':'grp-marketing','brand-perf':'grp-marketing','principal-perf':'grp-marketing','promo-mechanic':'grp-marketing',
   'sku-pareto':'grp-catmgmt','cat-overview':'grp-catmgmt','cat-promo-potential':'grp-catmgmt',
   'cat-member':'grp-catmgmt','cat-trend':'grp-catmgmt','cat-time':'grp-catmgmt','cat-detail':'grp-catmgmt',
@@ -14097,6 +14239,8 @@ function jColDetect(rows){
     endDate:    jCol(['enddate','end_date','tgl_akhir','tanggal_akhir','sampai','to','tglakhir','periode_sampai']),
     promoType:  jCol(['tipopromo','tipe_promo','tippromo','promo_type','promotype','jenis_promo','jenispromo','type_promo']),
     notes:      jCol(['notes','keterangan','catatan','remark','description','desc']),
+    guideline:  jCol(['nojuklak','no_juklak','juklakno','juklak','nomorjuklak','noguideline','guideline']),
+    skp:        jCol(['noskp','no_skp','skpno','skp','nomorskp']),
   };
 }
 
@@ -14128,6 +14272,7 @@ function sColDetect(rows){
     cogs:  sColNum(['costsls','cogs','hpp','totalcogs','totalhpp','cost','avgcost','modal','pokok']),
     type:  sCol(['type','tipe','jenis','flag','trxtype','transtype','transaction_type']),
     store: sCol(['kode_toko','kodetoko','store_code','storecode','kd_toko','toko','store','site','outlet']),
+    bon:   sCol(['no_bon','nobon','no_struk','nostruk','bon','struk','receipt','trxno','notransaksi','no_transaksi','invoice']),
     month: sCol(['bulan','month','month_num','bln','mo']),
     date:  sCol(['tgl_trs','tgltrs','tr_date','tgl','tanggal','date','posting_date','sale_date','txn_date','tdate']),
   };
@@ -14197,6 +14342,268 @@ function pePeriodPopulate(){
   if(!lib.length){sel.innerHTML='<option value="">— Upload promo list first —</option>';return;}
   const sorted=[...lib].sort((a,b)=>new Date(b.savedAt)-new Date(a.savedAt));
   sel.innerHTML=sorted.map(p=>`<option value="${p.id}"${p.active?' selected':''}>${p.label} (${p.rowCount.toLocaleString()} item)</option>`).join('');
+}
+
+// ══════════════════════════════════════════════
+//  CARI NO JUKLAK — lookup PLU & sales per toko dari satu nomor juklak
+// ══════════════════════════════════════════════
+let _jklLastResult=null;
+function jklNormNo(v){ return String(v==null?'':v).trim().toLowerCase().replace(/\s+/g,''); }
+function renderJuklakLookup(){
+  const emptyEl=document.getElementById('jkl-empty');
+  const resEl=document.getElementById('jkl-result');
+  const dlBtn=document.getElementById('jkl-dl');
+  const juk=(typeof uploads!=='undefined'&&Array.isArray(uploads.promo))?uploads.promo:[];
+  const sales=(typeof uploads!=='undefined'&&Array.isArray(uploads.sales))?uploads.sales:[];
+  const show=(msg)=>{ if(emptyEl){emptyEl.style.display='block';emptyEl.innerHTML=msg;} if(resEl)resEl.style.display='none'; if(dlBtn)dlBtn.style.display='none'; _jklLastResult=null; };
+  if(!juk.length) return show('<div style="font-size:15px;font-weight:600;margin-bottom:6px">Data Juklak belum ada</div><div style="font-size:12.5px">Aktifkan/upload juklak di Data Management dulu.</div>');
+  const jCols=jColDetect(juk);
+  const noCol=jCols.guideline||jCols.skp;
+  if(!noCol) return show('<div style="font-size:15px;font-weight:600;margin-bottom:6px">Kolom No Juklak / No SKP tidak ditemukan</div><div style="font-size:12.5px">File juklak perlu kolom seperti "NO JUKLAK" atau "NO SKP".</div>');
+
+  // datalist saran (sekali)
+  const dl=document.getElementById('jklDatalist');
+  if(dl && !dl.dataset.filled){
+    const set=new Map();
+    juk.forEach(r=>{ [jCols.guideline,jCols.skp].forEach(c=>{ if(c){const v=String(r[c]==null?'':r[c]).trim(); if(v)set.set(jklNormNo(v),v);} }); });
+    dl.innerHTML=[...set.values()].sort().map(v=>`<option value="${v}">`).join('');
+    dl.dataset.filled='1';
+  }
+  // month filter (sekali)
+  const monthSel=document.getElementById('jklMonthSel');
+  const sCols=sColDetect(sales);
+  if(monthSel && !monthSel.dataset.filled && sales.length){
+    const mm=new Map();
+    sales.forEach(r=>{const mo=getMonthFromRow(r,sCols),yr=getYearFromRow(r,sCols);if(mo){const k=yr?`${yr}-${String(mo).padStart(2,'0')}`:String(mo).padStart(2,'0');mm.set(k,yr?`${MONTH_NAMES[mo-1]} ${yr}`:MONTH_NAMES[mo-1]);}});
+    monthSel.innerHTML='<option value="ALL">Semua Bulan</option>'+[...mm.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([k,l])=>`<option value="${k}">${l}</option>`).join('');
+    monthSel.dataset.filled='1';
+  }
+
+  const q=jklNormNo((document.getElementById('jklSearch')||{}).value||'');
+  if(!q) return show('<div style="font-size:15px;font-weight:600;margin-bottom:6px">Ketik nomor juklak untuk mulai</div><div style="font-size:12.5px">Data dibaca dari Juklak aktif + Data Sales. Ketik sebagian nomor untuk melihat saran.</div>');
+
+  // baris juklak yang cocok (guideline ATAU skp mengandung query)
+  const matched=juk.filter(r=>{
+    const g=jCols.guideline?jklNormNo(r[jCols.guideline]):'';
+    const s=jCols.skp?jklNormNo(r[jCols.skp]):'';
+    return (g&&g.includes(q))||(s&&s.includes(q));
+  });
+  if(!matched.length) return show(`<div style="font-size:15px;font-weight:600;margin-bottom:6px">Tidak ada juklak dengan nomor "${(document.getElementById('jklSearch')||{}).value}"</div><div style="font-size:12.5px">Coba nomor lain, atau pilih dari saran yang muncul.</div>`);
+
+  // Kumpulkan PLU + info dari juklak
+  const parseN=v=>{const n=parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,''));return isNaN(n)?0:n;};
+  const pluInfo=new Map(); // pluStripped -> {plu,desc,cat,normP,promoP,disc}
+  matched.forEach(r=>{
+    const raw=jCols.code?String(r[jCols.code]||'').trim():''; if(!raw)return;
+    const key=raw.replace(/^0+/,'')||raw;
+    if(pluInfo.has(key))return;
+    let normP=jCols.normPrice?parseN(r[jCols.normPrice]):0;
+    if(normP<=0&&typeof masterPriceOf==='function'){try{normP=masterPriceOf(raw)||0;}catch(_){}}
+    const promoP=jCols.promoPrice?parseN(r[jCols.promoPrice]):0;
+    pluInfo.set(key,{plu:raw,desc:jCols.name?String(r[jCols.name]||'').trim():'',cat:jCols.cat?String(r[jCols.cat]||'').trim():'',normP,promoP,disc:(normP>0&&promoP>0)?(normP-promoP)/normP*100:null});
+  });
+
+  // Filter sales by month
+  const selMonth=(monthSel&&monthSel.value)||'ALL';
+  let srows=sales;
+  if(selMonth!=='ALL'){
+    srows=sales.filter(r=>{const mo=getMonthFromRow(r,sCols),yr=getYearFromRow(r,sCols);if(!mo)return false;const k=yr?`${yr}-${String(mo).padStart(2,'0')}`:String(mo).padStart(2,'0');return k===selMonth;});
+  }
+  // Agregasi sales per PLU dan per toko (hanya PLU yang ada di juklak ini)
+  const perPlu=new Map(); const perStore=new Map();
+  if(sCols.plu){
+    srows.forEach(r=>{
+      const raw=String(r[sCols.plu]||'').trim(); if(!raw)return;
+      const key=raw.replace(/^0+/,'')||raw;
+      if(!pluInfo.has(key))return;
+      const net=sCols.net?parseN(r[sCols.net]):0;
+      const qty=sCols.qty?parseN(r[sCols.qty]):0;
+      const store=sCols.store?String(r[sCols.store]||'').trim()||'—':'—';
+      const bon=sCols.bon?String(r[sCols.bon]||''):'';
+      let p=perPlu.get(key); if(!p){p={qty:0,net:0,stores:new Set()};perPlu.set(key,p);} p.qty+=qty;p.net+=net;p.stores.add(store);
+      let s=perStore.get(store); if(!s){s={qty:0,net:0,plus:new Set(),bons:new Set()};perStore.set(store,s);} s.qty+=qty;s.net+=net;s.plus.add(key); if(bon)s.bons.add(store+'|'+bon);
+    });
+  }
+
+  // Render KPI
+  const totNet=[...perStore.values()].reduce((a,b)=>a+b.net,0);
+  const totQty=[...perStore.values()].reduce((a,b)=>a+b.qty,0);
+  const soldPlu=perPlu.size;
+  const money=v=>(typeof fmt==='function')?fmt(v):Math.round(v).toLocaleString('en-US');
+  const kpi=document.getElementById('jkl-kpi');
+  const jklShown=(document.getElementById('jklSearch')||{}).value||'';
+  if(kpi)kpi.innerHTML=`
+    <div class="stat-card blue"><div class="stat-label">Net Sales</div><div class="stat-value">${money(totNet)}</div><div class="stat-sub">${selMonth==='ALL'?'semua bulan':monthSel.options[monthSel.selectedIndex].text}</div></div>
+    <div class="stat-card green"><div class="stat-label">Qty Terjual</div><div class="stat-value">${Math.round(totQty).toLocaleString('en-US')}</div><div class="stat-sub">unit</div></div>
+    <div class="stat-card amber"><div class="stat-label">PLU dalam Juklak</div><div class="stat-value">${pluInfo.size}</div><div class="stat-sub">${soldPlu} PLU ada penjualan</div></div>
+    <div class="stat-card purple"><div class="stat-label">Toko Terlibat</div><div class="stat-value">${perStore.size}</div><div class="stat-sub">punya transaksi</div></div>`;
+
+  // Render PLU table
+  const pluRows=[...pluInfo.entries()].map(([k,i])=>{const s=perPlu.get(k)||{qty:0,net:0,stores:new Set()};return{...i,key:k,qty:s.qty,net:s.net,nStore:s.stores.size};}).sort((a,b)=>b.net-a.net);
+  const pbody=document.getElementById('jklPluBody');
+  if(pbody)pbody.innerHTML=pluRows.map(r=>`<tr>
+    <td style="font-family:var(--mono)">${r.plu}</td>
+    <td>${r.desc||'<span style="color:var(--text3)">—</span>'}</td>
+    <td>${r.cat||'—'}</td>
+    <td class="right">${r.normP>0?Math.round(r.normP).toLocaleString('en-US'):'—'}</td>
+    <td class="right">${r.promoP>0?Math.round(r.promoP).toLocaleString('en-US'):'—'}</td>
+    <td class="right">${r.disc!=null?'<span class="stat-badge badge-amber">'+r.disc.toFixed(1)+'%</span>':'—'}</td>
+    <td class="right">${Math.round(r.qty).toLocaleString('en-US')}</td>
+    <td class="right">${money(r.net)}</td>
+    <td class="right">${r.nStore||0}</td></tr>`).join('');
+  const pfoot=document.getElementById('jklPluFoot');
+  if(pfoot)pfoot.innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td colspan="6">TOTAL · ${pluRows.length} PLU</td><td class="right">${Math.round(totQty).toLocaleString('en-US')}</td><td class="right">${money(totNet)}</td><td class="right">—</td></tr>`;
+
+  // Render Store table
+  const storeRows=[...perStore.entries()].map(([st,v])=>({store:st,qty:v.qty,net:v.net,nPlu:v.plus.size,nBon:v.bons.size})).sort((a,b)=>b.net-a.net);
+  const sbody=document.getElementById('jklStoreBody');
+  if(sbody)sbody.innerHTML=storeRows.length?storeRows.map(r=>`<tr>
+    <td style="font-weight:600">${r.store}</td>
+    <td class="right">${Math.round(r.qty).toLocaleString('en-US')}</td>
+    <td class="right">${r.nBon.toLocaleString('en-US')}</td>
+    <td class="right">${money(r.net)}</td>
+    <td class="right">${r.nPlu}</td>
+    <td class="right">${totNet>0?(r.net/totNet*100).toFixed(1):'0.0'}%</td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Belum ada penjualan untuk PLU juklak ini pada periode terpilih</td></tr>';
+  const sfoot=document.getElementById('jklStoreFoot');
+  if(sfoot)sfoot.innerHTML=storeRows.length?`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td>TOTAL · ${storeRows.length} toko</td><td class="right">${Math.round(totQty).toLocaleString('en-US')}</td><td class="right">—</td><td class="right">${money(totNet)}</td><td class="right">—</td><td class="right">100%</td></tr>`:'';
+
+  if(emptyEl)emptyEl.style.display='none';
+  if(resEl)resEl.style.display='block';
+  if(dlBtn)dlBtn.style.display='';
+  _jklLastResult={jklShown,pluRows,storeRows,selMonthLbl:selMonth==='ALL'?'Semua Bulan':monthSel.options[monthSel.selectedIndex].text};
+}
+function downloadExcelJuklakLookup(){
+  if(!_jklLastResult){alert('Cari nomor juklak dulu.');return;}
+  const R=_jklLastResult;
+  const rows=[['=== JUKLAK '+R.jklShown+' · '+R.selMonthLbl+' ===']];
+  rows.push([],['PLU','Deskripsi','Kategori','Harga Normal','Harga Promo','Disc %','Qty','Net Sales','#Toko']);
+  R.pluRows.forEach(r=>rows.push([r.plu,r.desc,r.cat,Math.round(r.normP),Math.round(r.promoP),r.disc!=null?parseFloat(r.disc.toFixed(1)):'',Math.round(r.qty),Math.round(r.net),r.nStore]));
+  rows.push([],['SALES PER TOKO'],['Kode Toko','Qty','#Struk','Net Sales','#PLU','% Kontribusi']);
+  const tot=R.storeRows.reduce((a,b)=>a+b.net,0)||1;
+  R.storeRows.forEach(r=>rows.push([r.store,Math.round(r.qty),r.nBon,Math.round(r.net),r.nPlu,parseFloat((r.net/tot*100).toFixed(1))]));
+  if(typeof xlsDownload==='function')xlsDownload(rows,'Juklak '+R.jklShown,'juklak_'+R.jklShown.replace(/[^a-z0-9]/gi,'_'));
+}
+
+// ══════════════════════════════════════════════
+//  REKAP JUKLAK — sales per juklak + rekap bulanan
+// ══════════════════════════════════════════════
+let _jkrLast=null;
+function renderJuklakRecap(){
+  const emptyEl=document.getElementById('jkr-empty');
+  const resEl=document.getElementById('jkr-result');
+  const dlBtn=document.getElementById('jkr-dl');
+  const juk=(typeof uploads!=='undefined'&&Array.isArray(uploads.promo))?uploads.promo:[];
+  const sales=(typeof uploads!=='undefined'&&Array.isArray(uploads.sales))?uploads.sales:[];
+  const show=m=>{if(emptyEl){emptyEl.style.display='block';emptyEl.innerHTML=m;}if(resEl)resEl.style.display='none';if(dlBtn)dlBtn.style.display='none';_jkrLast=null;};
+  if(!juk.length) return show('<div style="font-size:15px;font-weight:600;margin-bottom:6px">Data Juklak belum ada</div><div style="font-size:12.5px">Aktifkan/upload juklak dulu.</div>');
+  if(!sales.length) return show('<div style="font-size:15px;font-weight:600;margin-bottom:6px">Data Sales belum ada</div><div style="font-size:12.5px">Upload data sales untuk melihat rekap.</div>');
+  const jCols=jColDetect(juk), sCols=sColDetect(sales);
+  if(!jCols.code) return show('<div style="font-size:15px;font-weight:600;margin-bottom:6px">Kolom PLU juklak tidak ditemukan</div>');
+  const parseN=v=>{const n=parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,''));return isNaN(n)?0:n;};
+
+  // month filter (sekali)
+  const monthSel=document.getElementById('jkrMonthSel');
+  if(monthSel && !monthSel.dataset.filled){
+    const mm=new Map();
+    sales.forEach(r=>{const mo=getMonthFromRow(r,sCols),yr=getYearFromRow(r,sCols);if(mo){const k=yr?`${yr}-${String(mo).padStart(2,'0')}`:String(mo).padStart(2,'0');mm.set(k,yr?`${MONTH_NAMES[mo-1]} ${yr}`:MONTH_NAMES[mo-1]);}});
+    monthSel.innerHTML='<option value="ALL">Semua Bulan</option>'+[...mm.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([k,l])=>`<option value="${k}">${l}</option>`).join('');
+    monthSel.dataset.filled='1';
+  }
+
+  // Peta PLU(stripped) -> {juklak, skp} — satu PLU dianggap milik juklak pertama yang memuatnya
+  const pluToJk=new Map();
+  const jkMeta=new Map(); // key juklak -> {juklak,skp,plus:Set}
+  juk.forEach(r=>{
+    const raw=String(r[jCols.code]||'').trim(); if(!raw)return;
+    const key=raw.replace(/^0+/,'')||raw;
+    const jkNo=jCols.guideline?String(r[jCols.guideline]||'').trim():'';
+    const skNo=jCols.skp?String(r[jCols.skp]||'').trim():'';
+    const jkKey=jkNo||skNo||'(tanpa nomor)';
+    if(!pluToJk.has(key))pluToJk.set(key,{jkKey,jkNo,skNo});
+    let m=jkMeta.get(jkKey); if(!m){m={juklak:jkNo||'—',skp:skNo||'—',plus:new Set()};jkMeta.set(jkKey,m);} m.plus.add(key);
+    if(!m.skp||m.skp==='—'){if(skNo)m.skp=skNo;}
+  });
+
+  // Agregasi sales
+  const selMonth=(monthSel&&monthSel.value)||'ALL';
+  const agg=new Map();       // jkKey -> {qty,net,cogs,stores:Set}
+  const monthAgg=new Map();  // monthKey -> {qty,net,cogs,jks:Set,label}
+  sales.forEach(r=>{
+    if(!sCols.plu)return;
+    const raw=String(r[sCols.plu]||'').trim(); if(!raw)return;
+    const key=raw.replace(/^0+/,'')||raw;
+    const info=pluToJk.get(key); if(!info)return;
+    const mo=getMonthFromRow(r,sCols),yr=getYearFromRow(r,sCols);
+    const mKey=mo?(yr?`${yr}-${String(mo).padStart(2,'0')}`:String(mo).padStart(2,'0')):'?';
+    if(selMonth!=='ALL'&&mKey!==selMonth)return;
+    const net=sCols.net?parseN(r[sCols.net]):0;
+    const qty=sCols.qty?parseN(r[sCols.qty]):0;
+    const cogs=sCols.cogs?parseN(r[sCols.cogs]):0;
+    const store=sCols.store?String(r[sCols.store]||'').trim()||'—':'—';
+    let a=agg.get(info.jkKey); if(!a){a={qty:0,net:0,cogs:0,stores:new Set()};agg.set(info.jkKey,a);} a.qty+=qty;a.net+=net;a.cogs+=cogs;a.stores.add(store);
+    let mm=monthAgg.get(mKey); if(!mm){mm={qty:0,net:0,cogs:0,jks:new Set(),label:mo?(yr?`${MONTH_NAMES[mo-1]} ${yr}`:MONTH_NAMES[mo-1]):'?'};monthAgg.set(mKey,mm);} mm.qty+=qty;mm.net+=net;mm.cogs+=cogs;mm.jks.add(info.jkKey);
+  });
+
+  // Build rows
+  const q=(document.getElementById('jkrSearch')||{}).value||'';
+  const qn=q.trim().toLowerCase();
+  let rows=[...jkMeta.entries()].map(([k,m])=>{const a=agg.get(k)||{qty:0,net:0,cogs:0,stores:new Set()};const margin=a.net-a.cogs;return{jkKey:k,juklak:m.juklak,skp:m.skp,nPlu:m.plus.size,qty:a.qty,net:a.net,cogs:a.cogs,margin,gm:a.net>0?margin/a.net*100:0,nStore:a.stores.size};});
+  if(qn)rows=rows.filter(r=>(r.juklak||'').toLowerCase().includes(qn)||(r.skp||'').toLowerCase().includes(qn));
+  const sort=(document.getElementById('jkrSort')||{}).value||'net';
+  rows.sort((a,b)=>sort==='juklak'?String(a.juklak).localeCompare(String(b.juklak)):(b[sort]-a[sort]));
+
+  const money=v=>(typeof fmt==='function')?fmt(v):Math.round(v).toLocaleString('en-US');
+  const tQty=rows.reduce((s,r)=>s+r.qty,0),tNet=rows.reduce((s,r)=>s+r.net,0),tCogs=rows.reduce((s,r)=>s+r.cogs,0),tMargin=tNet-tCogs;
+
+  const kpi=document.getElementById('jkr-kpi');
+  if(kpi)kpi.innerHTML=`
+    <div class="stat-card blue"><div class="stat-label">Total Juklak</div><div class="stat-value">${rows.length}</div><div class="stat-sub">${rows.filter(r=>r.net>0).length} ada penjualan</div></div>
+    <div class="stat-card green"><div class="stat-label">Net Sales</div><div class="stat-value">${money(tNet)}</div><div class="stat-sub">${selMonth==='ALL'?'semua bulan':monthSel.options[monthSel.selectedIndex].text}</div></div>
+    <div class="stat-card amber"><div class="stat-label">Margin</div><div class="stat-value">${money(tMargin)}</div><div class="stat-sub">GM ${tNet>0?(tMargin/tNet*100).toFixed(1):'0.0'}%</div></div>
+    <div class="stat-card purple"><div class="stat-label">Qty Terjual</div><div class="stat-value">${Math.round(tQty).toLocaleString('en-US')}</div><div class="stat-sub">unit</div></div>`;
+
+  const body=document.getElementById('jkrBody');
+  if(body)body.innerHTML=rows.length?rows.map(r=>`<tr>
+    <td style="font-family:var(--mono);font-weight:600">${r.juklak}</td>
+    <td style="font-family:var(--mono)">${r.skp}</td>
+    <td class="right">${r.nPlu}</td>
+    <td class="right">${Math.round(r.qty).toLocaleString('en-US')}</td>
+    <td class="right">${money(r.net)}</td>
+    <td class="right">${money(r.cogs)}</td>
+    <td class="right" style="color:${r.margin>=0?'var(--green)':'var(--red)'}">${money(r.margin)}</td>
+    <td class="right"><span class="stat-badge ${r.gm>=0?'badge-green':'badge-red'}">${r.gm.toFixed(1)}%</span></td>
+    <td class="right">${r.nStore}</td></tr>`).join(''):'<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">Tidak ada juklak cocok</td></tr>';
+  const foot=document.getElementById('jkrFoot');
+  if(foot)foot.innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td colspan="3">TOTAL · ${rows.length} juklak</td><td class="right">${Math.round(tQty).toLocaleString('en-US')}</td><td class="right">${money(tNet)}</td><td class="right">${money(tCogs)}</td><td class="right">${money(tMargin)}</td><td class="right">${tNet>0?(tMargin/tNet*100).toFixed(1):'0.0'}%</td><td class="right">—</td></tr>`;
+
+  // Rekap per bulan
+  const mrows=[...monthAgg.entries()].filter(([k])=>k!=='?').sort((a,b)=>a[0].localeCompare(b[0])).map(([k,m])=>({key:k,label:m.label,qty:m.qty,net:m.net,cogs:m.cogs,margin:m.net-m.cogs,gm:m.net>0?(m.net-m.cogs)/m.net*100:0,nJk:m.jks.size}));
+  const mbody=document.getElementById('jkrMonthBody');
+  if(mbody)mbody.innerHTML=mrows.length?mrows.map(m=>`<tr>
+    <td style="font-weight:600">${m.label}</td>
+    <td class="right">${m.nJk}</td>
+    <td class="right">${Math.round(m.qty).toLocaleString('en-US')}</td>
+    <td class="right">${money(m.net)}</td>
+    <td class="right">${money(m.cogs)}</td>
+    <td class="right" style="color:${m.margin>=0?'var(--green)':'var(--red)'}">${money(m.margin)}</td>
+    <td class="right"><span class="stat-badge ${m.gm>=0?'badge-green':'badge-red'}">${m.gm.toFixed(1)}%</span></td></tr>`).join(''):'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">Tidak ada data bulanan</td></tr>';
+  const mfoot=document.getElementById('jkrMonthFoot');
+  const mtQty=mrows.reduce((s,r)=>s+r.qty,0),mtNet=mrows.reduce((s,r)=>s+r.net,0),mtCogs=mrows.reduce((s,r)=>s+r.cogs,0);
+  if(mfoot)mfoot.innerHTML=mrows.length?`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td>TOTAL</td><td class="right">—</td><td class="right">${Math.round(mtQty).toLocaleString('en-US')}</td><td class="right">${money(mtNet)}</td><td class="right">${money(mtCogs)}</td><td class="right">${money(mtNet-mtCogs)}</td><td class="right">${mtNet>0?((mtNet-mtCogs)/mtNet*100).toFixed(1):'0.0'}%</td></tr>`:'';
+
+  if(emptyEl)emptyEl.style.display='none';
+  if(resEl)resEl.style.display='block';
+  if(dlBtn)dlBtn.style.display='';
+  _jkrLast={rows,mrows,selMonthLbl:selMonth==='ALL'?'Semua Bulan':monthSel.options[monthSel.selectedIndex].text};
+}
+function downloadExcelJuklakRecap(){
+  if(!_jkrLast){alert('Buka rekap dulu.');return;}
+  const R=_jkrLast;
+  const rows=[['=== REKAP JUKLAK · '+R.selMonthLbl+' ==='],[],['No Juklak','No SKP','#PLU','Qty','Net Sales','COGS','Margin','GM %','#Toko']];
+  R.rows.forEach(r=>rows.push([r.juklak,r.skp,r.nPlu,Math.round(r.qty),Math.round(r.net),Math.round(r.cogs),Math.round(r.margin),parseFloat(r.gm.toFixed(1)),r.nStore]));
+  rows.push([],['REKAP PER BULAN'],['Bulan','#Juklak Aktif','Qty','Net Sales','COGS','Margin','GM %']);
+  R.mrows.forEach(m=>rows.push([m.label,m.nJk,Math.round(m.qty),Math.round(m.net),Math.round(m.cogs),Math.round(m.margin),parseFloat(m.gm.toFixed(1))]));
+  if(typeof xlsDownload==='function')xlsDownload(rows,'Rekap Juklak','rekap_juklak');
 }
 
 // Core compute: juklak rows + sales rows yang sudah difilter
@@ -15725,7 +16132,23 @@ async function downloadMcKinseyPPTX(){
       errEl.style.color=''; errEl.textContent='Signing in…';
       const { error } = await sbc.auth.signInWithPassword({ email, password: pass });
       if(error){ errEl.textContent='✕  Invalid email or password.'; return false; }
-      const prof = await sbProfile();
+      let prof = await sbProfile();
+      // Self-healing: akun ada di auth.users tapi belum punya baris di `profiles`
+      // (mis. dibuat langsung dari Supabase, atau invite lewat email).
+      // Buat profil pending otomatis agar muncul di Access Control admin.
+      if(!prof){
+        try{
+          const { data:sess } = await sbc.auth.getUser();
+          const au = sess && sess.user;
+          if(au){
+            const meta = au.user_metadata || {};
+            const nm = meta.name || (au.email||'').split('@')[0];
+            const rq = meta.requested_role || 'analyst';
+            await sbc.from('profiles').insert({ id:au.id, email:au.email, name:nm, role:rq, status:'pending', created_at:new Date().toISOString() });
+            prof = await sbProfile();
+          }
+        }catch(e){ console.warn('[Login] gagal auto-buat profil:', e&&e.message); }
+      }
       if(!prof){ await sbc.auth.signOut(); errEl.textContent='✕  No profile found — contact your admin.'; return false; }
       if(prof.status==='pending'){ await sbc.auth.signOut(); errEl.textContent='⏳  Your access request is awaiting admin approval.'; return false; }
       if(prof.status==='disabled'){ await sbc.auth.signOut(); errEl.textContent='⛔  This account has been deactivated — contact your admin.'; return false; }
@@ -15877,9 +16300,31 @@ async function downloadMcKinseyPPTX(){
     if(pass.length<6){ msg.textContent='✕  Password must be at least 6 characters.'; return false; }
     if(SUPA_ON){
       msg.textContent='Submitting…';
-      const { error } = await sbc.auth.signUp({ email, password:pass, options:{ data:{ name, requested_role: role } } });
+      const { data, error } = await sbc.auth.signUp({ email, password:pass, options:{ data:{ name, requested_role: role } } });
       if(error){ msg.textContent='✕  '+error.message; return false; }
+      // PENTING: signUp hanya membuat akun di auth.users. Profil harus dibuat di
+      // tabel `profiles` agar request muncul di Access Control sebagai "pending".
+      let profileOk=false, profileErr='';
+      const newId = data && data.user && data.user.id;
+      if(newId){
+        try{
+          const { error:insErr } = await sbc.from('profiles').insert({
+            id:newId, email, name, role, status:'pending', created_at:new Date().toISOString()
+          });
+          if(insErr){
+            // baris sudah ada (trigger DB) → tetap dianggap berhasil
+            if(/duplicate|already exists|unique/i.test(insErr.message||'')) profileOk=true;
+            else profileErr=insErr.message||'unknown';
+          } else profileOk=true;
+        }catch(e){ profileErr=(e&&e.message)||'unknown'; }
+      }
       try{ await sbc.auth.signOut(); }catch(_){}
+      if(!profileOk){
+        msg.style.color='var(--pf-warn, #d29922)';
+        msg.textContent='⚠  Account created, but the request could not be registered'+(profileErr?' ('+profileErr+')':'')+'. Please tell your admin your email.';
+        console.warn('[Register] gagal insert profiles:', profileErr);
+        return false;
+      }
       msg.style.color='var(--pf-ok)';
       msg.textContent='✓  Request submitted — an admin will review your access shortly.';
       document.getElementById('rgName').value=''; document.getElementById('rgPass').value='';
