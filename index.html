@@ -14543,6 +14543,8 @@ function renderJuklakRecap(){
   const pluToJk=new Map();
   const jkMeta=new Map(); // key juklak -> {juklak,skp,plus:Set}
   const jukF=jklRowsFilled();   // No Juklak/SKP sudah di-carry-down (pola Excel merged-cell)
+  const jkRange=new Map(); // jkKey -> {s:ms|null, e:ms|null} rentang tanggal aktif juklak
+  const _pms=v=>{const d=new Date(String(v==null?'':v).trim());return isNaN(d)?null:d.getTime();};
   jukF.forEach(r=>{
     const raw=String(r[jCols.code]||'').trim(); if(!raw)return;
     const key=raw.replace(/^0+/,'')||raw;
@@ -14552,6 +14554,11 @@ function renderJuklakRecap(){
     if(!pluToJk.has(key))pluToJk.set(key,{jkKey,jkNo,skNo});
     let m=jkMeta.get(jkKey); if(!m){m={juklak:jkNo||'(tanpa nomor)',skp:skNo||'—',plus:new Set()};jkMeta.set(jkKey,m);} m.plus.add(key);
     if(!m.skp||m.skp==='—'){if(skNo)m.skp=skNo;}
+    // rentang tanggal juklak (min start … max end)
+    const s=jCols.startDate?_pms(r[jCols.startDate]):null, e=jCols.endDate?_pms(r[jCols.endDate]):null;
+    let rg=jkRange.get(jkKey); if(!rg){rg={s:null,e:null};jkRange.set(jkKey,rg);}
+    if(s!=null)rg.s=(rg.s==null)?s:Math.min(rg.s,s);
+    if(e!=null)rg.e=(rg.e==null)?e:Math.max(rg.e,e);
   });
 
   // Agregasi sales
@@ -14563,6 +14570,16 @@ function renderJuklakRecap(){
     const raw=String(r[sCols.plu]||'').trim(); if(!raw)return;
     const key=raw.replace(/^0+/,'')||raw;
     const info=pluToJk.get(key); if(!info)return;
+    // Batasi ke rentang tanggal aktif juklak (agar toko/qty/sales tidak "diratakan"
+    // ke bulan di luar periode promo). Kalau juklak tak punya tanggal → hitung semua.
+    const rg=jkRange.get(info.jkKey);
+    if(rg&&(rg.s!=null||rg.e!=null)&&sCols.date){
+      const sd=new Date(String(r[sCols.date]||'').trim()).getTime();
+      if(!isNaN(sd)){
+        if(rg.s!=null&&sd<rg.s)return;
+        if(rg.e!=null&&sd>rg.e+864e5-1)return; // inklusif sampai akhir hari end date
+      }
+    }
     const mo=getMonthFromRow(r,sCols),yr=getYearFromRow(r,sCols);
     const mKey=mo?(yr?`${yr}-${String(mo).padStart(2,'0')}`:String(mo).padStart(2,'0')):'?';
     if(selMonth!=='ALL'&&mKey!==selMonth)return;
