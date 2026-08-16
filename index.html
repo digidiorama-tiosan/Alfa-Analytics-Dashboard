@@ -14229,6 +14229,28 @@ function peStatusBadge(s){
   return m[s]||s;
 }
 
+// Forward-fill No Juklak / No SKP yang kosong dari baris di atasnya (pola Excel
+// merged-cell: nomor hanya ditulis di baris PLU pertama tiap juklak, sisanya kosong).
+// Hasil di-cache; dipakai bersama oleh Cari No Juklak & Rekap Juklak.
+let _jklFilledCache=null, _jklFilledStamp=null;
+function jklRowsFilled(){
+  const juk=(typeof uploads!=='undefined'&&Array.isArray(uploads.promo))?uploads.promo:[];
+  if(!juk.length) return [];
+  const stamp=juk.length+'|'+(juk[0]?Object.keys(juk[0]).join(','):'');
+  if(_jklFilledCache&&_jklFilledStamp===stamp) return _jklFilledCache;
+  const jCols=jColDetect(juk);
+  const gC=jCols.guideline, sC=jCols.skp;
+  let lastG='', lastS='';
+  const out=juk.map(r=>{
+    const nr=Object.assign({},r);
+    if(gC){ const v=String(r[gC]==null?'':r[gC]).trim(); if(v) lastG=v; else if(lastG) nr[gC]=lastG; }
+    if(sC){ const v=String(r[sC]==null?'':r[sC]).trim(); if(v) lastS=v; else if(lastS) nr[sC]=lastS; }
+    return nr;
+  });
+  _jklFilledCache=out; _jklFilledStamp=stamp;
+  return out;
+}
+
 // Deteksi kolom di juklak
 function jColDetect(rows){
   if(!rows||!rows.length) return {};
@@ -14363,6 +14385,7 @@ function renderJuklakLookup(){
   const show=(msg)=>{ if(emptyEl){emptyEl.style.display='block';emptyEl.innerHTML=msg;} if(resEl)resEl.style.display='none'; if(dlBtn)dlBtn.style.display='none'; _jklLastResult=null; };
   if(!juk.length) return show('<div style="font-size:15px;font-weight:600;margin-bottom:6px">Data Juklak belum ada</div><div style="font-size:12.5px">Aktifkan/upload juklak di Data Management dulu.</div>');
   const jCols=jColDetect(juk);
+  const jukF=jklRowsFilled();   // pakai versi No Juklak/SKP yang sudah di-carry-down
   const noCol=jCols.guideline||jCols.skp;
   if(!noCol) return show('<div style="font-size:15px;font-weight:600;margin-bottom:6px">Kolom No Juklak / No SKP tidak ditemukan</div><div style="font-size:12.5px">File juklak perlu kolom seperti "NO JUKLAK" atau "NO SKP".</div>');
 
@@ -14388,7 +14411,7 @@ function renderJuklakLookup(){
   if(!q) return show('<div style="font-size:15px;font-weight:600;margin-bottom:6px">Ketik nomor juklak untuk mulai</div><div style="font-size:12.5px">Data dibaca dari Juklak aktif + Data Sales. Ketik sebagian nomor untuk melihat saran.</div>');
 
   // baris juklak yang cocok (guideline ATAU skp mengandung query)
-  const matched=juk.filter(r=>{
+  const matched=jukF.filter(r=>{
     const g=jCols.guideline?jklNormNo(r[jCols.guideline]):'';
     const s=jCols.skp?jklNormNo(r[jCols.skp]):'';
     return (g&&g.includes(q))||(s&&s.includes(q));
@@ -14519,14 +14542,15 @@ function renderJuklakRecap(){
   // Peta PLU(stripped) -> {juklak, skp} — satu PLU dianggap milik juklak pertama yang memuatnya
   const pluToJk=new Map();
   const jkMeta=new Map(); // key juklak -> {juklak,skp,plus:Set}
-  juk.forEach(r=>{
+  const jukF=jklRowsFilled();   // No Juklak/SKP sudah di-carry-down (pola Excel merged-cell)
+  jukF.forEach(r=>{
     const raw=String(r[jCols.code]||'').trim(); if(!raw)return;
     const key=raw.replace(/^0+/,'')||raw;
     const jkNo=jCols.guideline?String(r[jCols.guideline]||'').trim():'';
     const skNo=jCols.skp?String(r[jCols.skp]||'').trim():'';
     const jkKey=(jkNo||'—')+' ‖ '+(skNo||'—');   // gabung per No Juklak + No SKP (merge lintas bulan / double-entry excel)
     if(!pluToJk.has(key))pluToJk.set(key,{jkKey,jkNo,skNo});
-    let m=jkMeta.get(jkKey); if(!m){m={juklak:jkNo||'—',skp:skNo||'—',plus:new Set()};jkMeta.set(jkKey,m);} m.plus.add(key);
+    let m=jkMeta.get(jkKey); if(!m){m={juklak:jkNo||'(tanpa nomor)',skp:skNo||'—',plus:new Set()};jkMeta.set(jkKey,m);} m.plus.add(key);
     if(!m.skp||m.skp==='—'){if(skNo)m.skp=skNo;}
   });
 
