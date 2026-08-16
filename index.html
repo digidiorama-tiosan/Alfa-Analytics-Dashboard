@@ -14431,11 +14431,24 @@ function renderJuklakLookup(){
     pluInfo.set(key,{plu:raw,desc:jCols.name?String(r[jCols.name]||'').trim():'',cat:jCols.cat?String(r[jCols.cat]||'').trim():'',normP,promoP,disc:(normP>0&&promoP>0)?(normP-promoP)/normP*100:null});
   });
 
+  // Rentang tanggal aktif juklak yang cocok (agar sales tidak diratakan ke luar periode promo)
+  const _pms=v=>{const d=new Date(String(v==null?'':v).trim());return isNaN(d)?null:d.getTime();};
+  let jkS=null,jkE=null;
+  matched.forEach(r=>{
+    const s=jCols.startDate?_pms(r[jCols.startDate]):null, e=jCols.endDate?_pms(r[jCols.endDate]):null;
+    if(s!=null)jkS=(jkS==null)?s:Math.min(jkS,s);
+    if(e!=null)jkE=(jkE==null)?e:Math.max(jkE,e);
+  });
+
   // Filter sales by month
   const selMonth=(monthSel&&monthSel.value)||'ALL';
   let srows=sales;
   if(selMonth!=='ALL'){
     srows=sales.filter(r=>{const mo=getMonthFromRow(r,sCols),yr=getYearFromRow(r,sCols);if(!mo)return false;const k=yr?`${yr}-${String(mo).padStart(2,'0')}`:String(mo).padStart(2,'0');return k===selMonth;});
+  }
+  // Batasi ke rentang tanggal aktif juklak (kalau ada tanggal & tidak sedang filter 1 bulan tertentu)
+  if((jkS!=null||jkE!=null)&&sCols.date){
+    srows=srows.filter(r=>{const sd=new Date(String(r[sCols.date]||'').trim()).getTime();if(isNaN(sd))return true;if(jkS!=null&&sd<jkS)return false;if(jkE!=null&&sd>jkE+864e5-1)return false;return true;});
   }
   // Agregasi sales per PLU dan per toko (hanya PLU yang ada di juklak ini)
   const perPlu=new Map(); const perStore=new Map();
