@@ -2880,6 +2880,11 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
           <tfoot id="jkrFoot"></tfoot>
         </table>
       </div>
+      <div id="jkrPager" style="display:flex;align-items:center;justify-content:center;gap:12px;padding:12px 4px 2px;font-size:12.5px;color:var(--text2)">
+        <button class="filter-btn" id="jkrPrev" onclick="jkrGoPage(-1)">‹ Prev</button>
+        <span id="jkrPageInfo">—</span>
+        <button class="filter-btn" id="jkrNext" onclick="jkrGoPage(1)">Next ›</button>
+      </div>
     </div>
 
     <div class="section-title">Rekap per Bulan</div>
@@ -14487,7 +14492,8 @@ function downloadExcelJuklakLookup(){
 // ══════════════════════════════════════════════
 //  REKAP JUKLAK — sales per juklak + rekap bulanan
 // ══════════════════════════════════════════════
-let _jkrLast=null;
+let _jkrLast=null, _jkrPage=0, _jkrSig=null;
+function jkrGoPage(d){ _jkrPage+=d; renderJuklakRecap(); }
 function renderJuklakRecap(){
   const emptyEl=document.getElementById('jkr-empty');
   const resEl=document.getElementById('jkr-result');
@@ -14518,7 +14524,7 @@ function renderJuklakRecap(){
     const key=raw.replace(/^0+/,'')||raw;
     const jkNo=jCols.guideline?String(r[jCols.guideline]||'').trim():'';
     const skNo=jCols.skp?String(r[jCols.skp]||'').trim():'';
-    const jkKey=jkNo||skNo||'(tanpa nomor)';
+    const jkKey=(jkNo||'—')+' ‖ '+(skNo||'—');   // gabung per No Juklak + No SKP (merge lintas bulan / double-entry excel)
     if(!pluToJk.has(key))pluToJk.set(key,{jkKey,jkNo,skNo});
     let m=jkMeta.get(jkKey); if(!m){m={juklak:jkNo||'—',skp:skNo||'—',plus:new Set()};jkMeta.set(jkKey,m);} m.plus.add(key);
     if(!m.skp||m.skp==='—'){if(skNo)m.skp=skNo;}
@@ -14552,6 +14558,10 @@ function renderJuklakRecap(){
   const sort=(document.getElementById('jkrSort')||{}).value||'net';
   rows.sort((a,b)=>sort==='juklak'?String(a.juklak).localeCompare(String(b.juklak)):(b[sort]-a[sort]));
 
+  // reset ke halaman 1 bila filter/sort/search berubah (signature)
+  const sig=selMonth+'|'+sort+'|'+qn;
+  if(_jkrSig!==sig){_jkrPage=0;_jkrSig=sig;}
+
   const money=v=>(typeof fmt==='function')?fmt(v):Math.round(v).toLocaleString('en-US');
   const tQty=rows.reduce((s,r)=>s+r.qty,0),tNet=rows.reduce((s,r)=>s+r.net,0),tCogs=rows.reduce((s,r)=>s+r.cogs,0),tMargin=tNet-tCogs;
 
@@ -14563,7 +14573,17 @@ function renderJuklakRecap(){
     <div class="stat-card purple"><div class="stat-label">Qty Terjual</div><div class="stat-value">${Math.round(tQty).toLocaleString('en-US')}</div><div class="stat-sub">unit</div></div>`;
 
   const body=document.getElementById('jkrBody');
-  if(body)body.innerHTML=rows.length?rows.map(r=>`<tr>
+  const PER=30;
+  const nPages=Math.max(1,Math.ceil(rows.length/PER));
+  if(_jkrPage>=nPages)_jkrPage=nPages-1; if(_jkrPage<0)_jkrPage=0;
+  const pageRows=rows.slice(_jkrPage*PER,_jkrPage*PER+PER);
+  // pager UI
+  const pgInfo=document.getElementById('jkrPageInfo'),pgPrev=document.getElementById('jkrPrev'),pgNext=document.getElementById('jkrNext'),pgWrap=document.getElementById('jkrPager');
+  if(pgWrap)pgWrap.style.display=rows.length>PER?'flex':'none';
+  if(pgInfo)pgInfo.textContent=`Halaman ${_jkrPage+1} / ${nPages} · menampilkan ${rows.length?(_jkrPage*PER+1):0}–${_jkrPage*PER+pageRows.length} dari ${rows.length} juklak`;
+  if(pgPrev)pgPrev.disabled=_jkrPage<=0;
+  if(pgNext)pgNext.disabled=_jkrPage>=nPages-1;
+  if(body)body.innerHTML=pageRows.length?pageRows.map(r=>`<tr>
     <td style="font-family:var(--mono);font-weight:600">${r.juklak}</td>
     <td style="font-family:var(--mono)">${r.skp}</td>
     <td class="right">${r.nPlu}</td>
