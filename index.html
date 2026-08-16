@@ -2820,7 +2820,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
         <table class="data-table" id="jklStoreTable">
           <thead><tr>
             <th>Kode Toko</th><th class="right">Qty</th><th class="right"># Struk</th>
-            <th class="right">Net Sales</th><th class="right"># PLU Terjual</th><th class="right">% Kontribusi</th>
+            <th class="right">Net Sales</th><th class="right"># PLU Terjual</th><th class="right">% Kontribusi</th><th>No Faktur / log_promo</th>
           </tr></thead>
           <tbody id="jklStoreBody"></tbody>
           <tfoot id="jklStoreFoot"></tfoot>
@@ -2874,7 +2874,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
           <thead><tr>
             <th>No Juklak</th><th>No SKP</th><th class="right"># PLU</th>
             <th class="right">Qty</th><th class="right">Net Sales</th><th class="right">COGS</th>
-            <th class="right">Margin</th><th class="right">GM %</th><th class="right"># Toko</th>
+            <th class="right">Margin</th><th class="right">GM %</th><th class="right"># Toko</th><th>No Faktur / log_promo</th>
           </tr></thead>
           <tbody id="jkrBody"></tbody>
           <tfoot id="jkrFoot"></tfoot>
@@ -14317,6 +14317,7 @@ function sColDetect(rows){
     type:  sCol(['type','tipe','jenis','flag','trxtype','transtype','transaction_type']),
     store: sCol(['kode_toko','kodetoko','store_code','storecode','kd_toko','toko','store','site','outlet']),
     bon:   sCol(['no_bon','nobon','no_struk','nostruk','bon','struk','receipt','trxno','notransaksi','no_transaksi','invoice']),
+    logPromo: sCol(['log_promo','logpromo','no_faktur','nofaktur','faktur_promo','fakturpromo','faktur','logfaktur']),
     month: sCol(['bulan','month','month_num','bln','mo']),
     date:  sCol(['tgl_trs','tgltrs','tr_date','tgl','tanggal','date','posting_date','sale_date','txn_date','tdate']),
   };
@@ -14478,8 +14479,9 @@ function renderJuklakLookup(){
       const qty=sCols.qty?parseN(r[sCols.qty]):0;
       const store=sCols.store?String(r[sCols.store]||'').trim()||'—':'—';
       const bon=sCols.bon?String(r[sCols.bon]||''):'';
+      const faktur=sCols.logPromo?String(r[sCols.logPromo]||'').split('|')[0].trim():'';
       let p=perPlu.get(key); if(!p){p={qty:0,net:0,stores:new Set()};perPlu.set(key,p);} p.qty+=qty;p.net+=net;p.stores.add(store);
-      let s=perStore.get(store); if(!s){s={qty:0,net:0,plus:new Set(),bons:new Set()};perStore.set(store,s);} s.qty+=qty;s.net+=net;s.plus.add(key); if(bon)s.bons.add(store+'|'+bon);
+      let s=perStore.get(store); if(!s){s={qty:0,net:0,plus:new Set(),bons:new Set(),fakturs:new Set()};perStore.set(store,s);} s.qty+=qty;s.net+=net;s.plus.add(key); if(bon)s.bons.add(store+'|'+bon); if(faktur)s.fakturs.add(faktur);
     });
   }
 
@@ -14513,7 +14515,7 @@ function renderJuklakLookup(){
   if(pfoot)pfoot.innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td colspan="6">TOTAL · ${pluRows.length} PLU</td><td class="right">${Math.round(totQty).toLocaleString('en-US')}</td><td class="right">${money(totNet)}</td><td class="right">—</td></tr>`;
 
   // Render Store table
-  const storeRows=[...perStore.entries()].map(([st,v])=>({store:st,qty:v.qty,net:v.net,nPlu:v.plus.size,nBon:v.bons.size})).sort((a,b)=>b.net-a.net);
+  const storeRows=[...perStore.entries()].map(([st,v])=>({store:st,qty:v.qty,net:v.net,nPlu:v.plus.size,nBon:v.bons.size,fakturs:[...(v.fakturs||[])]})).sort((a,b)=>b.net-a.net);
   const sbody=document.getElementById('jklStoreBody');
   if(sbody)sbody.innerHTML=storeRows.length?storeRows.map(r=>`<tr>
     <td style="font-weight:600">${r.store}</td>
@@ -14521,9 +14523,10 @@ function renderJuklakLookup(){
     <td class="right">${r.nBon.toLocaleString('en-US')}</td>
     <td class="right">${money(r.net)}</td>
     <td class="right">${r.nPlu}</td>
-    <td class="right">${totNet>0?(r.net/totNet*100).toFixed(1):'0.0'}%</td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Belum ada penjualan untuk PLU juklak ini pada periode terpilih</td></tr>';
+    <td class="right">${totNet>0?(r.net/totNet*100).toFixed(1):'0.0'}%</td>
+    <td style="font-family:var(--mono);font-size:11px">${r.fakturs.length?r.fakturs.join(', '):'<span style="color:var(--text3)">—</span>'}</td></tr>`).join(''):'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">Belum ada penjualan untuk PLU juklak ini pada periode terpilih</td></tr>';
   const sfoot=document.getElementById('jklStoreFoot');
-  if(sfoot)sfoot.innerHTML=storeRows.length?`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td>TOTAL · ${storeRows.length} toko</td><td class="right">${Math.round(totQty).toLocaleString('en-US')}</td><td class="right">—</td><td class="right">${money(totNet)}</td><td class="right">—</td><td class="right">100%</td></tr>`:'';
+  if(sfoot)sfoot.innerHTML=storeRows.length?`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td>TOTAL · ${storeRows.length} toko</td><td class="right">${Math.round(totQty).toLocaleString('en-US')}</td><td class="right">—</td><td class="right">${money(totNet)}</td><td class="right">—</td><td class="right">100%</td><td></td></tr>`:'';
 
   if(emptyEl)emptyEl.style.display='none';
   if(resEl)resEl.style.display='block';
@@ -14536,9 +14539,9 @@ function downloadExcelJuklakLookup(){
   const rows=[['=== JUKLAK '+R.jklShown+' · '+R.selMonthLbl+' ===']];
   rows.push([],['PLU','Deskripsi','Kategori','Harga Normal','Harga Promo','Disc %','Qty','Net Sales','#Toko']);
   R.pluRows.forEach(r=>rows.push([r.plu,r.desc,r.cat,Math.round(r.normP),Math.round(r.promoP),r.disc!=null?parseFloat(r.disc.toFixed(1)):'',Math.round(r.qty),Math.round(r.net),r.nStore]));
-  rows.push([],['SALES PER TOKO'],['Kode Toko','Qty','#Struk','Net Sales','#PLU','% Kontribusi']);
+  rows.push([],['SALES PER TOKO'],['Kode Toko','Qty','#Struk','Net Sales','#PLU','% Kontribusi','No Faktur / log_promo']);
   const tot=R.storeRows.reduce((a,b)=>a+b.net,0)||1;
-  R.storeRows.forEach(r=>rows.push([r.store,Math.round(r.qty),r.nBon,Math.round(r.net),r.nPlu,parseFloat((r.net/tot*100).toFixed(1))]));
+  R.storeRows.forEach(r=>rows.push([r.store,Math.round(r.qty),r.nBon,Math.round(r.net),r.nPlu,parseFloat((r.net/tot*100).toFixed(1)),(r.fakturs||[]).join(', ')]));
   if(typeof xlsDownload==='function')xlsDownload(rows,'Juklak '+R.jklShown,'juklak_'+R.jklShown.replace(/[^a-z0-9]/gi,'_'));
 }
 
@@ -14607,6 +14610,7 @@ function renderJuklakRecap(){
     const qty=sCols.qty?parseN(r[sCols.qty]):0;
     const cogs=sCols.cogs?parseN(r[sCols.cogs]):0;
     const store=sCols.store?String(r[sCols.store]||'').trim()||'—':'—';
+    const faktur=sCols.logPromo?String(r[sCols.logPromo]||'').split('|')[0].trim():'';
     const sd=sCols.date?pfParseDate(r[sCols.date]):null;
     let countedForMonth=false;
     jkList.forEach(jkKey=>{
@@ -14616,7 +14620,7 @@ function renderJuklakRecap(){
         if(rg.s!=null&&sd<rg.s)return;
         if(rg.e!=null&&sd>rg.e+864e5-1)return;
       }
-      let a=agg.get(jkKey); if(!a){a={qty:0,net:0,cogs:0,stores:new Set()};agg.set(jkKey,a);} a.qty+=qty;a.net+=net;a.cogs+=cogs;a.stores.add(store);
+      let a=agg.get(jkKey); if(!a){a={qty:0,net:0,cogs:0,stores:new Set(),fakturs:new Set()};agg.set(jkKey,a);} a.qty+=qty;a.net+=net;a.cogs+=cogs;a.stores.add(store); if(faktur)a.fakturs.add(faktur);
       countedForMonth=true;
     });
     // rekap bulanan: hitung transaksi sekali saja (hindari double bila PLU dipakai >1 juklak)
@@ -14628,7 +14632,7 @@ function renderJuklakRecap(){
   // Build rows
   const q=(document.getElementById('jkrSearch')||{}).value||'';
   const qn=q.trim().toLowerCase();
-  let rows=[...jkMeta.entries()].map(([k,m])=>{const a=agg.get(k)||{qty:0,net:0,cogs:0,stores:new Set()};const margin=a.net-a.cogs;return{jkKey:k,juklak:m.juklak,skp:m.skp,nPlu:m.plus.size,qty:a.qty,net:a.net,cogs:a.cogs,margin,gm:a.net>0?margin/a.net*100:0,nStore:a.stores.size};});
+  let rows=[...jkMeta.entries()].map(([k,m])=>{const a=agg.get(k)||{qty:0,net:0,cogs:0,stores:new Set(),fakturs:new Set()};const margin=a.net-a.cogs;return{jkKey:k,juklak:m.juklak,skp:m.skp,nPlu:m.plus.size,qty:a.qty,net:a.net,cogs:a.cogs,margin,gm:a.net>0?margin/a.net*100:0,nStore:a.stores.size,fakturs:[...a.fakturs]};});
   if(qn)rows=rows.filter(r=>(r.juklak||'').toLowerCase().includes(qn)||(r.skp||'').toLowerCase().includes(qn));
   const sort=(document.getElementById('jkrSort')||{}).value||'net';
   rows.sort((a,b)=>sort==='juklak'?String(a.juklak).localeCompare(String(b.juklak)):(b[sort]-a[sort]));
@@ -14667,9 +14671,10 @@ function renderJuklakRecap(){
     <td class="right">${money(r.cogs)}</td>
     <td class="right" style="color:${r.margin>=0?'var(--green)':'var(--red)'}">${money(r.margin)}</td>
     <td class="right"><span class="stat-badge ${r.gm>=0?'badge-green':'badge-red'}">${r.gm.toFixed(1)}%</span></td>
-    <td class="right">${r.nStore}</td></tr>`).join(''):'<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">Tidak ada juklak cocok</td></tr>';
+    <td class="right">${r.nStore}</td>
+    <td style="font-family:var(--mono);font-size:11px">${r.fakturs&&r.fakturs.length?r.fakturs.join(', '):'<span style="color:var(--text3)">—</span>'}</td></tr>`).join(''):'<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:20px">Tidak ada juklak cocok</td></tr>';
   const foot=document.getElementById('jkrFoot');
-  if(foot)foot.innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td colspan="3">TOTAL · ${rows.length} juklak</td><td class="right">${Math.round(tQty).toLocaleString('en-US')}</td><td class="right">${money(tNet)}</td><td class="right">${money(tCogs)}</td><td class="right">${money(tMargin)}</td><td class="right">${tNet>0?(tMargin/tNet*100).toFixed(1):'0.0'}%</td><td class="right">—</td></tr>`;
+  if(foot)foot.innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td colspan="3">TOTAL · ${rows.length} juklak</td><td class="right">${Math.round(tQty).toLocaleString('en-US')}</td><td class="right">${money(tNet)}</td><td class="right">${money(tCogs)}</td><td class="right">${money(tMargin)}</td><td class="right">${tNet>0?(tMargin/tNet*100).toFixed(1):'0.0'}%</td><td class="right">—</td><td></td></tr>`;
 
   // Rekap per bulan
   const mrows=[...monthAgg.entries()].filter(([k])=>k!=='?').sort((a,b)=>a[0].localeCompare(b[0])).map(([k,m])=>({key:k,label:m.label,qty:m.qty,net:m.net,cogs:m.cogs,margin:m.net-m.cogs,gm:m.net>0?(m.net-m.cogs)/m.net*100:0,nJk:m.jks.size}));
@@ -14694,8 +14699,8 @@ function renderJuklakRecap(){
 function downloadExcelJuklakRecap(){
   if(!_jkrLast){alert('Buka rekap dulu.');return;}
   const R=_jkrLast;
-  const rows=[['=== REKAP JUKLAK · '+R.selMonthLbl+' ==='],[],['No Juklak','No SKP','#PLU','Qty','Net Sales','COGS','Margin','GM %','#Toko']];
-  R.rows.forEach(r=>rows.push([r.juklak,r.skp,r.nPlu,Math.round(r.qty),Math.round(r.net),Math.round(r.cogs),Math.round(r.margin),parseFloat(r.gm.toFixed(1)),r.nStore]));
+  const rows=[['=== REKAP JUKLAK · '+R.selMonthLbl+' ==='],[],['No Juklak','No SKP','#PLU','Qty','Net Sales','COGS','Margin','GM %','#Toko','No Faktur / log_promo']];
+  R.rows.forEach(r=>rows.push([r.juklak,r.skp,r.nPlu,Math.round(r.qty),Math.round(r.net),Math.round(r.cogs),Math.round(r.margin),parseFloat(r.gm.toFixed(1)),r.nStore,(r.fakturs||[]).join(', ')]));
   rows.push([],['REKAP PER BULAN'],['Bulan','#Juklak Aktif','Qty','Net Sales','COGS','Margin','GM %']);
   R.mrows.forEach(m=>rows.push([m.label,m.nJk,Math.round(m.qty),Math.round(m.net),Math.round(m.cogs),Math.round(m.margin),parseFloat(m.gm.toFixed(1))]));
   if(typeof xlsDownload==='function')xlsDownload(rows,'Rekap Juklak','rekap_juklak');
