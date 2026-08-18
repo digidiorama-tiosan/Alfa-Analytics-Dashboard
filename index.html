@@ -1702,6 +1702,18 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M6 6v8"/></svg>
           Rekap Juklak
         </button>
+        <button class="nav-item" onclick="showPanel('juklak-compliance',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 4.5L6 12 2.5 8.5"/></svg>
+          Compliance Harga
+        </button>
+        <button class="nav-item" onclick="showPanel('juklak-calendar',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="1"/><path d="M2 6h12M5 1.5v3M11 1.5v3"/></svg>
+          Kalender Juklak
+        </button>
+        <button class="nav-item" onclick="showPanel('juklak-margin',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v14M4 4h6a2 2 0 010 4H6a2 2 0 000 4h6"/></svg>
+          Margin Guard
+        </button>
         <button class="nav-item" onclick="showPanel('promo-contribution',this)">
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10s2-5 6-5 6 5 6 5-2 5-6 5-6-5-6-5z"/><circle cx="8" cy="10" r="2"/></svg>
           Promo vs Sales
@@ -2827,6 +2839,100 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
         </table>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PANEL: COMPLIANCE HARGA (harga jual aktual vs promo juklak)
+════════════════════════════════════════════════════════ -->
+<div id="panel-juklak-compliance" class="panel">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Compliance Harga Promo</div>
+      <div class="page-subtitle">Harga jual aktual (sales) vs harga promo juklak — deteksi PLU/toko yang tidak menjalankan harga promo</div>
+    </div>
+    <button class="btn-dl" id="jcp-dl" onclick="downloadExcelCompliance()" style="display:none">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg>Export Excel
+    </button>
+  </div>
+  <div class="store-filter-bar" style="margin-bottom:16px">
+    <span class="filter-label">Toleransi</span>
+    <select class="filter-select" id="jcpTol" onchange="renderJuklakCompliance()" style="min-width:120px">
+      <option value="0.02">±2%</option><option value="0.05" selected>±5%</option><option value="0.1">±10%</option><option value="0">Persis</option>
+    </select>
+    <span class="filter-label" style="margin-left:8px">Tampilkan</span>
+    <select class="filter-select" id="jcpShow" onchange="renderJuklakCompliance()" style="min-width:150px">
+      <option value="all">Semua</option><option value="viol" selected>Hanya tidak sesuai</option>
+    </select>
+    <input type="text" class="filter-select" id="jcpSearch" placeholder="cari PLU / toko / juklak…" autocomplete="off" oninput="renderJuklakCompliance()" style="min-width:190px;font-family:var(--mono);margin-left:auto">
+  </div>
+  <div id="jcp-empty" class="empty-state" style="padding:48px 20px;text-align:center;color:var(--text3)"><div style="font-size:15px;font-weight:600;margin-bottom:6px">Memuat…</div><div style="font-size:12.5px">Butuh Juklak (dengan harga promo) + Data Sales.</div></div>
+  <div id="jcp-result" style="display:none">
+    <div class="stats-grid" id="jcp-kpi" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px"></div>
+    <div class="section-title">Detail Harga per PLU × Toko</div>
+    <div class="chart-card">
+      <div class="table-wrap"><table class="data-table" id="jcpTable"><thead><tr>
+        <th>Juklak</th><th>PLU</th><th>Deskripsi</th><th>Toko</th>
+        <th class="right">Harga Promo (Juklak)</th><th class="right">Harga Jual Aktual</th><th class="right">Selisih</th><th>Status</th>
+      </tr></thead><tbody id="jcpBody"></tbody></table></div>
+      <div id="jcpPager" style="display:flex;align-items:center;justify-content:center;gap:12px;padding:12px 4px 2px;font-size:12.5px;color:var(--text2)">
+        <button class="filter-btn" id="jcpPrev" onclick="jcpGoPage(-1)">‹ Prev</button><span id="jcpPageInfo">—</span><button class="filter-btn" id="jcpNext" onclick="jcpGoPage(1)">Next ›</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PANEL: KALENDER JUKLAK (timeline periode & overlap)
+════════════════════════════════════════════════════════ -->
+<div id="panel-juklak-calendar" class="panel">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Kalender Juklak</div>
+      <div class="page-subtitle">Timeline periode tiap juklak — lihat berapa juklak aktif bersamaan & tumpang tindih</div>
+    </div>
+    <select class="filter-select" id="jcalMonth" onchange="renderJuklakCalendar()" style="min-width:160px"><option value="ALL">Semua Periode</option></select>
+  </div>
+  <div id="jcal-empty" class="empty-state" style="padding:48px 20px;text-align:center;color:var(--text3)"><div style="font-size:15px;font-weight:600;margin-bottom:6px">Memuat…</div><div style="font-size:12.5px">Butuh Juklak dengan kolom tanggal mulai & akhir.</div></div>
+  <div id="jcal-result" style="display:none">
+    <div class="stats-grid" id="jcal-kpi" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px"></div>
+    <div class="section-title">Timeline Periode Juklak</div>
+    <div class="chart-card" style="margin-bottom:20px"><div id="jcalGantt" style="overflow-x:auto"></div></div>
+    <div class="section-title">PLU dalam ≥ 2 Juklak Bersamaan (risiko double-discount)</div>
+    <div class="chart-card"><div class="table-wrap"><table class="data-table" id="jcalOverlapTable"><thead><tr>
+      <th>PLU</th><th class="right"># Juklak Overlap</th><th>Daftar Juklak</th><th>Rentang Tumpang Tindih</th>
+    </tr></thead><tbody id="jcalOverlapBody"></tbody></table></div></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PANEL: MARGIN GUARD (juklak margin tipis / negatif)
+════════════════════════════════════════════════════════ -->
+<div id="panel-juklak-margin" class="panel">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Margin Guard</div>
+      <div class="page-subtitle">Deteksi juklak dengan margin tipis / negatif setelah diskon & estimasi margin lost</div>
+    </div>
+    <button class="btn-dl" id="jmg-dl" onclick="downloadExcelMargin()" style="display:none">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg>Export Excel
+    </button>
+  </div>
+  <div class="store-filter-bar" style="margin-bottom:16px">
+    <span class="filter-label">Ambang GM% Aman</span>
+    <select class="filter-select" id="jmgThresh" onchange="renderJuklakMargin()" style="min-width:120px">
+      <option value="0">GM &lt; 0% (rugi)</option><option value="5" selected>GM &lt; 5%</option><option value="10">GM &lt; 10%</option><option value="100">Semua</option>
+    </select>
+    <input type="text" class="filter-select" id="jmgSearch" placeholder="cari juklak…" autocomplete="off" oninput="renderJuklakMargin()" style="min-width:190px;font-family:var(--mono);margin-left:auto">
+  </div>
+  <div id="jmg-empty" class="empty-state" style="padding:48px 20px;text-align:center;color:var(--text3)"><div style="font-size:15px;font-weight:600;margin-bottom:6px">Memuat…</div><div style="font-size:12.5px">Butuh Juklak + Data Sales (dengan COGS).</div></div>
+  <div id="jmg-result" style="display:none">
+    <div class="stats-grid" id="jmg-kpi" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px"></div>
+    <div class="section-title">Juklak Berisiko Margin</div>
+    <div class="chart-card"><div class="table-wrap"><table class="data-table" id="jmgTable"><thead><tr>
+      <th>Juklak</th><th>No SKP</th><th class="right"># PLU</th><th class="right">Qty</th>
+      <th class="right">Net Sales</th><th class="right">COGS</th><th class="right">Margin</th><th class="right">GM %</th><th>Status</th>
+    </tr></thead><tbody id="jmgBody"></tbody><tfoot id="jmgFoot"></tfoot></table></div></div>
   </div>
 </div>
 
@@ -5957,6 +6063,9 @@ function renderPanel(id) {
     case 'promo-effectiveness': renderPromoEffectiveness(); break;
     case 'juklak-lookup': renderJuklakLookup(); break;
     case 'juklak-recap': renderJuklakRecap(); break;
+    case 'juklak-compliance': renderJuklakCompliance(); break;
+    case 'juklak-calendar': renderJuklakCalendar(); break;
+    case 'juklak-margin': renderJuklakMargin(); break;
     case 'promo-contribution': renderPromoContrib(); break;
     case 'promo-member': renderPromoMember(); break;
     case 'promo-items': renderPromoItems(); break;
@@ -7009,7 +7118,7 @@ function renderMemDatabase() {
     const cv=document.getElementById('regTrendChart');
     if(cv&&cv.parentElement){cv.parentElement.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;text-align:center;color:var(--text3);font-size:12.5px;line-height:1.6;padding:0 24px">Kolom tanggal registrasi tidak ditemukan di file member<br>(mis. <b>reg_date</b>, <b>tanggal_daftar</b>, <b>join_date</b>) — tren pendaftaran tidak bisa dihitung.</div>';}
   } else {
-  makeChart('regTrendChart',{type:'bar',data:{labels:regLabels,datasets:[{label:'New Registrations',data:regLabels.map(k=>D.reg_monthly[k]),backgroundColor:COLORS,borderRadius:6}]},options:{...chartDefaults,scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,beginAtZero:true}}}});
+  makeChart('regTrendChart',{type:'bar',data:{labels:regLabels,datasets:[{label:'New Registrations',data:regLabels.map(k=>D.reg_monthly[k]),backgroundColor:COLORS,borderRadius:6}]},options:{...chartDefaults,layout:{padding:{top:24}},scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,beginAtZero:true}}},plugins:[{id:'regValueLabels',afterDatasetsDraw(ch){const ctx=ch.ctx,meta=ch.getDatasetMeta(0);ctx.save();ctx.font='700 12px '+FONT;ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--text')||'#e6edf3';ctx.textAlign='center';ctx.textBaseline='bottom';meta.data.forEach((bar,i)=>{const v=ch.data.datasets[0].data[i];if(v==null)return;ctx.fillText(Math.round(v).toLocaleString('en-US'),bar.x,bar.y-6);});ctx.restore();}}]});
   }
   makeChart('activeMemberDonut',{type:'doughnut',data:{labels:['Active','Dormant'],datasets:[{data:[S.active_members,dormant],backgroundColor:[GREEN,'#21262d'],borderColor:'#161b22',borderWidth:2,hoverOffset:6}]},options:{...chartDefaults,cutout:'70%',scales:{}}});
   document.getElementById('activeMemberLegend').innerHTML = `
@@ -12784,7 +12893,7 @@ const PANEL_GROUP_MAP = {
   'mem-vs-promo':'grp-members','mem-trend':'grp-members','mem-database':'grp-members','mem-homestore':'grp-members',
   'mem-demo':'grp-members','mem-transactions':'grp-members','mem-retention':'grp-members',
   'mem-category':'grp-members',
-  'promo-effectiveness':'grp-marketing','juklak-lookup':'grp-marketing','juklak-recap':'grp-marketing','promo-contribution':'grp-marketing','promo-member':'grp-marketing','promo-items':'grp-marketing',
+  'promo-effectiveness':'grp-marketing','juklak-lookup':'grp-marketing','juklak-recap':'grp-marketing','juklak-compliance':'grp-marketing','juklak-calendar':'grp-marketing','juklak-margin':'grp-marketing','promo-contribution':'grp-marketing','promo-member':'grp-marketing','promo-items':'grp-marketing',
   'promo-categories':'grp-marketing','basket':'grp-marketing','brand-perf':'grp-marketing','principal-perf':'grp-marketing','promo-mechanic':'grp-marketing',
   'sku-pareto':'grp-catmgmt','cat-overview':'grp-catmgmt','cat-promo-potential':'grp-catmgmt',
   'cat-member':'grp-catmgmt','cat-trend':'grp-catmgmt','cat-time':'grp-catmgmt','cat-detail':'grp-catmgmt',
@@ -14704,6 +14813,228 @@ function downloadExcelJuklakRecap(){
   rows.push([],['REKAP PER BULAN'],['Bulan','#Juklak Aktif','Qty','Net Sales','COGS','Margin','GM %']);
   R.mrows.forEach(m=>rows.push([m.label,m.nJk,Math.round(m.qty),Math.round(m.net),Math.round(m.cogs),Math.round(m.margin),parseFloat(m.gm.toFixed(1))]));
   if(typeof xlsDownload==='function')xlsDownload(rows,'Rekap Juklak','rekap_juklak');
+}
+
+// ══════════════════════════════════════════════
+//  SHARED: agregasi juklak (PLU, harga aktual, cost) dalam periode aktif
+// ══════════════════════════════════════════════
+function jklBuildAgg(){
+  const juk=(Array.isArray(uploads.promo))?uploads.promo:[];
+  const sales=(Array.isArray(uploads.sales))?uploads.sales:[];
+  if(!juk.length||!sales.length) return null;
+  const jCols=jColDetect(juk), sCols=sColDetect(sales);
+  if(!jCols.code||!sCols.plu) return null;
+  const jukF=jklRowsFilled();
+  const parseN=v=>{const n=parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,''));return isNaN(n)?0:n;};
+  // juklak meta per PLU
+  const pluMeta=new Map();      // pluKey -> {plu,desc,cat,promoP,normP, jkKeys:Set}
+  const jkMeta=new Map();       // jkKey -> {juklak,skp,plus:Set,range:{s,e}}
+  jukF.forEach(r=>{
+    const raw=String(r[jCols.code]||'').trim(); if(!raw)return;
+    const key=raw.replace(/^0+/,'')||raw;
+    const jkNo=jCols.guideline?String(r[jCols.guideline]||'').trim():'';
+    const skNo=jCols.skp?String(r[jCols.skp]||'').trim():'';
+    const jkKey=(jkNo||'—')+' ‖ '+(skNo||'—');
+    let promoP=jCols.promoPrice?parseN(r[jCols.promoPrice]):0;
+    let normP=jCols.normPrice?parseN(r[jCols.normPrice]):0;
+    if(normP<=0&&typeof masterPriceOf==='function'){try{normP=masterPriceOf(raw)||0;}catch(_){}}
+    let pm=pluMeta.get(key); if(!pm){pm={plu:raw,desc:jCols.name?String(r[jCols.name]||'').trim():'',cat:jCols.cat?String(r[jCols.cat]||'').trim():'',promoP,normP,jkKeys:new Set()};pluMeta.set(key,pm);}
+    if(promoP>0&&pm.promoP<=0)pm.promoP=promoP; if(normP>0&&pm.normP<=0)pm.normP=normP;
+    pm.jkKeys.add(jkKey);
+    let m=jkMeta.get(jkKey); if(!m){m={juklak:jkNo||'(tanpa nomor)',skp:skNo||'—',plus:new Set(),range:{s:null,e:null}};jkMeta.set(jkKey,m);}
+    m.plus.add(key); if((!m.skp||m.skp==='—')&&skNo)m.skp=skNo;
+    const s=jCols.startDate?pfParseDate(r[jCols.startDate]):null,e=jCols.endDate?pfParseDate(r[jCols.endDate]):null;
+    if(s!=null)m.range.s=(m.range.s==null)?s:Math.min(m.range.s,s);
+    if(e!=null)m.range.e=(m.range.e==null)?e:Math.max(m.range.e,e);
+  });
+  // sales agregasi per PLU×toko (dibatasi periode juklak) + per juklak
+  const pxs=new Map();  // pluKey|store -> {qty,net,cogs,jkKeys:Set}
+  const perJk=new Map();// jkKey -> {qty,net,cogs,stores:Set}
+  sales.forEach(r=>{
+    const raw=String(r[sCols.plu]||'').trim(); if(!raw)return;
+    const key=raw.replace(/^0+/,'')||raw;
+    const pm=pluMeta.get(key); if(!pm)return;
+    const sd=sCols.date?pfParseDate(r[sCols.date]):null;
+    const net=sCols.net?parseN(r[sCols.net]):0, qty=sCols.qty?parseN(r[sCols.qty]):0, cogs=sCols.cogs?parseN(r[sCols.cogs]):0;
+    const store=sCols.store?String(r[sCols.store]||'').trim()||'—':'—';
+    let matchedAny=false;
+    pm.jkKeys.forEach(jkKey=>{
+      const rg=jkMeta.get(jkKey).range;
+      if((rg.s!=null||rg.e!=null)&&sd!=null){ if(rg.s!=null&&sd<rg.s)return; if(rg.e!=null&&sd>rg.e+864e5-1)return; }
+      let j=perJk.get(jkKey); if(!j){j={qty:0,net:0,cogs:0,stores:new Set()};perJk.set(jkKey,j);} j.qty+=qty;j.net+=net;j.cogs+=cogs;j.stores.add(store);
+      const pk=key+'|'+store; let px=pxs.get(pk); if(!px){px={pluKey:key,store,qty:0,net:0,cogs:0,jkKeys:new Set()};pxs.set(pk,px);} px.qty+=qty;px.net+=net;px.cogs+=cogs;px.jkKeys.add(jkKey);
+      matchedAny=true;
+    });
+  });
+  return {jCols,sCols,pluMeta,jkMeta,pxs,perJk};
+}
+const _jklMoney=v=>(typeof fmt==='function')?fmt(v):Math.round(v).toLocaleString('en-US');
+
+// ── COMPLIANCE HARGA ──
+let _jcpLast=null,_jcpPage=0,_jcpSig=null;
+function jcpGoPage(d){_jcpPage+=d;renderJuklakCompliance();}
+function renderJuklakCompliance(){
+  const emptyEl=document.getElementById('jcp-empty'),resEl=document.getElementById('jcp-result'),dl=document.getElementById('jcp-dl');
+  const show=m=>{if(emptyEl){emptyEl.style.display='block';emptyEl.innerHTML=m;}if(resEl)resEl.style.display='none';if(dl)dl.style.display='none';_jcpLast=null;};
+  const A=jklBuildAgg();
+  if(!A) return show('<div style="font-size:15px;font-weight:600;margin-bottom:6px">Data belum lengkap</div><div style="font-size:12.5px">Butuh Juklak + Data Sales.</div>');
+  if(!A.jCols.promoPrice) return show('<div style="font-size:15px;font-weight:600;margin-bottom:6px">Kolom harga promo juklak tidak ditemukan</div><div style="font-size:12.5px">File juklak perlu kolom seperti "Consumer Promo Price" / "Harga Promo".</div>');
+  const tol=parseFloat((document.getElementById('jcpTol')||{}).value||'0.05');
+  const showMode=(document.getElementById('jcpShow')||{}).value||'viol';
+  const q=((document.getElementById('jcpSearch')||{}).value||'').trim().toLowerCase();
+  let recs=[];
+  A.pxs.forEach(px=>{
+    const pm=A.pluMeta.get(px.pluKey); if(!pm||pm.promoP<=0||px.qty<=0)return;
+    const actual=px.net/px.qty;
+    const diff=actual-pm.promoP, diffPct=pm.promoP>0?diff/pm.promoP:0;
+    const ok=Math.abs(diffPct)<=tol;
+    px.jkKeys.forEach(jkKey=>{
+      const jm=A.jkMeta.get(jkKey);
+      recs.push({juklak:jm.juklak,plu:pm.plu,desc:pm.desc,store:px.store,promoP:pm.promoP,actual,diff,diffPct,ok});
+    });
+  });
+  if(q)recs=recs.filter(r=>(r.juklak+r.plu+r.desc+r.store).toLowerCase().includes(q));
+  const totAll=recs.length, viol=recs.filter(r=>!r.ok);
+  let view=showMode==='viol'?viol:recs;
+  view.sort((a,b)=>Math.abs(b.diffPct)-Math.abs(a.diffPct));
+  const sig=tol+'|'+showMode+'|'+q; if(_jcpSig!==sig){_jcpPage=0;_jcpSig=sig;}
+  const PER=40,nP=Math.max(1,Math.ceil(view.length/PER)); if(_jcpPage>=nP)_jcpPage=nP-1; if(_jcpPage<0)_jcpPage=0;
+  const page=view.slice(_jcpPage*PER,_jcpPage*PER+PER);
+  const kpi=document.getElementById('jcp-kpi');
+  const rate=totAll?((totAll-viol.length)/totAll*100):0;
+  if(kpi)kpi.innerHTML=`
+    <div class="stat-card blue"><div class="stat-label">Baris Diperiksa</div><div class="stat-value">${totAll.toLocaleString('en-US')}</div><div class="stat-sub">PLU × toko</div></div>
+    <div class="stat-card green"><div class="stat-label">Compliance Rate</div><div class="stat-value">${rate.toFixed(1)}%</div><div class="stat-sub">sesuai harga promo</div></div>
+    <div class="stat-card red"><div class="stat-label">Tidak Sesuai</div><div class="stat-value">${viol.length.toLocaleString('en-US')}</div><div class="stat-sub">di luar toleransi</div></div>
+    <div class="stat-card amber"><div class="stat-label">Toleransi</div><div class="stat-value">±${(tol*100).toFixed(0)}%</div><div class="stat-sub">ambang selisih</div></div>`;
+  const body=document.getElementById('jcpBody');
+  if(body)body.innerHTML=page.length?page.map(r=>`<tr>
+    <td style="font-family:var(--mono);font-size:11px">${r.juklak}</td>
+    <td style="font-family:var(--mono)">${r.plu}</td>
+    <td>${r.desc||'—'}</td>
+    <td style="font-weight:600">${r.store}</td>
+    <td class="right">${Math.round(r.promoP).toLocaleString('en-US')}</td>
+    <td class="right">${Math.round(r.actual).toLocaleString('en-US')}</td>
+    <td class="right" style="color:${r.diff>0?'var(--red)':r.diff<0?'var(--green)':'var(--text2)'}">${r.diff>0?'+':''}${Math.round(r.diff).toLocaleString('en-US')} (${(r.diffPct*100).toFixed(1)}%)</td>
+    <td>${r.ok?'<span class="stat-badge badge-green">Sesuai</span>':(r.diff>0?'<span class="stat-badge badge-red">Kemahalan</span>':'<span class="stat-badge badge-amber">Kemurahan</span>')}</td></tr>`).join(''):'<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:20px">Tidak ada baris</td></tr>';
+  const pg=document.getElementById('jcpPager'); if(pg)pg.style.display=view.length>PER?'flex':'none';
+  const pgi=document.getElementById('jcpPageInfo'); if(pgi)pgi.textContent=`Halaman ${_jcpPage+1} / ${nP} · ${view.length} baris`;
+  const pv=document.getElementById('jcpPrev'),nx=document.getElementById('jcpNext'); if(pv)pv.disabled=_jcpPage<=0; if(nx)nx.disabled=_jcpPage>=nP-1;
+  if(emptyEl)emptyEl.style.display='none'; if(resEl)resEl.style.display='block'; if(dl)dl.style.display='';
+  _jcpLast=view;
+}
+function downloadExcelCompliance(){
+  if(!_jcpLast){alert('Buka data dulu.');return;}
+  const rows=[['Juklak','PLU','Deskripsi','Toko','Harga Promo','Harga Aktual','Selisih','Selisih %','Status']];
+  _jcpLast.forEach(r=>rows.push([r.juklak,r.plu,r.desc,r.store,Math.round(r.promoP),Math.round(r.actual),Math.round(r.diff),parseFloat((r.diffPct*100).toFixed(1)),r.ok?'Sesuai':(r.diff>0?'Kemahalan':'Kemurahan')]));
+  if(typeof xlsDownload==='function')xlsDownload(rows,'Compliance Harga','compliance_harga');
+}
+
+// ── KALENDER JUKLAK ──
+function renderJuklakCalendar(){
+  const emptyEl=document.getElementById('jcal-empty'),resEl=document.getElementById('jcal-result');
+  const show=m=>{if(emptyEl){emptyEl.style.display='block';emptyEl.innerHTML=m;}if(resEl)resEl.style.display='none';};
+  const A=jklBuildAgg();
+  if(!A) return show('<div style="font-size:15px;font-weight:600;margin-bottom:6px">Data belum lengkap</div>');
+  const items=[...A.jkMeta.entries()].map(([k,m])=>({jkKey:k,juklak:m.juklak,skp:m.skp,s:m.range.s,e:m.range.e,nPlu:m.plus.size})).filter(x=>x.s!=null&&x.e!=null);
+  if(!items.length) return show('<div style="font-size:15px;font-weight:600;margin-bottom:6px">Tidak ada tanggal juklak terbaca</div><div style="font-size:12.5px">Pastikan kolom tanggal mulai & akhir ada di file juklak.</div>');
+  // month filter
+  const mSel=document.getElementById('jcalMonth');
+  if(mSel&&!mSel.dataset.filled){
+    const set=new Map();
+    items.forEach(it=>{const d=new Date(it.s);const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');set.set(k,MONTH_NAMES[d.getMonth()]+' '+d.getFullYear());});
+    mSel.innerHTML='<option value="ALL">Semua Periode</option>'+[...set.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([k,l])=>`<option value="${k}">${l}</option>`).join('');
+    mSel.dataset.filled='1';
+  }
+  const selM=(mSel&&mSel.value)||'ALL';
+  let view=items.slice();
+  if(selM!=='ALL')view=view.filter(it=>{const d=new Date(it.s);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')===selM;});
+  view.sort((a,b)=>a.s-b.s);
+  const minS=Math.min(...view.map(x=>x.s)),maxE=Math.max(...view.map(x=>x.e));
+  const span=Math.max(1,maxE-minS);
+  const fmtD=ms=>{const d=new Date(ms);return d.getDate()+' '+MONTH_NAMES[d.getMonth()].slice(0,3);};
+  // KPI: max concurrent
+  let maxConc=0;const evts=[];view.forEach(it=>{evts.push([it.s,1]);evts.push([it.e+864e5,-1]);});evts.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);let cur=0;evts.forEach(e=>{cur+=e[1];if(cur>maxConc)maxConc=cur;});
+  const kpi=document.getElementById('jcal-kpi');
+  if(kpi)kpi.innerHTML=`
+    <div class="stat-card blue"><div class="stat-label">Total Juklak</div><div class="stat-value">${view.length}</div><div class="stat-sub">punya tanggal</div></div>
+    <div class="stat-card amber"><div class="stat-label">Maks Aktif Bersamaan</div><div class="stat-value">${maxConc}</div><div class="stat-sub">juklak overlap puncak</div></div>
+    <div class="stat-card green"><div class="stat-label">Rentang</div><div class="stat-value" style="font-size:16px">${fmtD(minS)} – ${fmtD(maxE)}</div><div class="stat-sub">periode tercakup</div></div>
+    <div class="stat-card purple"><div class="stat-label">Durasi Rata-rata</div><div class="stat-value">${Math.round(view.reduce((s,x)=>s+(x.e-x.s)/864e5+1,0)/view.length)}</div><div class="stat-sub">hari / juklak</div></div>`;
+  // Gantt
+  const rowH=26,barColors=['#58a6ff','#3fb950','#f0a733','#d2a8ff','#f85149','#39c5cf'];
+  const gantt=view.slice(0,60).map((it,i)=>{
+    const left=(it.s-minS)/span*100, width=Math.max(1.5,((it.e-it.s)/span)*100);
+    const c=barColors[i%barColors.length];
+    return `<div style="display:flex;align-items:center;height:${rowH}px;gap:8px">
+      <div style="width:230px;flex-shrink:0;font-size:11px;font-family:var(--mono);color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${it.juklak} · ${it.skp}">${it.juklak}</div>
+      <div style="position:relative;flex:1;height:14px;background:var(--surface2);border-radius:3px">
+        <div style="position:absolute;left:${left}%;width:${width}%;height:100%;background:${c};border-radius:3px" title="${fmtD(it.s)} – ${fmtD(it.e)} · ${it.nPlu} PLU"></div>
+      </div>
+      <div style="width:120px;flex-shrink:0;font-size:10.5px;color:var(--text3);white-space:nowrap">${fmtD(it.s)}–${fmtD(it.e)}</div></div>`;
+  }).join('');
+  const g=document.getElementById('jcalGantt'); if(g)g.innerHTML=gantt+(view.length>60?`<div style="padding:10px;color:var(--text3);font-size:11px">…menampilkan 60 dari ${view.length} juklak</div>`:'');
+  // overlap PLU (PLU di >=2 juklak dengan periode tumpang tindih)
+  const overlapRows=[];
+  A.pluMeta.forEach((pm,key)=>{
+    if(pm.jkKeys.size<2)return;
+    const jks=[...pm.jkKeys].map(k=>A.jkMeta.get(k)).filter(m=>m.range.s!=null&&m.range.e!=null);
+    for(let i=0;i<jks.length;i++)for(let j=i+1;j<jks.length;j++){
+      const a=jks[i],b=jks[j];const os=Math.max(a.range.s,b.range.s),oe=Math.min(a.range.e,b.range.e);
+      if(os<=oe){overlapRows.push({plu:pm.plu,jks:[...pm.jkKeys].map(k=>A.jkMeta.get(k).juklak),n:pm.jkKeys.size,os,oe});break;}
+    }
+  });
+  overlapRows.sort((a,b)=>b.n-a.n);
+  const ob=document.getElementById('jcalOverlapBody');
+  if(ob)ob.innerHTML=overlapRows.length?overlapRows.slice(0,100).map(r=>`<tr>
+    <td style="font-family:var(--mono)">${r.plu}</td><td class="right">${r.n}</td>
+    <td style="font-size:11px">${r.jks.join(', ')}</td><td style="font-size:11px">${fmtD(r.os)} – ${fmtD(r.oe)}</td></tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">Tidak ada PLU yang tumpang tindih antar juklak 👍</td></tr>';
+  if(emptyEl)emptyEl.style.display='none'; if(resEl)resEl.style.display='block';
+}
+
+// ── MARGIN GUARD ──
+let _jmgLast=null;
+function renderJuklakMargin(){
+  const emptyEl=document.getElementById('jmg-empty'),resEl=document.getElementById('jmg-result'),dl=document.getElementById('jmg-dl');
+  const show=m=>{if(emptyEl){emptyEl.style.display='block';emptyEl.innerHTML=m;}if(resEl)resEl.style.display='none';if(dl)dl.style.display='none';_jmgLast=null;};
+  const A=jklBuildAgg();
+  if(!A) return show('<div style="font-size:15px;font-weight:600;margin-bottom:6px">Data belum lengkap</div>');
+  const thr=parseFloat((document.getElementById('jmgThresh')||{}).value||'5');
+  const q=((document.getElementById('jmgSearch')||{}).value||'').trim().toLowerCase();
+  let rows=[...A.jkMeta.entries()].map(([k,m])=>{
+    const j=A.perJk.get(k)||{qty:0,net:0,cogs:0,stores:new Set()};
+    const margin=j.net-j.cogs, gm=j.net>0?margin/j.net*100:0;
+    return {juklak:m.juklak,skp:m.skp,nPlu:m.plus.size,qty:j.qty,net:j.net,cogs:j.cogs,margin,gm};
+  }).filter(r=>r.net>0);
+  if(q)rows=rows.filter(r=>(r.juklak+r.skp).toLowerCase().includes(q));
+  const atRisk=rows.filter(r=>r.gm<thr);
+  atRisk.sort((a,b)=>a.gm-b.gm);
+  const totMarginLost=atRisk.filter(r=>r.margin<0).reduce((s,r)=>s+r.margin,0);
+  const kpi=document.getElementById('jmg-kpi');
+  if(kpi)kpi.innerHTML=`
+    <div class="stat-card blue"><div class="stat-label">Juklak Dinilai</div><div class="stat-value">${rows.length}</div><div class="stat-sub">ada penjualan</div></div>
+    <div class="stat-card red"><div class="stat-label">Berisiko (GM &lt; ${thr}%)</div><div class="stat-value">${atRisk.length}</div><div class="stat-sub">perlu ditinjau</div></div>
+    <div class="stat-card amber"><div class="stat-label">Margin Rugi</div><div class="stat-value">${_jklMoney(Math.abs(totMarginLost))}</div><div class="stat-sub">dari juklak margin negatif</div></div>
+    <div class="stat-card green"><div class="stat-label">GM% Portofolio</div><div class="stat-value">${(function(){const n=rows.reduce((s,r)=>s+r.net,0),c=rows.reduce((s,r)=>s+r.cogs,0);return n>0?((n-c)/n*100).toFixed(1):'0.0';})()}%</div><div class="stat-sub">semua juklak</div></div>`;
+  const body=document.getElementById('jmgBody');
+  if(body)body.innerHTML=atRisk.length?atRisk.map(r=>`<tr>
+    <td style="font-family:var(--mono);font-weight:600">${r.juklak}</td><td style="font-family:var(--mono);font-size:11px">${r.skp}</td>
+    <td class="right">${r.nPlu}</td><td class="right">${Math.round(r.qty).toLocaleString('en-US')}</td>
+    <td class="right">${_jklMoney(r.net)}</td><td class="right">${_jklMoney(r.cogs)}</td>
+    <td class="right" style="color:${r.margin>=0?'var(--green)':'var(--red)'}">${_jklMoney(r.margin)}</td>
+    <td class="right"><span class="stat-badge ${r.gm<0?'badge-red':r.gm<5?'badge-amber':'badge-green'}">${r.gm.toFixed(1)}%</span></td>
+    <td>${r.gm<0?'<span class="stat-badge badge-red">Rugi</span>':r.gm<5?'<span class="stat-badge badge-amber">Tipis</span>':'<span class="stat-badge badge-green">Aman</span>'}</td></tr>`).join(''):'<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">Tidak ada juklak di bawah ambang 👍</td></tr>';
+  const foot=document.getElementById('jmgFoot');
+  const tN=atRisk.reduce((s,r)=>s+r.net,0),tC=atRisk.reduce((s,r)=>s+r.cogs,0),tQ=atRisk.reduce((s,r)=>s+r.qty,0);
+  if(foot)foot.innerHTML=atRisk.length?`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td colspan="3">TOTAL · ${atRisk.length} juklak</td><td class="right">${Math.round(tQ).toLocaleString('en-US')}</td><td class="right">${_jklMoney(tN)}</td><td class="right">${_jklMoney(tC)}</td><td class="right">${_jklMoney(tN-tC)}</td><td class="right">${tN>0?((tN-tC)/tN*100).toFixed(1):'0.0'}%</td><td></td></tr>`:'';
+  if(emptyEl)emptyEl.style.display='none'; if(resEl)resEl.style.display='block'; if(dl)dl.style.display='';
+  _jmgLast=atRisk;
+}
+function downloadExcelMargin(){
+  if(!_jmgLast){alert('Buka data dulu.');return;}
+  const rows=[['Juklak','No SKP','#PLU','Qty','Net Sales','COGS','Margin','GM %','Status']];
+  _jmgLast.forEach(r=>rows.push([r.juklak,r.skp,r.nPlu,Math.round(r.qty),Math.round(r.net),Math.round(r.cogs),Math.round(r.margin),parseFloat(r.gm.toFixed(1)),r.gm<0?'Rugi':r.gm<5?'Tipis':'Aman']));
+  if(typeof xlsDownload==='function')xlsDownload(rows,'Margin Guard','margin_guard');
 }
 
 // Core compute: juklak rows + sales rows yang sudah difilter
