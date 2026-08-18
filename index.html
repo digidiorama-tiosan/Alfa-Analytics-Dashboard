@@ -1702,18 +1702,6 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M6 6v8"/></svg>
           Rekap Juklak
         </button>
-        <button class="nav-item" onclick="showPanel('juklak-compliance',this)">
-          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 4.5L6 12 2.5 8.5"/></svg>
-          Compliance Harga
-        </button>
-        <button class="nav-item" onclick="showPanel('juklak-calendar',this)">
-          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="1"/><path d="M2 6h12M5 1.5v3M11 1.5v3"/></svg>
-          Kalender Juklak
-        </button>
-        <button class="nav-item" onclick="showPanel('juklak-margin',this)">
-          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v14M4 4h6a2 2 0 010 4H6a2 2 0 000 4h6"/></svg>
-          Margin Guard
-        </button>
         <button class="nav-item" onclick="showPanel('promo-contribution',this)">
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10s2-5 6-5 6 5 6 5-2 5-6 5-6-5-6-5z"/><circle cx="8" cy="10" r="2"/></svg>
           Promo vs Sales
@@ -2839,100 +2827,6 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
         </table>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- ════════════════════════════════════════════════════════
-     PANEL: COMPLIANCE HARGA (harga jual aktual vs promo juklak)
-════════════════════════════════════════════════════════ -->
-<div id="panel-juklak-compliance" class="panel">
-  <div class="page-header">
-    <div>
-      <div class="page-title">Compliance Harga Promo</div>
-      <div class="page-subtitle">Harga jual aktual (sales) vs harga promo juklak — deteksi PLU/toko yang tidak menjalankan harga promo</div>
-    </div>
-    <button class="btn-dl" id="jcp-dl" onclick="downloadExcelCompliance()" style="display:none">
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg>Export Excel
-    </button>
-  </div>
-  <div class="store-filter-bar" style="margin-bottom:16px">
-    <span class="filter-label">Toleransi</span>
-    <select class="filter-select" id="jcpTol" onchange="renderJuklakCompliance()" style="min-width:120px">
-      <option value="0.02">±2%</option><option value="0.05" selected>±5%</option><option value="0.1">±10%</option><option value="0">Persis</option>
-    </select>
-    <span class="filter-label" style="margin-left:8px">Tampilkan</span>
-    <select class="filter-select" id="jcpShow" onchange="renderJuklakCompliance()" style="min-width:150px">
-      <option value="all">Semua</option><option value="viol" selected>Hanya tidak sesuai</option>
-    </select>
-    <input type="text" class="filter-select" id="jcpSearch" placeholder="cari PLU / toko / juklak…" autocomplete="off" oninput="renderJuklakCompliance()" style="min-width:190px;font-family:var(--mono);margin-left:auto">
-  </div>
-  <div id="jcp-empty" class="empty-state" style="padding:48px 20px;text-align:center;color:var(--text3)"><div style="font-size:15px;font-weight:600;margin-bottom:6px">Memuat…</div><div style="font-size:12.5px">Butuh Juklak (dengan harga promo) + Data Sales.</div></div>
-  <div id="jcp-result" style="display:none">
-    <div class="stats-grid" id="jcp-kpi" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px"></div>
-    <div class="section-title">Detail Harga per PLU × Toko</div>
-    <div class="chart-card">
-      <div class="table-wrap"><table class="data-table" id="jcpTable"><thead><tr>
-        <th>Juklak</th><th>PLU</th><th>Deskripsi</th><th>Toko</th>
-        <th class="right">Harga Promo (Juklak)</th><th class="right">Harga Jual Aktual</th><th class="right">Selisih</th><th>Status</th>
-      </tr></thead><tbody id="jcpBody"></tbody></table></div>
-      <div id="jcpPager" style="display:flex;align-items:center;justify-content:center;gap:12px;padding:12px 4px 2px;font-size:12.5px;color:var(--text2)">
-        <button class="filter-btn" id="jcpPrev" onclick="jcpGoPage(-1)">‹ Prev</button><span id="jcpPageInfo">—</span><button class="filter-btn" id="jcpNext" onclick="jcpGoPage(1)">Next ›</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ════════════════════════════════════════════════════════
-     PANEL: KALENDER JUKLAK (timeline periode & overlap)
-════════════════════════════════════════════════════════ -->
-<div id="panel-juklak-calendar" class="panel">
-  <div class="page-header">
-    <div>
-      <div class="page-title">Kalender Juklak</div>
-      <div class="page-subtitle">Timeline periode tiap juklak — lihat berapa juklak aktif bersamaan & tumpang tindih</div>
-    </div>
-    <select class="filter-select" id="jcalMonth" onchange="renderJuklakCalendar()" style="min-width:160px"><option value="ALL">Semua Periode</option></select>
-  </div>
-  <div id="jcal-empty" class="empty-state" style="padding:48px 20px;text-align:center;color:var(--text3)"><div style="font-size:15px;font-weight:600;margin-bottom:6px">Memuat…</div><div style="font-size:12.5px">Butuh Juklak dengan kolom tanggal mulai & akhir.</div></div>
-  <div id="jcal-result" style="display:none">
-    <div class="stats-grid" id="jcal-kpi" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px"></div>
-    <div class="section-title">Timeline Periode Juklak</div>
-    <div class="chart-card" style="margin-bottom:20px"><div id="jcalGantt" style="overflow-x:auto"></div></div>
-    <div class="section-title">PLU dalam ≥ 2 Juklak Bersamaan (risiko double-discount)</div>
-    <div class="chart-card"><div class="table-wrap"><table class="data-table" id="jcalOverlapTable"><thead><tr>
-      <th>PLU</th><th class="right"># Juklak Overlap</th><th>Daftar Juklak</th><th>Rentang Tumpang Tindih</th>
-    </tr></thead><tbody id="jcalOverlapBody"></tbody></table></div></div>
-  </div>
-</div>
-
-<!-- ════════════════════════════════════════════════════════
-     PANEL: MARGIN GUARD (juklak margin tipis / negatif)
-════════════════════════════════════════════════════════ -->
-<div id="panel-juklak-margin" class="panel">
-  <div class="page-header">
-    <div>
-      <div class="page-title">Margin Guard</div>
-      <div class="page-subtitle">Deteksi juklak dengan margin tipis / negatif setelah diskon & estimasi margin lost</div>
-    </div>
-    <button class="btn-dl" id="jmg-dl" onclick="downloadExcelMargin()" style="display:none">
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg>Export Excel
-    </button>
-  </div>
-  <div class="store-filter-bar" style="margin-bottom:16px">
-    <span class="filter-label">Ambang GM% Aman</span>
-    <select class="filter-select" id="jmgThresh" onchange="renderJuklakMargin()" style="min-width:120px">
-      <option value="0">GM &lt; 0% (rugi)</option><option value="5" selected>GM &lt; 5%</option><option value="10">GM &lt; 10%</option><option value="100">Semua</option>
-    </select>
-    <input type="text" class="filter-select" id="jmgSearch" placeholder="cari juklak…" autocomplete="off" oninput="renderJuklakMargin()" style="min-width:190px;font-family:var(--mono);margin-left:auto">
-  </div>
-  <div id="jmg-empty" class="empty-state" style="padding:48px 20px;text-align:center;color:var(--text3)"><div style="font-size:15px;font-weight:600;margin-bottom:6px">Memuat…</div><div style="font-size:12.5px">Butuh Juklak + Data Sales (dengan COGS).</div></div>
-  <div id="jmg-result" style="display:none">
-    <div class="stats-grid" id="jmg-kpi" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px"></div>
-    <div class="section-title">Juklak Berisiko Margin</div>
-    <div class="chart-card"><div class="table-wrap"><table class="data-table" id="jmgTable"><thead><tr>
-      <th>Juklak</th><th>No SKP</th><th class="right"># PLU</th><th class="right">Qty</th>
-      <th class="right">Net Sales</th><th class="right">COGS</th><th class="right">Margin</th><th class="right">GM %</th><th>Status</th>
-    </tr></thead><tbody id="jmgBody"></tbody><tfoot id="jmgFoot"></tfoot></table></div></div>
   </div>
 </div>
 
@@ -6063,9 +5957,6 @@ function renderPanel(id) {
     case 'promo-effectiveness': renderPromoEffectiveness(); break;
     case 'juklak-lookup': renderJuklakLookup(); break;
     case 'juklak-recap': renderJuklakRecap(); break;
-    case 'juklak-compliance': renderJuklakCompliance(); break;
-    case 'juklak-calendar': renderJuklakCalendar(); break;
-    case 'juklak-margin': renderJuklakMargin(); break;
     case 'promo-contribution': renderPromoContrib(); break;
     case 'promo-member': renderPromoMember(); break;
     case 'promo-items': renderPromoItems(); break;
@@ -12893,7 +12784,7 @@ const PANEL_GROUP_MAP = {
   'mem-vs-promo':'grp-members','mem-trend':'grp-members','mem-database':'grp-members','mem-homestore':'grp-members',
   'mem-demo':'grp-members','mem-transactions':'grp-members','mem-retention':'grp-members',
   'mem-category':'grp-members',
-  'promo-effectiveness':'grp-marketing','juklak-lookup':'grp-marketing','juklak-recap':'grp-marketing','juklak-compliance':'grp-marketing','juklak-calendar':'grp-marketing','juklak-margin':'grp-marketing','promo-contribution':'grp-marketing','promo-member':'grp-marketing','promo-items':'grp-marketing',
+  'promo-effectiveness':'grp-marketing','juklak-lookup':'grp-marketing','juklak-recap':'grp-marketing','promo-contribution':'grp-marketing','promo-member':'grp-marketing','promo-items':'grp-marketing',
   'promo-categories':'grp-marketing','basket':'grp-marketing','brand-perf':'grp-marketing','principal-perf':'grp-marketing','promo-mechanic':'grp-marketing',
   'sku-pareto':'grp-catmgmt','cat-overview':'grp-catmgmt','cat-promo-potential':'grp-catmgmt',
   'cat-member':'grp-catmgmt','cat-trend':'grp-catmgmt','cat-time':'grp-catmgmt','cat-detail':'grp-catmgmt',
