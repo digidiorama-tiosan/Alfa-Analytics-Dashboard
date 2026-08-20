@@ -1788,6 +1788,10 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
         <svg class="nav-group-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>
       </button>
       <div class="nav-group-body" id="grp-analytics">
+        <button class="nav-item" onclick="showPanel('ai-strategy',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5l1.6 3.6 3.9.4-2.9 2.6.8 3.8L8 12.4 4.6 14.5l.8-3.8L2.5 8.1l3.9-.4z"/></svg>
+          AI Strategy
+        </button>
         <button class="nav-item" onclick="showPanel('revenue-drivers',this)">
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="14" rx="2"/><path d="M4 10l2-4 3 3 2-5 2 3"/></svg>
           Revenue &amp; Value Drivers
@@ -2765,6 +2769,55 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     </div>
   </div>
 </div>
+
+<!-- ════════════════════════════════════════════════════════
+     PANEL: AI STRATEGY (usulan strategi berbasis data tercapture)
+════════════════════════════════════════════════════════ -->
+<div id="panel-ai-strategy" class="panel">
+  <div class="page-header">
+    <div>
+      <div class="page-title">AI Strategy</div>
+      <div class="page-subtitle">Usulan strategi otomatis dari data yang sudah tercapture — performa, promo/juklak, member, & anomali</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select class="filter-select" id="aiFocus" style="min-width:180px">
+        <option value="all">Semua area</option>
+        <option value="perf">Ringkasan performa</option>
+        <option value="promo">Strategi promo / juklak</option>
+        <option value="member">Segmen &amp; retensi member</option>
+        <option value="anomaly">Deteksi anomali / alert</option>
+      </select>
+      <button class="filter-btn primary" id="aiRunBtn" onclick="renderAiStrategy(true)">✨ Buat Usulan Strategi</button>
+    </div>
+  </div>
+
+  <div class="stats-grid" id="ai-datacheck" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px"></div>
+
+  <div id="ai-empty" class="empty-state" style="padding:40px 20px;text-align:center;color:var(--text3)">
+    <div style="font-size:34px;margin-bottom:10px">✨</div>
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px;color:var(--text)">Klik "Buat Usulan Strategi"</div>
+    <div style="font-size:12.5px;max-width:520px;margin:0 auto;line-height:1.6">AI membaca angka yang sudah dihitung dashboard (bukan data mentah pelanggan) lalu menyusun rekomendasi yang bisa ditindaklanjuti. Pilih area fokus di atas.</div>
+  </div>
+
+  <div id="ai-loading" style="display:none;padding:40px 20px;text-align:center;color:var(--text2)">
+    <div class="ai-spinner" style="width:34px;height:34px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:50%;margin:0 auto 14px;animation:aispin 0.8s linear infinite"></div>
+    <div style="font-size:13px;font-weight:600">AI sedang menganalisa data…</div>
+    <div style="font-size:11.5px;color:var(--text3);margin-top:4px">biasanya 5–15 detik</div>
+  </div>
+
+  <div id="ai-error" style="display:none;margin-bottom:16px"></div>
+
+  <div id="ai-result" style="display:none">
+    <div class="chart-card" style="margin-bottom:16px">
+      <div class="chart-header"><div><div class="chart-title">📋 Usulan Strategi</div><div class="chart-subtitle" id="ai-result-sub">Dihasilkan AI berdasarkan data periode aktif</div></div>
+        <button class="btn-dl" onclick="aiCopyResult()">📄 Salin</button>
+      </div>
+      <div id="ai-output" style="font-size:13.5px;line-height:1.7;color:var(--text);padding:4px 2px"></div>
+      <div style="font-size:10.5px;color:var(--text3);margin-top:14px;border-top:1px solid var(--border2);padding-top:10px">⚠ Usulan dihasilkan AI dari ringkasan agregat — verifikasi sebelum eksekusi. Bukan pengganti keputusan manajemen.</div>
+    </div>
+  </div>
+</div>
+<style>@keyframes aispin{to{transform:rotate(360deg)}}#ai-output h3{font-size:14.5px;font-weight:700;color:var(--text);margin:16px 0 6px}#ai-output h2{font-size:16px;font-weight:700;color:var(--text);margin:18px 0 8px}#ai-output ul{margin:6px 0 6px 4px;padding-left:18px}#ai-output li{margin:4px 0}#ai-output p{margin:6px 0}#ai-output strong{color:var(--text);font-weight:700}#ai-output code{background:var(--surface2);padding:1px 5px;border-radius:4px;font-size:12px}</style>
 
 <!-- ════════════════════════════════════════════════════════
      PANEL: CARI NO JUKLAK (Juklak Lookup)
@@ -5970,6 +6023,7 @@ function renderPanel(id) {
     case 'data-quality': renderDataQuality(); break;
     case 'rokok-report': renderRokokReport(); break;
     case 'revenue-drivers': renderRevenueDrivers(); break;
+    case 'ai-strategy': renderAiStrategy(); break;
     case 'void-return': renderVoidReturn(); break;
     case 'sku-pareto': renderPareto(); break;
     case 'churn-risk': renderChurn(); break;
@@ -12788,7 +12842,7 @@ const PANEL_GROUP_MAP = {
   'promo-categories':'grp-marketing','basket':'grp-marketing','brand-perf':'grp-marketing','principal-perf':'grp-marketing','promo-mechanic':'grp-marketing',
   'sku-pareto':'grp-catmgmt','cat-overview':'grp-catmgmt','cat-promo-potential':'grp-catmgmt',
   'cat-member':'grp-catmgmt','cat-trend':'grp-catmgmt','cat-time':'grp-catmgmt','cat-detail':'grp-catmgmt',
-  'revenue-drivers':'grp-analytics','peak-hours':'grp-analytics','void-return':'grp-analytics',
+  'revenue-drivers':'grp-analytics','peak-hours':'grp-analytics','void-return':'grp-analytics','ai-strategy':'grp-analytics',
   'cohort-analysis':'grp-analytics','sales-forecast':'grp-analytics','price-elasticity':'grp-analytics',
   'data-mgmt':'grp-data',
   'store-map':'grp-data'
@@ -14927,6 +14981,112 @@ function downloadExcelMargin(){
   _jmgLast.forEach(r=>rows.push([r.juklak,r.skp,r.nPlu,Math.round(r.qty),Math.round(r.net),Math.round(r.cogs),Math.round(r.margin),parseFloat(r.gm.toFixed(1)),r.gm<0?'Rugi':r.gm<5?'Tipis':'Aman']));
   if(typeof xlsDownload==='function')xlsDownload(rows,'Margin Guard','margin_guard');
 }
+
+// ══════════════════════════════════════════════
+//  AI STRATEGY — usulan strategi dari data tercapture
+// ══════════════════════════════════════════════
+function aiFmtN(v){ if(v==null||!isFinite(v))return '—'; return Math.round(v).toLocaleString('en-US'); }
+function aiBuildDigest(){
+  const S=(D&&D.summary)?D.summary:{};
+  const mNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // Bulanan (aggregate D.monthly per bulan)
+  const mm={};
+  (D.monthly||[]).forEach(m=>{const k=m.month;if(!mm[k])mm[k]={month:k,name:mNames[k-1],net:0,gm:0,cogs:0,txns:0,mem:0};mm[k].net+=m.net_sales;mm[k].gm+=m.gm;mm[k].cogs+=m.cogs;mm[k].txns+=(m.txns||0);mm[k].mem+=(m.member_sales||0);});
+  const months=Object.values(mm).sort((a,b)=>a.month-b.month);
+  const totNet=months.reduce((a,m)=>a+m.net,0),totGm=months.reduce((a,m)=>a+m.gm,0),totTxns=months.reduce((a,m)=>a+m.txns,0),memNet=months.reduce((a,m)=>a+m.mem,0);
+  // Per toko
+  const st={};
+  (D.monthly||[]).forEach(m=>{const k=m.store_code||'A001';if(!st[k])st[k]={store:k,net:0,gm:0,txns:0};st[k].net+=m.net_sales;st[k].gm+=m.gm;st[k].txns+=(m.txns||0);});
+  const stores=Object.values(st).sort((a,b)=>b.net-a.net);
+  // Kategori top
+  const cats=(D.categories||D.top_categories||[]).slice(0,10).map(c=>({cat:c.name||c.category||c.cat,net:c.net_sales||c.net||c.value||0}));
+  // Promo/juklak (pakai agg yang sudah ada)
+  let promo=null;
+  try{ const A=jklBuildAgg(); if(A){ let n=0,net=0,cogs=0,jk=0; A.perJk.forEach(j=>{jk++;net+=j.net;cogs+=j.cogs;}); promo={juklakCount:A.jkMeta.size,activeJuklak:jk,promoNet:net,promoMargin:net-cogs,promoGmPct:net>0?(net-cogs)/net*100:0}; } }catch(_){}
+  // Member churn / v1
+  let mem=null;
+  try{ if(!_v1Data && _rawSalesRows && _rawSalesRows.length) buildV1Data(_rawSalesRows); if(_v1Data){ const ms=_v1Data.members||[]; const crit=ms.filter(m=>m.churnScore>=70).length,warn=ms.filter(m=>m.churnScore>=40&&m.churnScore<70).length; mem={totalMembers:ms.length,critical:crit,warning:warn,voidRate:_v1Data.totalVoidRate}; } }catch(_){}
+  return {
+    periode:{bulan:months.map(m=>m.name).join(', '),jumlahBulan:months.length},
+    performa:{netSales:Math.round(totNet),grossMargin:Math.round(totGm),gmPct:totNet>0?+(totGm/totNet*100).toFixed(1):0,transaksi:totTxns,avgBasket:totTxns>0?Math.round(totNet/totTxns):0,memberSales:Math.round(memNet),memberPct:totNet>0?+(memNet/totNet*100).toFixed(1):0},
+    trenBulanan:months.map(m=>({bulan:m.name,net:Math.round(m.net),gmPct:m.net>0?+(m.gm/m.net*100).toFixed(1):0,txns:m.txns})),
+    perToko:stores.map(s=>({toko:s.store,net:Math.round(s.net),gmPct:s.net>0?+(s.gm/s.net*100).toFixed(1):0,txns:s.txns})),
+    kategoriTeratas:cats.map(c=>({kategori:c.cat,net:Math.round(c.net)})),
+    promo, member:mem
+  };
+}
+function aiRenderDatacheck(){
+  const el=document.getElementById('ai-datacheck'); if(!el)return;
+  const dg=aiBuildDigest();
+  el.innerHTML=`
+    <div class="stat-card blue"><div class="stat-label">Net Sales</div><div class="stat-value">${aiFmtN(dg.performa.netSales)}</div><div class="stat-sub">${dg.periode.jumlahBulan} bulan data</div></div>
+    <div class="stat-card green"><div class="stat-label">GM%</div><div class="stat-value">${dg.performa.gmPct}%</div><div class="stat-sub">${dg.perToko.length} toko</div></div>
+    <div class="stat-card amber"><div class="stat-label">Juklak Aktif</div><div class="stat-value">${dg.promo?dg.promo.activeJuklak:'—'}</div><div class="stat-sub">promo tercapture</div></div>
+    <div class="stat-card purple"><div class="stat-label">Member Berisiko</div><div class="stat-value">${dg.member?(dg.member.critical+dg.member.warning):'—'}</div><div class="stat-sub">churn tinggi+sedang</div></div>`;
+}
+// Panggil AI: coba Supabase Edge Function (OpenAI di server) dulu; fallback ke AI bawaan (preview).
+async function aiComplete(system, user){
+  const endpoint = (typeof SUPA_URL!=='undefined' && SUPA_URL) ? (SUPA_URL.replace(/\/$/,'')+'/functions/v1/ai-strategy') : null;
+  let edgeErr=null;
+  if(endpoint){
+    try{
+      const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(typeof SUPA_KEY!=='undefined'?SUPA_KEY:''),'apikey':(typeof SUPA_KEY!=='undefined'?SUPA_KEY:'')},body:JSON.stringify({system,user})});
+      if(res.ok){ const j=await res.json(); const t=j.text||j.output||j.content||(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content); if(t) return {text:t,via:'Supabase + OpenAI'}; edgeErr='Edge Function membalas tanpa teks'; }
+      else { const msg=await res.text().catch(()=>''); edgeErr='Edge Function '+res.status+(res.status===404?' (belum di-deploy)':'')+(msg?': '+msg.slice(0,160):''); }
+    }catch(e){ edgeErr='Edge Function tak terjangkau: '+String(e.message).slice(0,120); }
+  }
+  // Fallback: AI bawaan lingkungan preview
+  if(window.claude && window.claude.complete){
+    const t=await window.claude.complete({system,max_tokens:1600,messages:[{role:'user',content:user}]});
+    return {text:t,via:'AI bawaan (preview)'};
+  }
+  throw new Error(edgeErr || 'NO_BACKEND');
+}
+function aiMarkdown(md){
+  let h=String(md||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  h=h.replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/^# (.+)$/gm,'<h2>$1</h2>');
+  h=h.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`(.+?)`/g,'<code>$1</code>');
+  // list grouping
+  const lines=h.split('\n'); let out='',inList=false;
+  lines.forEach(ln=>{
+    const m=ln.match(/^\s*[-*]\s+(.+)$/)||ln.match(/^\s*\d+\.\s+(.+)$/);
+    if(m){ if(!inList){out+='<ul>';inList=true;} out+='<li>'+m[1]+'</li>'; }
+    else{ if(inList){out+='</ul>';inList=false;} if(/^<h[23]>/.test(ln.trim())){out+=ln;} else if(ln.trim()){out+='<p>'+ln+'</p>';} }
+  });
+  if(inList)out+='</ul>';
+  return out;
+}
+let _aiLastText='';
+async function renderAiStrategy(run){
+  aiRenderDatacheck();
+  const emptyEl=document.getElementById('ai-empty'),loadEl=document.getElementById('ai-loading'),resEl=document.getElementById('ai-result'),errEl=document.getElementById('ai-error');
+  if(!run){ if(emptyEl&&emptyEl.style.display==='none'&&resEl.style.display==='none'){/*keep*/} return; }
+  if(!(D&&D.monthly&&D.monthly.length)){ if(errEl){errEl.style.display='block';errEl.innerHTML='<div class="chart-card" style="border-left:3px solid var(--red);padding:14px 16px;color:var(--text2);font-size:13px">Belum ada data. Upload sales & klik Rebuild Dashboard dulu.</div>';} if(loadEl)loadEl.style.display='none'; return; }
+  if(errEl)errEl.style.display='none'; if(emptyEl)emptyEl.style.display='none'; if(resEl)resEl.style.display='none'; if(loadEl)loadEl.style.display='block';
+  const focus=(document.getElementById('aiFocus')||{value:'all'}).value||'all';
+  const focusLabel={all:'semua area (performa, promo, member, anomali)',perf:'ringkasan performa keseluruhan',promo:'strategi promo/juklak',member:'segmen & retensi member',anomaly:'deteksi anomali & alert'}[focus];
+  const dg=aiBuildDigest();
+  const system='Anda adalah Senior Retail Business Analyst untuk jaringan ritel modern (mirip Alfamart) di Bangladesh. Anda menganalisa data agregat dan memberi rekomendasi strategi yang TAJAM, spesifik, dan bisa langsung dieksekusi. Jawab dalam Bahasa Indonesia. Gunakan format markdown: judul "## ", subjudul "### ", dan bullet "- ". Setiap rekomendasi harus menyebut angka dari data & dampak bisnis yang diharapkan. Hindari basa-basi. Mata uang: Taka (Tk).';
+  const user=`Berikut ringkasan data dashboard (agregat, sudah dihitung):\n\n${JSON.stringify(dg,null,1)}\n\nFOKUS ANALISA: ${focusLabel}.\n\nBuat:\n## Ringkasan Situasi (2-3 kalimat, sebut angka kunci)\n## Temuan Utama (3-5 bullet, tiap bullet dengan angka)\n## Usulan Strategi (3-6 aksi konkret, urut prioritas; tiap aksi: apa, kenapa berdasar data, dampak yang diharapkan)\n## Alert / Anomali (jika ada pola berisiko: margin tipis, toko underperform, churn tinggi, dsb)\n\nGunakan HANYA angka dari data di atas. Jika suatu area tak ada datanya, katakan singkat dan lewati.`;
+  try{
+    const {text,via}=await aiComplete(system,user);
+    _aiLastText=text;
+    document.getElementById('ai-output').innerHTML=aiMarkdown(text);
+    const sub=document.getElementById('ai-result-sub'); if(sub)sub.textContent='Fokus: '+focusLabel+' · via '+via+' · '+new Date().toLocaleString('id-ID');
+    if(loadEl)loadEl.style.display='none'; if(resEl)resEl.style.display='block';
+  }catch(e){
+    if(loadEl)loadEl.style.display='none';
+    let msg;
+    if(String(e.message)==='NO_BACKEND'){
+      msg='Backend AI belum aktif. Fitur ini butuh <strong>Supabase Edge Function "ai-strategy"</strong> (proxy ke OpenAI) agar jalan di situs live. Panduan deploy ada di file <code>supabase/functions/ai-strategy</code> yang disertakan. Di lingkungan preview, AI bawaan dipakai otomatis.';
+    } else {
+      msg='Gagal memanggil AI: '+String(e.message);
+    }
+    if(errEl){errEl.style.display='block';errEl.innerHTML='<div class="chart-card" style="border-left:3px solid var(--amber);padding:14px 16px;color:var(--text2);font-size:13px">'+msg+'</div>';}
+    if(emptyEl)emptyEl.style.display='none';
+  }
+}
+function aiCopyResult(){ if(!_aiLastText){return;} try{navigator.clipboard.writeText(_aiLastText);}catch(_){}}
 
 // Core compute: juklak rows + sales rows yang sudah difilter
 function peComputePeriod(juklakRows, salesRows){
