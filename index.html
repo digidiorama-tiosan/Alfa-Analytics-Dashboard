@@ -15026,11 +15026,13 @@ function aiRenderDatacheck(){
 }
 // Panggil AI: coba Supabase Edge Function (OpenAI di server) dulu; fallback ke AI bawaan (preview).
 async function aiComplete(system, user){
-  const endpoint = (typeof SUPA_URL!=='undefined' && SUPA_URL) ? (SUPA_URL.replace(/\/$/,'')+'/functions/v1/ai-strategy') : null;
+  const _url = (typeof SUPA_URL!=='undefined' && SUPA_URL) ? SUPA_URL : (window.SUPA_URL||'');
+  const _key = (typeof SUPA_KEY!=='undefined' && SUPA_KEY) ? SUPA_KEY : (window.SUPA_KEY||'');
+  const endpoint = _url ? (_url.replace(/\/$/,'')+'/functions/v1/ai-strategy') : null;
   let edgeErr=null;
   if(endpoint){
     try{
-      const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(typeof SUPA_KEY!=='undefined'?SUPA_KEY:''),'apikey':(typeof SUPA_KEY!=='undefined'?SUPA_KEY:'')},body:JSON.stringify({system,user})});
+      const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+_key,'apikey':_key},body:JSON.stringify({system,user})});
       if(res.ok){ const j=await res.json(); const t=j.text||j.output||j.content||(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content); if(t) return {text:t,via:'Supabase + OpenAI'}; edgeErr='Edge Function membalas tanpa teks'; }
       else { const msg=await res.text().catch(()=>''); edgeErr='Edge Function '+res.status+(res.status===404?' (belum di-deploy)':'')+(msg?': '+msg.slice(0,160):''); }
     }catch(e){ edgeErr='Edge Function tak terjangkau: '+String(e.message).slice(0,120); }
@@ -16514,6 +16516,7 @@ async function downloadMcKinseyPPTX(){
   const SUPA_URL = 'https://iibkhlybjgdkrywmaofk.supabase.co';
   const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpYmtobHliamdka3J5d21hb2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNzEyOTUsImV4cCI6MjA5NTg0NzI5NX0.V0BIEx8i63esFnuB_pgyipyws04N19mKlwniCqJ93Hk';
   const SUPA_ON  = (typeof supabase!=='undefined' && supabase.createClient) && /^https:\/\/.+\.supabase\.co/.test(SUPA_URL) && SUPA_KEY.length>40;
+  try{ window.SUPA_URL = SUPA_URL; window.SUPA_KEY = SUPA_KEY; }catch(_){}
   // Tangkap flag recovery SEBELUM klien Supabase sempat memproses & menghapus hash URL
   try{ if(/type=recovery/.test(location.hash)||/type=recovery/.test(location.search)) sessionStorage.setItem('pf_recovery','1'); }catch(_){}
   const sbc = SUPA_ON ? supabase.createClient(SUPA_URL, SUPA_KEY) : null;
