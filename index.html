@@ -3604,6 +3604,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       <div class="table-wrap"><table class="data-table" id="rtBandTable"><thead><tr>
         <th>Rentang Nilai (Tk)</th><th class="right"># Struk</th><th class="right">% Struk</th>
         <th class="right">Net Sales</th><th class="right">% Net Sales</th><th class="right">Avg Basket</th>
+        <th class="right">Kumulatif ke Atas (# Struk)</th><th class="right">% Kumulatif</th>
       </tr></thead><tbody id="rtBandBody"></tbody><tfoot id="rtBandFoot"></tfoot></table></div>
     </div>
   </div>
@@ -7725,14 +7726,18 @@ function rtRenderBands(view){
     const b=bands.find(b=>b.hi==null?o.net>=b.lo:o.net<=b.hi);
     if(b){ b.cnt++; b.net+=o.net; }
   });
+  // kumulatif dari band ini ke atas (total struk pada range di atas & termasuk range ini)
+  for(let i=bands.length-1;i>=0;i--){ bands[i].cum=(bands[i+1]?bands[i+1].cum:0)+bands[i].cnt; bands[i].cumNet=(bands[i+1]?bands[i+1].cumNet:0)+bands[i].net; }
   body.innerHTML=bands.map(b=>'<tr>'
     +'<td style="font-weight:600">'+b.label+'</td>'
     +'<td class="right">'+b.cnt.toLocaleString('en-US')+'</td>'
     +'<td class="right">'+(tCnt?(b.cnt/tCnt*100):0).toFixed(1)+'%</td>'
     +'<td class="right">'+fmt(b.net)+'</td>'
     +'<td class="right">'+(tNet?(b.net/tNet*100):0).toFixed(1)+'%</td>'
-    +'<td class="right">'+fmt(b.cnt?b.net/b.cnt:0)+'</td></tr>').join('');
-  if(foot) foot.innerHTML='<tr style="font-weight:700;border-top:2px solid var(--border2)"><td>TOTAL</td><td class="right">'+tCnt.toLocaleString('en-US')+'</td><td class="right">100%</td><td class="right">'+fmt(tNet)+'</td><td class="right">100%</td><td class="right">'+fmt(tCnt?tNet/tCnt:0)+'</td></tr>';
+    +'<td class="right">'+fmt(b.cnt?b.net/b.cnt:0)+'</td>'
+    +'<td class="right" style="font-weight:600">'+b.cum.toLocaleString('en-US')+'</td>'
+    +'<td class="right">'+(tCnt?(b.cum/tCnt*100):0).toFixed(1)+'%</td></tr>').join('');
+  if(foot) foot.innerHTML='<tr style="font-weight:700;border-top:2px solid var(--border2)"><td>TOTAL</td><td class="right">'+tCnt.toLocaleString('en-US')+'</td><td class="right">100%</td><td class="right">'+fmt(tNet)+'</td><td class="right">100%</td><td class="right">'+fmt(tCnt?tNet/tCnt:0)+'</td><td class="right">'+tCnt.toLocaleString('en-US')+'</td><td class="right">100%</td></tr>';
 }
 function renderReceiptThreshold() {
   rtBuildReceipts();
