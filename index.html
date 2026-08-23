@@ -1792,6 +1792,10 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5l1.6 3.6 3.9.4-2.9 2.6.8 3.8L8 12.4 4.6 14.5l.8-3.8L2.5 8.1l3.9-.4z"/></svg>
           AI Strategy
         </button>
+        <button class="nav-item" onclick="showPanel('ai-chat',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 9.5A2.5 2.5 0 0111.5 12H6l-3.5 2.5V4A2.5 2.5 0 015 1.5h6.5A2.5 2.5 0 0114 4z"/></svg>
+          Tanya Data (AI Chat)
+        </button>
         <button class="nav-item" onclick="showPanel('revenue-drivers',this)">
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="14" rx="2"/><path d="M4 10l2-4 3 3 2-5 2 3"/></svg>
           Revenue &amp; Value Drivers
@@ -2820,6 +2824,28 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 <style>@keyframes aispin{to{transform:rotate(360deg)}}#ai-output h3{font-size:14.5px;font-weight:700;color:var(--text);margin:16px 0 6px}#ai-output h2{font-size:16px;font-weight:700;color:var(--text);margin:18px 0 8px}#ai-output ul{margin:6px 0 6px 4px;padding-left:18px}#ai-output li{margin:4px 0}#ai-output p{margin:6px 0}#ai-output strong{color:var(--text);font-weight:700}#ai-output code{background:var(--surface2);padding:1px 5px;border-radius:4px;font-size:12px}</style>
 
 <!-- ════════════════════════════════════════════════════════
+     PANEL: TANYA DATA (AI CHAT) — tanya-jawab live atas data dashboard
+════════════════════════════════════════════════════════ -->
+<div id="panel-ai-chat" class="panel">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Tanya Data (AI Chat)</div>
+      <div class="page-subtitle">Tanya apa saja tentang data yang sedang dimuat — AI membaca angka dashboard secara live</div>
+    </div>
+    <button class="filter-btn" onclick="aiChatReset()">🗑 Mulai Baru</button>
+  </div>
+  <div class="chart-card" style="display:flex;flex-direction:column;height:calc(100vh - 210px);min-height:420px">
+    <div id="aiChatLog" style="flex:1;overflow-y:auto;padding:6px 2px;display:flex;flex-direction:column;gap:12px"></div>
+    <div id="aiChatChips" style="display:flex;gap:7px;flex-wrap:wrap;padding:10px 0 8px;border-top:1px solid var(--border2)"></div>
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <textarea id="aiChatInput" rows="2" placeholder="mis. Toko mana yang basket-nya paling rendah dan kenapa?" style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 13px;color:var(--text);font-family:var(--font);font-size:13.5px;resize:vertical" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiChatSend();}"></textarea>
+      <button class="filter-btn primary" id="aiChatSendBtn" onclick="aiChatSend()" style="height:42px;padding:0 18px">Kirim ➤</button>
+    </div>
+  </div>
+</div>
+<style>.aic-row{display:flex;gap:10px;max-width:100%}.aic-row.me{flex-direction:row-reverse}.aic-av{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--surface2);border:1px solid var(--border2)}.aic-bub{background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:10px 13px;font-size:13.5px;line-height:1.65;max-width:min(760px,82%)}.aic-row.me .aic-bub{background:rgba(88,166,255,0.10);border-color:rgba(88,166,255,0.35)}.aic-bub h2,.aic-bub h3{font-size:14px;font-weight:700;margin:10px 0 4px}.aic-bub ul{margin:5px 0 5px 2px;padding-left:18px}.aic-bub li{margin:3px 0}.aic-bub p{margin:5px 0}.aic-bub table{border-collapse:collapse;margin:8px 0;font-size:12.5px}.aic-bub td,.aic-bub th{border:1px solid var(--border2);padding:4px 8px}</style>
+
+<!-- ════════════════════════════════════════════════════════
      PANEL: CARI NO JUKLAK (Juklak Lookup)
 ════════════════════════════════════════════════════════ -->
 <div id="panel-juklak-lookup" class="panel">
@@ -3600,7 +3626,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     </div>
     <div style="margin-top:20px">
       <div class="chart-title" style="font-size:14px">Sebaran Struk per Rentang Nilai (tidak tumpang tindih)</div>
-      <div class="chart-subtitle" style="margin-bottom:10px">Tiap struk masuk ke SATU rentang saja (batas atas inklusif) — struk Tk 2.000 dihitung di baris "1.001 – 2.000"; struk Tk 2.500 di baris "2.001 – 3.000". Tidak ada yang dihitung dua kali.</div>
+      <div class="chart-subtitle" style="margin-bottom:10px">Tiap struk masuk ke SATU rentang saja (batas atas inklusif) — struk Tk 2.000 dihitung di baris "1.001 – 2.000"; struk Tk 2.500 di baris "2.001 – 3.000". Tabel ini menampilkan <b>semua struk</b> pada bulan terpilih (bukan hanya yang ≥ nilai minimum), sehingga KPI di atas = jumlah baris bertanda <span style="color:var(--accent)">● ikut KPI</span>.</div>
       <div class="table-wrap"><table class="data-table" id="rtBandTable"><thead><tr>
         <th>Rentang Nilai (Tk)</th><th class="right"># Struk</th><th class="right">% Struk</th>
         <th class="right">Net Sales</th><th class="right">% Net Sales</th><th class="right">Avg Basket</th>
@@ -6036,6 +6062,7 @@ function renderPanel(id) {
     case 'rokok-report': renderRokokReport(); break;
     case 'revenue-drivers': renderRevenueDrivers(); break;
     case 'ai-strategy': renderAiStrategy(); break;
+    case 'ai-chat': renderAiChat(); break;
     case 'void-return': renderVoidReturn(); break;
     case 'sku-pareto': renderPareto(); break;
     case 'churn-risk': renderChurn(); break;
@@ -7714,7 +7741,7 @@ function rtFillMonthSel(){
   sel.dataset.filled='1';
 }
 // Tabel sebaran per rentang nilai — TIDAK kumulatif (tiap struk masuk satu band)
-function rtRenderBands(view){
+function rtRenderBands(view, th){
   const body=document.getElementById('rtBandBody'), foot=document.getElementById('rtBandFoot');
   if(!body) return;
   // batas ATAS inklusif: ≤1.000 · 1.001–2.000 · 2.001–3.000 · 3.001–4.000 · >4.000
@@ -7728,15 +7755,20 @@ function rtRenderBands(view){
   });
   // kumulatif dari band ini ke atas (total struk pada range di atas & termasuk range ini)
   for(let i=bands.length-1;i>=0;i--){ bands[i].cum=(bands[i+1]?bands[i+1].cum:0)+bands[i].cnt; bands[i].cumNet=(bands[i+1]?bands[i+1].cumNet:0)+bands[i].net; }
-  body.innerHTML=bands.map(b=>'<tr>'
-    +'<td style="font-weight:600">'+b.label+'</td>'
+  body.innerHTML=bands.filter(b=>b.cnt>0).map(b=>{
+    // tandai band yang ikut terhitung pada KPI "struk ≥ nilai" (batas bawah band ≥ threshold)
+    const inTh=(th>0)&&((b.hi==null?b.lo:b.hi)>=th)&&((b.lo==null?0:b.lo)>=th||(b.hi!=null&&b.hi>=th&&(b.lo==null?0:b.lo)>=th));
+    const hit=(th>0)&&(b.hi==null? true : b.hi>=th) && ((b.lo==null?0:b.lo)>=th);
+    return '<tr'+(hit?' style="background:rgba(88,166,255,0.07)"':'')+'>'
+    +'<td style="font-weight:600">'+b.label+(hit?' <span style="font-size:10px;color:var(--accent);font-weight:700">● ikut KPI</span>':'')+'</td>'
     +'<td class="right">'+b.cnt.toLocaleString('en-US')+'</td>'
     +'<td class="right">'+(tCnt?(b.cnt/tCnt*100):0).toFixed(1)+'%</td>'
     +'<td class="right">'+fmt(b.net)+'</td>'
     +'<td class="right">'+(tNet?(b.net/tNet*100):0).toFixed(1)+'%</td>'
     +'<td class="right">'+fmt(b.cnt?b.net/b.cnt:0)+'</td>'
     +'<td class="right" style="font-weight:600">'+b.cum.toLocaleString('en-US')+'</td>'
-    +'<td class="right">'+(tCnt?(b.cum/tCnt*100):0).toFixed(1)+'%</td></tr>').join('');
+    +'<td class="right">'+(tCnt?(b.cum/tCnt*100):0).toFixed(1)+'%</td></tr>';}).join('')
+    || '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:18px">Tidak ada struk pada bulan terpilih</td></tr>';
   if(foot) foot.innerHTML='<tr style="font-weight:700;border-top:2px solid var(--border2)"><td>TOTAL</td><td class="right">'+tCnt.toLocaleString('en-US')+'</td><td class="right">100%</td><td class="right">'+fmt(tNet)+'</td><td class="right">100%</td><td class="right">'+fmt(tCnt?tNet/tCnt:0)+'</td><td class="right">'+tCnt.toLocaleString('en-US')+'</td><td class="right">100%</td></tr>';
 }
 function renderReceiptThreshold() {
@@ -7750,7 +7782,7 @@ function renderReceiptThreshold() {
   if (!totReceipts) {
     ['rt-count','rt-pct','rt-rev','rt-revpct'].forEach(id=>set(id,'—'));
     set('rt-count-sub','No sales data yet'); set('rt-pct-sub','—'); set('rt-rev-sub','—');
-    rtRenderBands([]);
+    rtRenderBands([], th);
     renderRtBreakdowns(th, false);
     return;
   }
@@ -7758,7 +7790,7 @@ function renderReceiptThreshold() {
   VIEW.forEach(o=>{ viewNet+=o.net; if(o.net>=th){ cnt++; rev+=o.net; } });
   const pct = totReceipts>0 ? (cnt/totReceipts*100) : 0;
   const revPct = viewNet>0 ? (rev/viewNet*100) : 0;
-  rtRenderBands(VIEW);
+  rtRenderBands(VIEW, th);
   set('rt-count', cnt.toLocaleString('en-US'));
   set('rt-count-sub', 'of '+totReceipts.toLocaleString('en-US')+' total receipts');
   set('rt-pct', pct.toFixed(1)+'%');
@@ -12904,7 +12936,7 @@ const PANEL_GROUP_MAP = {
   'promo-categories':'grp-marketing','basket':'grp-marketing','brand-perf':'grp-marketing','principal-perf':'grp-marketing','promo-mechanic':'grp-marketing',
   'sku-pareto':'grp-catmgmt','cat-overview':'grp-catmgmt','cat-promo-potential':'grp-catmgmt',
   'cat-member':'grp-catmgmt','cat-trend':'grp-catmgmt','cat-time':'grp-catmgmt','cat-detail':'grp-catmgmt',
-  'revenue-drivers':'grp-analytics','peak-hours':'grp-analytics','void-return':'grp-analytics','ai-strategy':'grp-analytics',
+  'revenue-drivers':'grp-analytics','peak-hours':'grp-analytics','void-return':'grp-analytics','ai-strategy':'grp-analytics','ai-chat':'grp-analytics',
   'cohort-analysis':'grp-analytics','sales-forecast':'grp-analytics','price-elasticity':'grp-analytics',
   'data-mgmt':'grp-data',
   'store-map':'grp-data'
@@ -15151,6 +15183,60 @@ async function renderAiStrategy(run){
   }
 }
 function aiCopyResult(){ if(!_aiLastText){return;} try{navigator.clipboard.writeText(_aiLastText);}catch(_){}}
+
+// ══════════════════════════════════════════════
+//  TANYA DATA (AI CHAT) — tanya-jawab live atas data dashboard
+// ══════════════════════════════════════════════
+let _aicHistory=[];
+const AIC_CHIPS=['Ringkas performa bulan terakhir','Toko mana yang perlu perhatian?','Promo/juklak mana yang paling menguntungkan?','Bagaimana kondisi retensi member?','Ada anomali yang perlu saya waspadai?','Rekomendasi 3 aksi minggu ini'];
+function aicEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function aiChatRenderChips(){
+  const el=document.getElementById('aiChatChips'); if(!el)return;
+  el.innerHTML=AIC_CHIPS.map(c=>`<button class="filter-btn" onclick="aiChatAsk(this.textContent)">${c}</button>`).join('');
+}
+function aiChatPaint(){
+  const log=document.getElementById('aiChatLog'); if(!log)return;
+  if(!_aicHistory.length){
+    log.innerHTML=`<div style="text-align:center;color:var(--text3);padding:34px 16px">
+      <div style="font-size:30px;margin-bottom:8px">💬</div>
+      <div style="font-size:14.5px;font-weight:600;color:var(--text);margin-bottom:5px">Tanya apa saja tentang data Anda</div>
+      <div style="font-size:12.5px;max-width:520px;margin:0 auto;line-height:1.6">AI membaca angka agregat yang sedang dimuat dashboard (performa, tren bulanan, per toko, kategori, juklak, member) — lalu menjawab dengan angka. Coba salah satu contoh di bawah.</div></div>`;
+    return;
+  }
+  log.innerHTML=_aicHistory.map(m=>`<div class="aic-row ${m.role==='user'?'me':''}">
+    <div class="aic-av">${m.role==='user'?'🧑':'✨'}</div>
+    <div class="aic-bub">${m.role==='user'?aicEsc(m.content).replace(/\n/g,'<br>'):(m.pending?'<span style="color:var(--text3)">sedang menganalisa…</span>':aiMarkdown(m.content))}</div></div>`).join('');
+  log.scrollTop=log.scrollHeight;
+}
+function renderAiChat(){ aiChatRenderChips(); aiChatPaint(); }
+function aiChatReset(){ _aicHistory=[]; aiChatPaint(); }
+function aiChatAsk(q){ const el=document.getElementById('aiChatInput'); if(el)el.value=q; aiChatSend(); }
+async function aiChatSend(){
+  const el=document.getElementById('aiChatInput'); if(!el)return;
+  const q=String(el.value||'').trim(); if(!q)return;
+  if(!(D&&D.monthly&&D.monthly.length)){ _aicHistory.push({role:'assistant',content:'Belum ada data yang dimuat. Upload data sales lalu klik **Rebuild Dashboard** dulu.'}); aiChatPaint(); return; }
+  el.value='';
+  const btn=document.getElementById('aiChatSendBtn'); if(btn)btn.disabled=true;
+  _aicHistory.push({role:'user',content:q});
+  _aicHistory.push({role:'assistant',content:'',pending:true});
+  aiChatPaint();
+  const dg=aiBuildDigest();
+  const system='Anda adalah analis data ritel senior yang menjawab pertanyaan tentang dashboard penjualan jaringan ritel modern di Bangladesh (mata uang Taka/Tk). Anda HANYA boleh memakai angka dari DATA DASHBOARD yang diberikan; bila suatu angka tidak tersedia, katakan terus terang bahwa datanya belum ada di dashboard dan sebutkan menu/data apa yang perlu diupload. Jawab RINGKAS dan langsung ke inti (maksimal ~200 kata kecuali diminta detail), Bahasa Indonesia, sebut angka konkret. Format markdown: bullet "- ", tebal "**", judul "### ". Jangan mengarang angka.';
+  // kirim 6 pesan terakhir sebagai konteks percakapan
+  const hist=_aicHistory.filter(m=>!m.pending).slice(-7,-1).map(m=>(m.role==='user'?'PENGGUNA: ':'ANDA: ')+m.content).join('\n\n');
+  const user=`DATA DASHBOARD (agregat, live):\n${JSON.stringify(dg,null,1)}\n\n${hist?'PERCAKAPAN SEBELUMNYA:\n'+hist+'\n\n':''}PERTANYAAN PENGGUNA:\n${q}`;
+  try{
+    const {text}=await aiComplete(system,user);
+    _aicHistory[_aicHistory.length-1]={role:'assistant',content:text};
+  }catch(e){
+    const msg=String(e.message)==='NO_BACKEND'
+      ? 'Backend AI belum aktif. Fitur ini butuh **Edge Function `ai-strategy`** di Supabase (proxy ke OpenAI) agar jalan di situs live.'
+      : 'Gagal memanggil AI: '+String(e.message);
+    _aicHistory[_aicHistory.length-1]={role:'assistant',content:msg};
+  }
+  if(btn)btn.disabled=false;
+  aiChatPaint();
+}
 
 // Core compute: juklak rows + sales rows yang sudah difilter
 function peComputePeriod(juklakRows, salesRows){
