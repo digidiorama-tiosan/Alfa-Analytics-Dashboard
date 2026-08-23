@@ -3579,14 +3579,17 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:6px 0 18px">
       <div style="display:flex;flex-direction:column;gap:5px">
         <label style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Minimum value (Tk)</label>
-        <input type="text" inputmode="numeric" id="rtThreshold" value="500" autocomplete="off" oninput="renderReceiptThreshold()" style="width:180px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 13px;color:var(--text);font-family:var(--mono);font-size:15px;font-weight:700">
+        <input type="text" inputmode="numeric" id="rtThreshold" value="1000" autocomplete="off" oninput="renderReceiptThreshold()" style="width:180px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 13px;color:var(--text);font-family:var(--mono);font-size:15px;font-weight:700">
       </div>
       <div style="display:flex;gap:7px;flex-wrap:wrap">
-        <button class="filter-btn" onclick="rtSet(200)">≥ 200</button>
-        <button class="filter-btn" onclick="rtSet(500)">≥ 500</button>
         <button class="filter-btn" onclick="rtSet(1000)">≥ 1,000</button>
         <button class="filter-btn" onclick="rtSet(2000)">≥ 2,000</button>
-        <button class="filter-btn" onclick="rtSet(5000)">≥ 5,000</button>
+        <button class="filter-btn" onclick="rtSet(3000)">≥ 3,000</button>
+        <button class="filter-btn" onclick="rtSet(4000)">≥ 4,000</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Bulan</label>
+        <select class="filter-select" id="rtMonthSel" onchange="renderReceiptThreshold()" style="min-width:150px"><option value="ALL">Semua Bulan</option></select>
       </div>
     </div>
     <div class="stats-grid">
@@ -3594,6 +3597,14 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       <div class="stat-card green"><div class="stat-label">% of Total Receipts</div><div class="stat-value" id="rt-pct">—</div><div class="stat-sub" id="rt-pct-sub">—</div></div>
       <div class="stat-card amber"><div class="stat-label">Sales Value (These Receipts)</div><div class="stat-value" id="rt-rev">—</div><div class="stat-sub" id="rt-rev-sub">—</div></div>
       <div class="stat-card purple"><div class="stat-label">% of Total Net Sales</div><div class="stat-value" id="rt-revpct">—</div><div class="stat-sub">Revenue contribution</div></div>
+    </div>
+    <div style="margin-top:20px">
+      <div class="chart-title" style="font-size:14px">Sebaran Struk per Rentang Nilai (tidak tumpang tindih)</div>
+      <div class="chart-subtitle" style="margin-bottom:10px">Tiap struk masuk ke SATU rentang saja (batas atas inklusif) — struk Tk 2.000 dihitung di baris "1.001 – 2.000"; struk Tk 2.500 di baris "2.001 – 3.000". Tidak ada yang dihitung dua kali.</div>
+      <div class="table-wrap"><table class="data-table" id="rtBandTable"><thead><tr>
+        <th>Rentang Nilai (Tk)</th><th class="right"># Struk</th><th class="right">% Struk</th>
+        <th class="right">Net Sales</th><th class="right">% Net Sales</th><th class="right">Avg Basket</th>
+      </tr></thead><tbody id="rtBandBody"></tbody><tfoot id="rtBandFoot"></tfoot></table></div>
     </div>
   </div>
 
@@ -7682,22 +7693,67 @@ function rtBuildReceipts() {
 }
 let _rtHas = {};
 function rtSet(v){ const el=document.getElementById('rtThreshold'); if(el){ el.value=v; renderReceiptThreshold(); } }
+const RT_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+// Struk sesuai filter bulan yang dipilih
+function rtViewReceipts(){
+  const sel=document.getElementById('rtMonthSel');
+  const v=sel?sel.value:'ALL';
+  if(!_rtReceipts) return [];
+  if(!v||v==='ALL') return _rtReceipts;
+  const m=parseInt(v,10);
+  return _rtReceipts.filter(o=>o.month===m);
+}
+function rtFillMonthSel(){
+  const sel=document.getElementById('rtMonthSel');
+  if(!sel||sel.dataset.filled==='1'||!_rtReceipts) return;
+  const set=new Set(); _rtReceipts.forEach(o=>{ if(o.month!=null) set.add(o.month); });
+  const ms=[...set].sort((a,b)=>a-b);
+  if(!ms.length) return;
+  sel.innerHTML='<option value="ALL">Semua Bulan</option>'+ms.map(m=>'<option value="'+m+'">'+(RT_MON[m-1]||m)+'</option>').join('');
+  sel.dataset.filled='1';
+}
+// Tabel sebaran per rentang nilai — TIDAK kumulatif (tiap struk masuk satu band)
+function rtRenderBands(view){
+  const body=document.getElementById('rtBandBody'), foot=document.getElementById('rtBandFoot');
+  if(!body) return;
+  // batas ATAS inklusif: ≤1.000 · 1.001–2.000 · 2.001–3.000 · 3.001–4.000 · >4.000
+  const caps=[1000,2000,3000,4000];
+  const bands=caps.map((hi,i)=>({lo:i===0?null:caps[i-1]+1,hi,label:i===0?('≤ '+hi.toLocaleString('en-US')):((caps[i-1]+1).toLocaleString('en-US')+' – '+hi.toLocaleString('en-US')),cnt:0,net:0}));
+  bands.push({lo:caps[caps.length-1]+1,hi:null,label:'> '+caps[caps.length-1].toLocaleString('en-US'),cnt:0,net:0});
+  let tCnt=0,tNet=0;
+  (view||[]).forEach(o=>{ tCnt++; tNet+=o.net;
+    const b=bands.find(b=>b.hi==null?o.net>=b.lo:o.net<=b.hi);
+    if(b){ b.cnt++; b.net+=o.net; }
+  });
+  body.innerHTML=bands.map(b=>'<tr>'
+    +'<td style="font-weight:600">'+b.label+'</td>'
+    +'<td class="right">'+b.cnt.toLocaleString('en-US')+'</td>'
+    +'<td class="right">'+(tCnt?(b.cnt/tCnt*100):0).toFixed(1)+'%</td>'
+    +'<td class="right">'+fmt(b.net)+'</td>'
+    +'<td class="right">'+(tNet?(b.net/tNet*100):0).toFixed(1)+'%</td>'
+    +'<td class="right">'+fmt(b.cnt?b.net/b.cnt:0)+'</td></tr>').join('');
+  if(foot) foot.innerHTML='<tr style="font-weight:700;border-top:2px solid var(--border2)"><td>TOTAL</td><td class="right">'+tCnt.toLocaleString('en-US')+'</td><td class="right">100%</td><td class="right">'+fmt(tNet)+'</td><td class="right">100%</td><td class="right">'+fmt(tCnt?tNet/tCnt:0)+'</td></tr>';
+}
 function renderReceiptThreshold() {
   rtBuildReceipts();
+  rtFillMonthSel();
   const set = (id,val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
   const thEl = document.getElementById('rtThreshold');
   const th = thEl ? (parseFloat(String(thEl.value).replace(/[^\d.]/g,''))||0) : 0;
-  const totReceipts = _rtReceipts ? _rtReceipts.length : 0;
+  const VIEW = rtViewReceipts();
+  const totReceipts = VIEW.length;
   if (!totReceipts) {
     ['rt-count','rt-pct','rt-rev','rt-revpct'].forEach(id=>set(id,'—'));
     set('rt-count-sub','No sales data yet'); set('rt-pct-sub','—'); set('rt-rev-sub','—');
+    rtRenderBands([]);
     renderRtBreakdowns(th, false);
     return;
   }
-  let cnt=0, rev=0;
-  _rtReceipts.forEach(o=>{ if(o.net>=th){ cnt++; rev+=o.net; } });
+  let cnt=0, rev=0, viewNet=0;
+  VIEW.forEach(o=>{ viewNet+=o.net; if(o.net>=th){ cnt++; rev+=o.net; } });
   const pct = totReceipts>0 ? (cnt/totReceipts*100) : 0;
-  const revPct = _rtRevTotal>0 ? (rev/_rtRevTotal*100) : 0;
+  const revPct = viewNet>0 ? (rev/viewNet*100) : 0;
+  rtRenderBands(VIEW);
   set('rt-count', cnt.toLocaleString('en-US'));
   set('rt-count-sub', 'of '+totReceipts.toLocaleString('en-US')+' total receipts');
   set('rt-pct', pct.toFixed(1)+'%');
@@ -7785,14 +7841,15 @@ function renderBasketAffinity(){
 
 // ── Breakdown "struk besar (≥T)" per dimensi ──
 function renderRtBreakdowns(th, hasData) {
-  if (!hasData || !_rtReceipts || !_rtReceipts.length) return;
-  const big = _rtReceipts.filter(o=>o.net>=th);
+  const VIEW = (typeof rtViewReceipts==='function') ? rtViewReceipts() : (VIEW||[]);
+  if (!hasData || !VIEW.length) return;
+  const big = VIEW.filter(o=>o.net>=th);
   const noteId = (id,txt)=>{ const el=document.getElementById(id); if(el) el.textContent=txt; };
   const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const DOW=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
   { // PER TOKO
-    const by={}; _rtReceipts.forEach(o=>{const k=o.store||'—';(by[k]=by[k]||{tot:0,big:0}).tot++;});
+    const by={}; VIEW.forEach(o=>{const k=o.store||'—';(by[k]=by[k]||{tot:0,big:0}).tot++;});
     big.forEach(o=>{const k=o.store||'—';if(by[k])by[k].big++;});
     let arr=Object.entries(by).map(([s,v])=>({s,pct:v.tot?v.big/v.tot*100:0,big:v.big,tot:v.tot})).sort((a,b)=>b.pct-a.pct);
     const top=arr.slice(0,12);
@@ -7800,28 +7857,28 @@ function renderRtBreakdowns(th, hasData) {
     if(arr.length) noteId('rt-store-note','Highest: '+arr[0].s+' ('+arr[0].pct.toFixed(1)+'%) · Lowest: '+arr[arr.length-1].s+' ('+arr[arr.length-1].pct.toFixed(1)+'%)');
   }
   { // PER BULAN
-    const by={}; _rtReceipts.forEach(o=>{if(o.month==null)return;(by[o.month]=by[o.month]||{tot:0,big:0}).tot++;});
+    const by={}; VIEW.forEach(o=>{if(o.month==null)return;(by[o.month]=by[o.month]||{tot:0,big:0}).tot++;});
     big.forEach(o=>{if(o.month!=null&&by[o.month])by[o.month].big++;});
     const ms=Object.keys(by).map(Number).sort((a,b)=>a-b);
     makeChart('rtMonthChart',{type:'line',data:{labels:ms.map(m=>MON[m-1]||m),datasets:[{label:'% large receipts',data:ms.map(m=>+(by[m].tot?by[m].big/by[m].tot*100:0).toFixed(1)),borderColor:GREEN,backgroundColor:GREEN+'22',fill:true,tension:0.4,pointBackgroundColor:GREEN,pointRadius:5}]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:false},tooltip:{callbacks:{afterLabel:c=>{const m=ms[c.dataIndex];return by[m].big.toLocaleString('en-US')+' / '+by[m].tot.toLocaleString('en-US')+' receipts';}}}},scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,beginAtZero:true,ticks:{...chartDefaults.scales.y.ticks,callback:v=>v+'%'}}}}});
   }
   { // MEMBER vs NON & PROMO vs NON
     const memBig=big.filter(o=>o.mem).length,nonBig=big.length-memBig;
-    const memTot=_rtReceipts.filter(o=>o.mem).length,nonTot=_rtReceipts.length-memTot;
+    const memTot=VIEW.filter(o=>o.mem).length,nonTot=VIEW.length-memTot;
     const proBig=big.filter(o=>o.promo).length,npBig=big.length-proBig;
-    const proTot=_rtReceipts.filter(o=>o.promo).length,npTot=_rtReceipts.length-proTot;
+    const proTot=VIEW.filter(o=>o.promo).length,npTot=VIEW.length-proTot;
     makeChart('rtSegChart',{type:'bar',data:{labels:['Member','Non-Member','Promo','Non-Promo'],datasets:[{label:'% large receipts in group',data:[memTot?+(memBig/memTot*100).toFixed(1):0,nonTot?+(nonBig/nonTot*100).toFixed(1):0,proTot?+(proBig/proTot*100).toFixed(1):0,npTot?+(npBig/npTot*100).toFixed(1):0],backgroundColor:[GREEN+'99',ACCENT+'55',AMBER+'99',ACCENT+'55'],borderColor:[GREEN,ACCENT,AMBER,ACCENT],borderWidth:1,borderRadius:6}]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:false},tooltip:{callbacks:{afterLabel:c=>{const mp=[[memBig,memTot],[nonBig,nonTot],[proBig,proTot],[npBig,npTot]][c.dataIndex];return mp[0].toLocaleString('en-US')+' / '+mp[1].toLocaleString('en-US')+' receipts';}}}},scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,beginAtZero:true,ticks:{...chartDefaults.scales.y.ticks,callback:v=>v+'%'}}}}});
     noteId('rt-seg-note','Of all large receipts: '+(big.length?(memBig/big.length*100):0).toFixed(0)+'% member · '+(big.length?(proBig/big.length*100):0).toFixed(0)+'% used promo');
   }
   { // PER HARI
     const totD=[0,0,0,0,0,0,0],bigD=[0,0,0,0,0,0,0];
-    _rtReceipts.forEach(o=>{if(o.dow!=null){totD[o.dow]++;if(o.net>=th)bigD[o.dow]++;}});
+    VIEW.forEach(o=>{if(o.dow!=null){totD[o.dow]++;if(o.net>=th)bigD[o.dow]++;}});
     const order=[1,2,3,4,5,6,0];
     makeChart('rtDowChart',{type:'bar',data:{labels:order.map(d=>DOW[d]),datasets:[{label:'% large receipts',data:order.map(d=>totD[d]?+(bigD[d]/totD[d]*100).toFixed(1):0),backgroundColor:order.map(d=>d===0||d===6?AMBER+'99':ACCENT+'88'),borderColor:order.map(d=>d===0||d===6?AMBER:ACCENT),borderWidth:1,borderRadius:6}]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:false},tooltip:{callbacks:{afterLabel:c=>{const d=order[c.dataIndex];return bigD[d].toLocaleString('en-US')+' / '+totD[d].toLocaleString('en-US')+' receipts';}}}},scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,beginAtZero:true,ticks:{...chartDefaults.scales.y.ticks,callback:v=>v+'%'}}}}});
   }
   { // PER JAM
     const totH=new Array(24).fill(0),bigH=new Array(24).fill(0);let anyH=false;
-    _rtReceipts.forEach(o=>{if(o.hour!=null){anyH=true;totH[o.hour]++;if(o.net>=th)bigH[o.hour]++;}});
+    VIEW.forEach(o=>{if(o.hour!=null){anyH=true;totH[o.hour]++;if(o.net>=th)bigH[o.hour]++;}});
     makeChart('rtHourChart',{type:'bar',data:{labels:totH.map((_,h)=>h+':00'),datasets:[{label:'% large receipts',data:totH.map((t,h)=>t?+(bigH[h]/t*100).toFixed(1):0),backgroundColor:PURPLE+'88',borderColor:PURPLE,borderWidth:1,borderRadius:4}]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:false},tooltip:{callbacks:{afterLabel:c=>bigH[c.dataIndex].toLocaleString('en-US')+' / '+totH[c.dataIndex].toLocaleString('en-US')+' receipts'}}},scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,beginAtZero:true,ticks:{...chartDefaults.scales.y.ticks,callback:v=>v+'%'}}}}});
     const hw=document.getElementById('rtHourWrap'); if(hw) hw.style.display=anyH?'':'none';
   }
