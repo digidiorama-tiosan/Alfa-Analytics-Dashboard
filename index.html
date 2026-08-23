@@ -3626,7 +3626,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     </div>
     <div style="margin-top:20px">
       <div class="chart-title" style="font-size:14px">Sebaran Struk per Rentang Nilai (tidak tumpang tindih)</div>
-      <div class="chart-subtitle" style="margin-bottom:10px">Tiap struk masuk ke SATU rentang saja (batas atas inklusif) — struk Tk 2.000 dihitung di baris "1.001 – 2.000"; struk Tk 2.500 di baris "2.001 – 3.000". Tabel ini menampilkan <b>semua struk</b> pada bulan terpilih (bukan hanya yang ≥ nilai minimum), sehingga KPI di atas = jumlah baris bertanda <span style="color:var(--accent)">● ikut KPI</span>.</div>
+      <div class="chart-subtitle" style="margin-bottom:10px">Tiap struk masuk ke SATU rentang saja (batas atas inklusif). KPI di atas bersifat <b>kumulatif</b> (semua struk ≥ nilai minimum) = jumlah baris bertanda <span style="color:var(--accent)">● ikut KPI</span>, ditambah sebagian dari baris <span style="color:var(--amber)">◐</span> bila nilai minimum jatuh di tengah rentang.</div>
       <div class="table-wrap"><table class="data-table" id="rtBandTable"><thead><tr>
         <th>Rentang Nilai (Tk)</th><th class="right"># Struk</th><th class="right">% Struk</th>
         <th class="right">Net Sales</th><th class="right">% Net Sales</th><th class="right">Avg Basket</th>
@@ -7756,11 +7756,14 @@ function rtRenderBands(view, th){
   // kumulatif dari band ini ke atas (total struk pada range di atas & termasuk range ini)
   for(let i=bands.length-1;i>=0;i--){ bands[i].cum=(bands[i+1]?bands[i+1].cum:0)+bands[i].cnt; bands[i].cumNet=(bands[i+1]?bands[i+1].cumNet:0)+bands[i].net; }
   body.innerHTML=bands.filter(b=>b.cnt>0).map(b=>{
-    // tandai band yang ikut terhitung pada KPI "struk ≥ nilai" (batas bawah band ≥ threshold)
-    const inTh=(th>0)&&((b.hi==null?b.lo:b.hi)>=th)&&((b.lo==null?0:b.lo)>=th||(b.hi!=null&&b.hi>=th&&(b.lo==null?0:b.lo)>=th));
-    const hit=(th>0)&&(b.hi==null? true : b.hi>=th) && ((b.lo==null?0:b.lo)>=th);
-    return '<tr'+(hit?' style="background:rgba(88,166,255,0.07)"':'')+'>'
-    +'<td style="font-weight:600">'+b.label+(hit?' <span style="font-size:10px;color:var(--accent);font-weight:700">● ikut KPI</span>':'')+'</td>'
+    // band ikut KPI penuh bila batas bawahnya ≥ threshold; "sebagian" bila threshold jatuh di dalam band
+    const lo=(b.lo==null?0:b.lo), hiOk=(b.hi==null||b.hi>=th);
+    const hit=(th>0)&&hiOk&&(lo>=th);
+    const partial=(th>0)&&hiOk&&(lo<th);
+    const tag=hit?' <span style="font-size:10px;color:var(--accent);font-weight:700">● ikut KPI</span>'
+      :partial?' <span style="font-size:10px;color:var(--amber);font-weight:700">◐ sebagian ikut KPI</span>':'';
+    return '<tr'+(hit?' style="background:rgba(88,166,255,0.07)"':partial?' style="background:rgba(240,167,51,0.06)"':'')+'>'
+    +'<td style="font-weight:600">'+b.label+tag+'</td>'
     +'<td class="right">'+b.cnt.toLocaleString('en-US')+'</td>'
     +'<td class="right">'+(tCnt?(b.cnt/tCnt*100):0).toFixed(1)+'%</td>'
     +'<td class="right">'+fmt(b.net)+'</td>'
