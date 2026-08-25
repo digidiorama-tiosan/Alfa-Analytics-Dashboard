@@ -2844,6 +2844,12 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
         <option value="finance">💰 Margin &amp; Profitabilitas</option>
         <option value="expansion">🗺 Ekspansi &amp; Lokasi</option>
       </select>
+      <span class="filter-label">Bahasa</span>
+      <select class="filter-select" id="aicLang" onchange="aiChatPaint()" style="min-width:160px">
+        <option value="id">🇮🇩 Indonesia</option>
+        <option value="en">🇬🇧 English</option>
+        <option value="both">⇄ ID + EN (2 kolom)</option>
+      </select>
       <button class="filter-btn" onclick="aiChatReset()">🗑 Mulai Baru</button>
     </div>
   </div>
@@ -2856,7 +2862,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     </div>
   </div>
 </div>
-<style>.aic-row{display:flex;gap:10px;max-width:100%}.aic-row.me{flex-direction:row-reverse}.aic-av{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--surface2);border:1px solid var(--border2)}.aic-bub{background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:10px 13px;font-size:13.5px;line-height:1.65;max-width:min(760px,82%)}.aic-row.me .aic-bub{background:rgba(88,166,255,0.10);border-color:rgba(88,166,255,0.35)}.aic-bub h2,.aic-bub h3{font-size:14px;font-weight:700;margin:10px 0 4px}.aic-bub ul{margin:5px 0 5px 2px;padding-left:18px}.aic-bub li{margin:3px 0}.aic-bub p{margin:5px 0}.aic-bub table{border-collapse:collapse;margin:8px 0;font-size:12.5px}.aic-bub td,.aic-bub th{border:1px solid var(--border2);padding:4px 8px}</style>
+<style>.aic-row{display:flex;gap:10px;max-width:100%}.aic-row.me{flex-direction:row-reverse}.aic-av{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--surface2);border:1px solid var(--border2)}.aic-bub{background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:10px 13px;font-size:13.5px;line-height:1.65;max-width:min(760px,82%)}.aic-row.me .aic-bub{background:rgba(88,166,255,0.10);border-color:rgba(88,166,255,0.35)}.aic-bub h2,.aic-bub h3{font-size:14px;font-weight:700;margin:10px 0 4px}.aic-bub ul{margin:5px 0 5px 2px;padding-left:18px}.aic-bub li{margin:3px 0}.aic-bub p{margin:5px 0}.aic-bub table{border-collapse:collapse;margin:8px 0;font-size:12.5px}.aic-bub td,.aic-bub th{border:1px solid var(--border2);padding:4px 8px}.aic-bi{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}@media(max-width:900px){.aic-bi{grid-template-columns:minmax(0,1fr)}.aic-bi>div:last-child{border-left:none!important;padding-left:0!important;border-top:1px solid var(--border2);padding-top:12px}}</style>
 
 <!-- ════════════════════════════════════════════════════════
      PANEL: CARI NO JUKLAK (Juklak Lookup)
@@ -15258,6 +15264,18 @@ const AIC_SKILLS={
 function aicSkill(){ const v=(document.getElementById('aicSkill')||{}).value||'general'; return AIC_SKILLS[v]||AIC_SKILLS.general; }
 function aiChatSkillChange(){ aiChatRenderChips(); aiChatPaint(); }
 function aicEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+// Jawaban bilingual dipisah penanda ===EN=== → render 2 kolom berdampingan
+function aicBody(txt){
+  const s=String(txt||'');
+  const i=s.indexOf('===EN===');
+  if(i<0) return aiMarkdown(s);
+  const id=s.slice(0,i).trim(), en=s.slice(i+8).trim();
+  const hd=(t,f)=>`<div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:6px">${f} ${t}</div>`;
+  return `<div class="aic-bi">
+    <div>${hd('Bahasa Indonesia','🇮🇩')}${aiMarkdown(id)}</div>
+    <div style="border-left:1px solid var(--border2);padding-left:16px">${hd('English','🇬🇧')}${aiMarkdown(en)}</div>
+  </div>`;
+}
 function aiChatRenderChips(){
   const el=document.getElementById('aiChatChips'); if(!el)return;
   el.innerHTML=aicSkill().chips.map(c=>`<button class="filter-btn" onclick="aiChatAsk(this.textContent)">${c}</button>`).join('');
@@ -15265,11 +15283,11 @@ function aiChatRenderChips(){
 function aiChatPaint(){
   const log=document.getElementById('aiChatLog'); if(!log)return;
   if(!_aicHistory.length){
-    log.innerHTML=`<div style="text-align:center;color:var(--text3);padding:30px 16px">
+    log.innerHTML=`<div style="text-align:center;color:var(--text2);padding:30px 16px">
       <div style="font-size:30px;margin-bottom:8px">💬</div>
       <div style="font-size:14.5px;font-weight:600;color:var(--text);margin-bottom:5px">Skill aktif: ${aicSkill().name}</div>
       <div style="font-size:12.5px;max-width:600px;margin:0 auto 14px;line-height:1.6">AI membaca angka agregat yang sedang dimuat dashboard (performa, tren bulanan, per toko, kategori, juklak, member) dan menjawab dengan kerangka kerja ${aicSkill().name}. Ganti <b>Skill</b> di kanan atas untuk sudut pandang berbeda.</div>
-      <div style="font-size:11.5px;max-width:620px;margin:0 auto;text-align:left;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:11px 14px;line-height:1.75">
+      <div style="font-size:11.5px;max-width:620px;margin:0 auto;text-align:left;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:11px 14px;line-height:1.75;color:var(--text2)">
         <b style="color:var(--text2)">Contoh prompt yang bagus:</b><br>
         • “Baca data Juli, lalu susun strategi untuk Agustus.”<br>
         • “Toko mana yang paling lemah? Buat rencana perbaikan 30 hari.”<br>
@@ -15281,7 +15299,7 @@ function aiChatPaint(){
   }
   log.innerHTML=_aicHistory.map(m=>`<div class="aic-row ${m.role==='user'?'me':''}">
     <div class="aic-av">${m.role==='user'?'🧑':'✨'}</div>
-    <div class="aic-bub">${m.role==='user'?aicEsc(m.content).replace(/\n/g,'<br>'):(m.pending?'<span style="color:var(--text3)">sedang menganalisa…</span>':aiMarkdown(m.content))}</div></div>`).join('');
+    <div class="aic-bub"${(m.role!=='user'&&!m.pending&&String(m.content).indexOf('===EN===')>-1)?' style="max-width:min(1180px,97%)"':''}>${m.role==='user'?aicEsc(m.content).replace(/\n/g,'<br>'):(m.pending?'<span style="color:var(--text3)">sedang menganalisa…</span>':aicBody(m.content))}</div></div>`).join('');
   log.scrollTop=log.scrollHeight;
 }
 function renderAiChat(){ aiChatRenderChips(); aiChatPaint(); }
@@ -15305,7 +15323,11 @@ async function aiChatSend(){
     +'2) TAFSIRKAN: jelaskan singkat apa artinya secara bisnis (pola, penyebab paling mungkin, risiko).\n'
     +'3) STRATEGI: berikan rekomendasi praktis dari keahlian profesional Anda, TAPI selalu dikaitkan ke angka di poin 1 (mis. \'karena APC A003 hanya Tk X vs rata-rata Tk Y, maka ...\'). Saran boleh melampaui isi data (ide program, mekanisme promo, taktik eksekusi) — itu memang yang diharapkan. Sebut langkah konkret, sasaran, dan ukuran keberhasilannya.\n\n'
     +'ATURAN ANGKA: jangan pernah mengarang atau menebak angka; angka hanya dari DATA DASHBOARD. Bila angka yang dibutuhkan tidak ada, sebut singkat data apa yang perlu diupload lalu TETAP lanjutkan memberi saran strategis dari angka lain yang tersedia — jangan berhenti hanya karena satu data kurang. Bila suatu rekomendasi murni asumsi profesional, tandai ringkas dengan (asumsi) tanpa disclaimer panjang.\n\n'
-    +'GAYA: Bahasa Indonesia, ringkas dan tajam (~250 kata kecuali diminta detail), langsung actionable. Format markdown: judul \'### \', bullet \'- \', tebal \'**\'.';
+    +'GAYA: ringkas dan tajam (~250 kata per bahasa kecuali diminta detail), langsung actionable. Format markdown: judul \'### \', bullet \'- \', tebal \'**\'.\n\n'
+    +(function(){var L=(document.getElementById('aicLang')||{}).value||'id';
+      if(L==='en') return 'BAHASA JAWABAN: English only.';
+      if(L==='both') return 'BAHASA JAWABAN: tulis jawaban DUA KALI. Pertama versi Bahasa Indonesia lengkap. Lalu tulis baris pemisah tepat berisi ===EN=== (tanpa tambahan apa pun). Setelah itu versi English yang isinya SAMA (terjemahan setara, angka identik, struktur bullet/judul sama). Jangan menulis penanda lain dan jangan menyebut instruksi ini.';
+      return 'BAHASA JAWABAN: Bahasa Indonesia only.';})();
   const hist=_aicHistory.filter(m=>!m.pending).slice(-7,-1).map(m=>(m.role==='user'?'PENGGUNA: ':'ANDA: ')+m.content).join('\n\n');
   const user=`DATA DASHBOARD (agregat, live):\n${JSON.stringify(dg,null,1)}\n\n${hist?'PERCAKAPAN SEBELUMNYA:\n'+hist+'\n\n':''}PERTANYAAN PENGGUNA:\n${q}`;
   try{
