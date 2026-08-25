@@ -2832,7 +2832,20 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       <div class="page-title">Tanya Data (AI Chat)</div>
       <div class="page-subtitle">Tanya apa saja tentang data yang sedang dimuat — AI membaca angka dashboard secara live</div>
     </div>
-    <button class="filter-btn" onclick="aiChatReset()">🗑 Mulai Baru</button>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span class="filter-label">Skill</span>
+      <select class="filter-select" id="aicSkill" onchange="aiChatSkillChange()" style="min-width:210px">
+        <option value="general">🧠 Analis Umum</option>
+        <option value="marketing">📣 Marketing &amp; Promo</option>
+        <option value="sales">📈 Sales &amp; Operasi Toko</option>
+        <option value="report">📄 Reporting &amp; Executive</option>
+        <option value="member">👥 Member &amp; CRM</option>
+        <option value="category">📦 Kategori &amp; Assortment</option>
+        <option value="finance">💰 Margin &amp; Profitabilitas</option>
+        <option value="expansion">🗺 Ekspansi &amp; Lokasi</option>
+      </select>
+      <button class="filter-btn" onclick="aiChatReset()">🗑 Mulai Baru</button>
+    </div>
   </div>
   <div class="chart-card" style="display:flex;flex-direction:column;height:calc(100vh - 210px);min-height:420px">
     <div id="aiChatLog" style="flex:1;overflow-y:auto;padding:6px 2px;display:flex;flex-direction:column;gap:12px"></div>
@@ -15191,19 +15204,79 @@ function aiCopyResult(){ if(!_aiLastText){return;} try{navigator.clipboard.write
 //  TANYA DATA (AI CHAT) — tanya-jawab live atas data dashboard
 // ══════════════════════════════════════════════
 let _aicHistory=[];
-const AIC_CHIPS=['Ringkas performa bulan terakhir','Toko mana yang perlu perhatian?','Promo/juklak mana yang paling menguntungkan?','Bagaimana kondisi retensi member?','Ada anomali yang perlu saya waspadai?','Rekomendasi 3 aksi minggu ini'];
+// ── SKILL PACKS: tiap skill punya persona, kerangka analisa, dan contoh pertanyaan sendiri ──
+const AIC_SKILLS={
+  general:{
+    name:'Analis Umum',
+    persona:'Anda Senior Retail Business Analyst untuk jaringan minimarket modern di Dhaka, Bangladesh. Anda menjawab pertanyaan apa pun tentang data dashboard secara ringkas dan berbasis angka.',
+    playbook:'Kerangka: (1) jawab langsung pertanyaannya, (2) tunjukkan angka pendukung, (3) satu implikasi/aksi bila relevan.',
+    chips:['Ringkas performa bulan terakhir','Toko mana yang perlu perhatian?','Ada anomali yang perlu saya waspadai?','Rekomendasi 3 aksi minggu ini','Tren bulanan naik atau turun?','Bandingkan performa antar toko']
+  },
+  marketing:{
+    name:'Marketing & Promo',
+    persona:'Anda Trade Marketing Manager ritel modern berpengalaman 15 tahun (kategori FMCG, pasar Bangladesh). Anda ahli merancang mekanisme promo, kalender promo, negosiasi trade support dengan principal, dan mengukur efektivitas promo.',
+    playbook:'Gunakan kerangka trade marketing: uplift vs baseline, incremental margin, ROI promo, cannibalization & halo effect, forward buying, promo depth vs frequency, mekanisme (price cut vs bundling vs free gift), dan kontribusi principal/supplier. Selalu bedakan promo yang MENAMBAH volume dari promo yang hanya MENDISKON penjualan yang tetap terjadi. Bila menyarankan promo, sebut: kategori/SKU sasaran, mekanisme, kedalaman diskon, durasi, dan target uplift.',
+    chips:['Promo/juklak mana yang paling menguntungkan?','Juklak mana yang harus dihentikan?','Kategori apa yang layak dipromokan bulan depan?','Mekanisme promo apa yang paling efektif?','Apakah ada promo yang merusak margin?','Rancang kalender promo 1 bulan ke depan','Promo mana yang cuma mendiskon tanpa nambah volume?']
+  },
+  sales:{
+    name:'Sales & Operasi Toko',
+    persona:'Anda Area Sales Manager yang membina performa toko. Fokus Anda: pencapaian penjualan per toko, produktivitas struk, disiplin eksekusi, dan coaching kepala toko.',
+    playbook:'Gunakan metrik operasi: Net Sales, STD (struk per hari), APC (nilai belanja per pelanggan), UPT (item per struk), GM%, dan tren MoM. Bandingkan toko terhadap rata-rata jaringan, pisahkan masalah TRAFFIC (STD rendah) dari masalah BASKET (APC rendah) — keduanya butuh aksi berbeda. Beri aksi konkret level toko.',
+    chips:['Toko mana yang underperform dan kenapa?','Masalahnya traffic atau basket size?','Toko mana yang STD-nya turun?','Bagaimana cara naikkan APC?','Ranking toko dari terbaik ke terburuk','Toko mana yang layak dijadikan benchmark?']
+  },
+  report:{
+    name:'Reporting & Executive',
+    persona:'Anda Business Analyst yang menyiapkan materi untuk manajemen (Board/CEO). Gaya Anda: executive-first, exception-based, angka dulu penjelasan kemudian.',
+    playbook:'Susun jawaban seperti executive summary: (1) Headline — satu kalimat kesimpulan dengan angka utama, (2) 3 poin kunci (apa yang naik/turun, seberapa, kenapa), (3) Risiko/perhatian, (4) Rekomendasi keputusan. Hindari jargon teknis. Utamakan prinsip 80/20 — sebut hal yang mengubah keputusan saja.',
+    chips:['Buat executive summary bulan ini','Apa 3 poin utama untuk rapat manajemen?','Apa yang harus saya laporkan ke atasan?','Highlight & lowlight periode ini','Buat narasi untuk slide performa','Angka mana yang paling penting diperhatikan?']
+  },
+  member:{
+    name:'Member & CRM',
+    persona:'Anda CRM & Loyalty Manager ritel. Fokus Anda: akuisisi member, retensi, frekuensi kunjungan, dan nilai belanja member vs non-member.',
+    playbook:'Gunakan kerangka CRM: penetrasi member (% sales dari member), akuisisi bulanan, churn/at-risk, frekuensi kunjungan, basket premium member vs non-member, dan segmentasi RFM sederhana (Recency-Frequency-Monetary). Bedakan masalah AKUISISI dari masalah RETENSI. Sarankan program yang bisa dieksekusi toko.',
+    chips:['Bagaimana kondisi retensi member?','Berapa member yang berisiko churn?','Apakah member belanja lebih besar dari non-member?','Bagaimana cara naikkan penetrasi member?','Toko mana yang akuisisi membernya lemah?','Segmen member mana yang paling bernilai?']
+  },
+  category:{
+    name:'Kategori & Assortment',
+    persona:'Anda Category Manager ritel modern. Fokus Anda: peran kategori, kelengkapan assortment, produktivitas SKU, dan ruang rak.',
+    playbook:'Gunakan kerangka category management: peran kategori (traffic driver / profit generator / turf defending), analisa Pareto SKU (80/20), penetrasi kategori dalam struk, kontribusi sales vs margin, SKU produktif vs SKU tidur, dan attachment antar kategori. Rekomendasikan tambah/kurangi/ganti SKU dengan alasan angka.',
+    chips:['Kategori mana penyumbang terbesar?','SKU mana yang perlu didelist?','Berapa % SKU yang menyumbang 80% omzet?','Kategori apa yang jadi penarik traffic?','Kategori mana margin-nya paling bagus?','Assortment apa yang masih kurang?']
+  },
+  finance:{
+    name:'Margin & Profitabilitas',
+    persona:'Anda Commercial Finance Analyst ritel. Fokus Anda: kualitas margin, kebocoran profit, dan trade-off volume vs profitabilitas.',
+    playbook:'Gunakan kerangka profitabilitas: GM% dan GM absolut, mix effect (pergeseran ke kategori margin rendah), margin lost akibat diskon, kontribusi margin per toko/kategori/juklak, dan sensitivitas harga. Selalu bedakan pertumbuhan sales yang SEHAT (margin terjaga) dari yang MERUGIKAN (beli volume dengan margin).',
+    chips:['Di mana margin paling banyak bocor?','Apakah pertumbuhan sales ini sehat?','Kategori mana yang menekan GM%?','Berapa margin yang hilang karena diskon?','Toko mana yang margin-nya paling tipis?','Trade-off volume vs margin bulan ini']
+  },
+  expansion:{
+    name:'Ekspansi & Lokasi',
+    persona:'Anda Expansion & Site Selection Manager ritel di Greater Dhaka. Fokus Anda: potensi pasar area, kanibalisasi antar toko, dan prioritas pembukaan toko baru.',
+    playbook:'Gunakan kerangka site selection: populasi catchment, sales per capita, penetrasi member terhadap rumah tangga, jarak antar toko (risiko kanibalisasi), dan benchmark toko sejenis. Bandingkan performa toko terhadap POTENSI pasarnya, bukan angka absolut. Bila menyarankan lokasi, sebut alasan populasi & jarak.',
+    chips:['Toko mana yang belum optimal dibanding potensi pasarnya?','Area mana prioritas buka toko baru?','Apakah ada toko yang saling makan pasar?','Toko mana sales per capita-nya rendah?','Bagaimana urutan prioritas ekspansi?']
+  }
+};
+function aicSkill(){ const v=(document.getElementById('aicSkill')||{}).value||'general'; return AIC_SKILLS[v]||AIC_SKILLS.general; }
+function aiChatSkillChange(){ aiChatRenderChips(); aiChatPaint(); }
 function aicEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function aiChatRenderChips(){
   const el=document.getElementById('aiChatChips'); if(!el)return;
-  el.innerHTML=AIC_CHIPS.map(c=>`<button class="filter-btn" onclick="aiChatAsk(this.textContent)">${c}</button>`).join('');
+  el.innerHTML=aicSkill().chips.map(c=>`<button class="filter-btn" onclick="aiChatAsk(this.textContent)">${c}</button>`).join('');
 }
 function aiChatPaint(){
   const log=document.getElementById('aiChatLog'); if(!log)return;
   if(!_aicHistory.length){
-    log.innerHTML=`<div style="text-align:center;color:var(--text3);padding:34px 16px">
+    log.innerHTML=`<div style="text-align:center;color:var(--text3);padding:30px 16px">
       <div style="font-size:30px;margin-bottom:8px">💬</div>
-      <div style="font-size:14.5px;font-weight:600;color:var(--text);margin-bottom:5px">Tanya apa saja tentang data Anda</div>
-      <div style="font-size:12.5px;max-width:520px;margin:0 auto;line-height:1.6">AI membaca angka agregat yang sedang dimuat dashboard (performa, tren bulanan, per toko, kategori, juklak, member) — lalu menjawab dengan angka. Coba salah satu contoh di bawah.</div></div>`;
+      <div style="font-size:14.5px;font-weight:600;color:var(--text);margin-bottom:5px">Skill aktif: ${aicSkill().name}</div>
+      <div style="font-size:12.5px;max-width:600px;margin:0 auto 14px;line-height:1.6">AI membaca angka agregat yang sedang dimuat dashboard (performa, tren bulanan, per toko, kategori, juklak, member) dan menjawab dengan kerangka kerja ${aicSkill().name}. Ganti <b>Skill</b> di kanan atas untuk sudut pandang berbeda.</div>
+      <div style="font-size:11.5px;max-width:620px;margin:0 auto;text-align:left;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:11px 14px;line-height:1.75">
+        <b style="color:var(--text2)">Contoh prompt yang bagus:</b><br>
+        • “Baca data Juli, lalu susun strategi untuk Agustus.”<br>
+        • “Toko mana yang paling lemah? Buat rencana perbaikan 30 hari.”<br>
+        • “Dari data kategori, kategori apa yang layak dipromokan bulan depan?”<br>
+        • “Berdasarkan tren 3 bulan terakhir, apa risiko terbesar saya?”<br>
+        • “Juklak mana yang ROI-nya jelek dan apa gantinya?”
+      </div></div>`;
     return;
   }
   log.innerHTML=_aicHistory.map(m=>`<div class="aic-row ${m.role==='user'?'me':''}">
@@ -15224,8 +15297,15 @@ async function aiChatSend(){
   _aicHistory.push({role:'assistant',content:'',pending:true});
   aiChatPaint();
   const dg=aiBuildDigest();
-  const system='Anda adalah analis data ritel senior yang menjawab pertanyaan tentang dashboard penjualan jaringan ritel modern di Bangladesh (mata uang Taka/Tk). Anda HANYA boleh memakai angka dari DATA DASHBOARD yang diberikan; bila suatu angka tidak tersedia, katakan terus terang bahwa datanya belum ada di dashboard dan sebutkan menu/data apa yang perlu diupload. Jawab RINGKAS dan langsung ke inti (maksimal ~200 kata kecuali diminta detail), Bahasa Indonesia, sebut angka konkret. Format markdown: bullet "- ", tebal "**", judul "### ". Jangan mengarang angka.';
-  // kirim 6 pesan terakhir sebagai konteks percakapan
+  const SK=aicSkill();
+  const system=SK.persona+' Anda menjawab pertanyaan tentang dashboard penjualan jaringan ritel modern di Bangladesh (mata uang Taka/Tk).\n\n'
+    +'KERANGKA KERJA ANDA: '+SK.playbook+'\n\n'
+    +'CARA MENJAWAB — selalu bertumpu pada data, lalu lanjut ke strategi:\n'
+    +'1) BACA DATA: mulai dari temuan konkret di DATA DASHBOARD (sebut angka + satuan Tk, bandingkan antar toko/bulan/kategori bila relevan). Ini fondasi jawaban Anda.\n'
+    +'2) TAFSIRKAN: jelaskan singkat apa artinya secara bisnis (pola, penyebab paling mungkin, risiko).\n'
+    +'3) STRATEGI: berikan rekomendasi praktis dari keahlian profesional Anda, TAPI selalu dikaitkan ke angka di poin 1 (mis. \'karena APC A003 hanya Tk X vs rata-rata Tk Y, maka ...\'). Saran boleh melampaui isi data (ide program, mekanisme promo, taktik eksekusi) — itu memang yang diharapkan. Sebut langkah konkret, sasaran, dan ukuran keberhasilannya.\n\n'
+    +'ATURAN ANGKA: jangan pernah mengarang atau menebak angka; angka hanya dari DATA DASHBOARD. Bila angka yang dibutuhkan tidak ada, sebut singkat data apa yang perlu diupload lalu TETAP lanjutkan memberi saran strategis dari angka lain yang tersedia — jangan berhenti hanya karena satu data kurang. Bila suatu rekomendasi murni asumsi profesional, tandai ringkas dengan (asumsi) tanpa disclaimer panjang.\n\n'
+    +'GAYA: Bahasa Indonesia, ringkas dan tajam (~250 kata kecuali diminta detail), langsung actionable. Format markdown: judul \'### \', bullet \'- \', tebal \'**\'.';
   const hist=_aicHistory.filter(m=>!m.pending).slice(-7,-1).map(m=>(m.role==='user'?'PENGGUNA: ':'ANDA: ')+m.content).join('\n\n');
   const user=`DATA DASHBOARD (agregat, live):\n${JSON.stringify(dg,null,1)}\n\n${hist?'PERCAKAPAN SEBELUMNYA:\n'+hist+'\n\n':''}PERTANYAAN PENGGUNA:\n${q}`;
   try{
