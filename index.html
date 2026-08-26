@@ -1730,6 +1730,10 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14V6l4-3 4 3v8"/><path d="M10 14V8h4v6"/><path d="M1 14h14"/></svg>
           Principal &amp; Supplier
         </button>
+        <button class="nav-item" onclick="showPanel('section-contribution',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="2" width="13" height="3" rx="1"/><rect x="1.5" y="6.5" width="13" height="3" rx="1"/><rect x="1.5" y="11" width="13" height="3" rx="1"/></svg>
+          Kontribusi Section
+        </button>
         <button class="nav-item" onclick="showPanel('promo-mechanic',this)">
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 5h5v9H2zM9 5h5v9H9z"/><path d="M4.5 5V2.5M11.5 5V2.5"/></svg>
           Promo Mechanic
@@ -4746,6 +4750,40 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 </div>
 
 <!-- ══════════════════════════════════
+     PANEL: KONTRIBUSI SECTION & CATEGORY (Oramas)
+══════════════════════════════════ -->
+<div id="panel-section-contribution" class="panel">
+  <div class="page-header">
+    <div><div class="page-title">📊 Kontribusi Section &amp; Category</div><div class="page-subtitle">%Cont NS per Section &amp; Category — dari struktur produk Oramas disambungkan ke Data Sales via PLU</div></div>
+    <button class="btn-dl" id="scDl" onclick="downloadExcelSectionContribution()" style="display:none">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg>Export Excel
+    </button>
+  </div>
+  <div id="scAlert" style="display:none" class="alert-box amber"><span style="font-size:16px">⚠️</span><div id="scAlertText"></div></div>
+  <div id="sc-result" style="display:none">
+    <div class="stats-grid" id="sc-kpi" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px"></div>
+    <div class="section-title">%Cont NS By Section</div>
+    <div class="chart-card" style="margin-bottom:20px">
+      <div class="table-wrap" style="max-height:560px;overflow:auto">
+        <table class="data-table" id="scSectionTable"><thead><tr>
+          <th>Section</th><th class="right">∑PLU Active</th><th class="right">%Cont PLU</th>
+          <th class="right">NS</th><th class="right">GM</th><th class="right">%GM</th><th class="right">%Cont NS</th>
+        </tr></thead><tbody id="scSectionBody"></tbody><tfoot id="scSectionFoot"></tfoot></table>
+      </div>
+    </div>
+    <div class="section-title">%Cont NS By Category</div>
+    <div class="chart-card">
+      <div class="table-wrap" style="max-height:560px;overflow:auto">
+        <table class="data-table" id="scCatTable"><thead><tr>
+          <th>Category</th><th class="right">∑PLU Active</th><th class="right">NS</th>
+          <th class="right">GM</th><th class="right">%GM</th><th class="right">%Cont NS</th>
+        </tr></thead><tbody id="scCatBody"></tbody><tfoot id="scCatFoot"></tfoot></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
      PANEL: PROMO MECHANIC
 ══════════════════════════════════ -->
 <div id="panel-promo-mechanic" class="panel">
@@ -6074,6 +6112,7 @@ function renderPanel(id) {
     case 'basket': renderBasket(); break;
     case 'brand-perf': renderBrandPerf(); break;
     case 'principal-perf': renderPrincipalPerf(); break;
+    case 'section-contribution': renderSectionContribution(); break;
     case 'promo-mechanic': renderPromoMechanic(); break;
     case 'peak-hours': renderPeakHours(); break;
     case 'price-elasticity': renderPriceElasticity(); break;
@@ -6676,16 +6715,24 @@ function buildMasterAttrMap(){
   const cBrand=mkFind(pc,['nama merek','nama_merek','brand_name','namamerek','brand','merek','merk']);
   const cPrin=mkFind(pc,['nama prinsipal','prinsipal','principal','nama_prinsipal','principle']);
   const cSupp=mkFind(pc,['nama supplier','supplier','nama_supplier','vendor','pemasok']);
+  const cSection=mkFind(pc,['section','seksi','nama section','nama_section','section name']);
+  const cRack=mkFind(pc,['rack','reguler rack','regular rack','nama rack','rack name','no rack','no_rack']);
+  const cCat=mkFind(pc,['category','kategori','nama category','nama_kategori','category name','subdept','sub dept','sub_dept']);
+  const cCatCode=mkFind(pc,['category code','kode kategori','cat code','catcode','kode_kategori','kode category','subdept code','kode subdept']);
   const map=new Map();
   prod.forEach(p=>{
     const k=mkPlu(p[cPlu]);if(!k)return;
     map.set(k,{
       brand:cBrand?String(p[cBrand]||'').trim():'',
       principal:cPrin?String(p[cPrin]||'').trim():'',
-      supplier:cSupp?String(p[cSupp]||'').trim():''
+      supplier:cSupp?String(p[cSupp]||'').trim():'',
+      section:cSection?String(p[cSection]||'').trim():'',
+      rack:cRack?String(p[cRack]||'').trim():'',
+      category:cCat?String(p[cCat]||'').trim():'',
+      catCode:cCatCode?String(p[cCatCode]||'').trim():''
     });
   });
-  return {map,has:{brand:!!cBrand,principal:!!cPrin,supplier:!!cSupp}};
+  return {map,has:{brand:!!cBrand,principal:!!cPrin,supplier:!!cSupp,section:!!cSection,rack:!!cRack,category:!!cCat,catCode:!!cCatCode}};
 }
 // Self-heal: master Oramas mungkin belum ter-restore saat panel dibuka — coba muat dari IndexedDB lalu render ulang
 let _prodEnsureBusy=false;
@@ -6895,6 +6942,87 @@ function ppExportCSV(){
   const lines=['Rank,'+label+',Omzet,Share %,Margin,GM %,SKU,SKU Promo,% SKU Promo'];
   _ppRows.forEach((a,i)=>lines.push([i+1,q(a.name),R(a.net),(total?a.net/total*100:0).toFixed(2),R(a.margin),a.gm===null?'':a.gm.toFixed(1),a.skus,a.promoSku===null?'':a.promoSku,a.promoSku===null||!a.skus?'':(a.promoSku/a.skus*100).toFixed(0)].join(',')));
   dlCSV(lines,label+'_Performance.csv');
+}
+
+// ══════════════════════════════════════════════
+//  KONTRIBUSI SECTION & CATEGORY (Oramas)
+// ══════════════════════════════════════════════
+let _scSection=null,_scCat=null;
+function renderSectionContribution(){
+  const box=document.getElementById('scAlert'),txt=document.getElementById('scAlertText'),res=document.getElementById('sc-result'),dl=document.getElementById('scDl');
+  const bail=msg=>{if(box){box.style.display='flex';txt.innerHTML=msg;}if(res)res.style.display='none';if(dl)dl.style.display='none';_scSection=null;_scCat=null;};
+  const sales=(typeof uploads!=='undefined'&&Array.isArray(uploads.sales))?uploads.sales:[];
+  if(!sales.length) return bail('<strong>Belum ada data sales.</strong> Upload di Data Management dulu.');
+  const master=buildMasterAttrMap();
+  if(!master){ pfEnsureProductLoaded(renderSectionContribution); return bail('<strong>Product Master (Oramas) belum diunggah.</strong> Menu ini membaca Section &amp; Category dari master lalu disambungkan ke sales via PLU.'); }
+  if(!master.has.section && !master.has.category) return bail('<strong>Kolom Section / Category tidak ditemukan di Product Master.</strong> Pastikan master Oramas memuat kolom Section dan/atau Category.');
+  const sc=Object.keys(sales[0]||{});
+  const cPlu=mkFind(sc,['plu','item_code','kode_barang','barcode','sku']);
+  if(!cPlu) return bail('<strong>Kolom PLU tidak terdeteksi di data sales.</strong>');
+  const cNet=mkFind(sc,['net sales','net_sales','netsales','amount','nilai']);
+  const cQty=mkFind(sc,['qty','quantity','jumlah']);
+  const cCogs=mkFind(sc,['cost_sls','cogs','hpp']);
+  const cAvgCost=mkFind(sc,['avg_cost','avgcost','harga_pokok']);
+  const cType=mkFind(sc,['type','tipe','jenis']);
+  const secAgg={},catAgg={};
+  sales.forEach(r=>{
+    if(cType){const t=String(r[cType]||'').trim().toUpperCase();if(/^[VRX]/.test(t))return;}
+    const key=mkPlu(r[cPlu]); if(!key)return;
+    const info=master.map.get(key); if(!info)return;
+    const qty=cQty?mkNum(r[cQty]):0, net=cNet?mkNum(r[cNet]):0;
+    const cogs=cCogs?mkNum(r[cCogs]):(cAvgCost?mkNum(r[cAvgCost])*qty:0);
+    if(master.has.section){ const s=info.section||'(Tanpa Section)'; let a=secAgg[s]||(secAgg[s]={name:s,net:0,cogs:0,plus:new Set()}); a.net+=net;a.cogs+=cogs;a.plus.add(key); }
+    if(master.has.category){ const cn=info.category||info.catCode||'(Tanpa Category)'; const label=info.catCode&&info.category?info.catCode+' - '+info.category:cn; let a=catAgg[label]||(catAgg[label]={name:label,net:0,cogs:0,plus:new Set()}); a.net+=net;a.cogs+=cogs;a.plus.add(key); }
+  });
+  const secRows=Object.values(secAgg).map(a=>({name:a.name,plu:a.plus.size,net:a.net,gm:a.net-a.cogs})).filter(r=>r.net!==0).sort((x,y)=>y.net-x.net);
+  const catRows=Object.values(catAgg).map(a=>({name:a.name,plu:a.plus.size,net:a.net,gm:a.net-a.cogs})).filter(r=>r.net!==0).sort((x,y)=>y.net-x.net);
+  if(!secRows.length && !catRows.length) return bail('<strong>Tidak ada PLU sales yang cocok dengan master.</strong> Periksa kembali PLU di kedua data.');
+  const totNetS=secRows.reduce((s,r)=>s+r.net,0)||1, totPluS=secRows.reduce((s,r)=>s+r.plu,0)||1, totGmS=secRows.reduce((s,r)=>s+r.gm,0);
+  const totNetC=catRows.reduce((s,r)=>s+r.net,0)||1, totGmC=catRows.reduce((s,r)=>s+r.gm,0), totPluC=catRows.reduce((s,r)=>s+r.plu,0);
+  const money=v=>(typeof fmt==='function')?fmt(v):Math.round(v).toLocaleString('en-US');
+  const kpi=document.getElementById('sc-kpi');
+  const topSec=secRows[0], topCat=catRows[0];
+  if(kpi)kpi.innerHTML=`
+    <div class="stat-card blue"><div class="stat-label">Total Section</div><div class="stat-value">${secRows.length}</div><div class="stat-sub">punya penjualan</div></div>
+    <div class="stat-card green"><div class="stat-label">Section Teratas</div><div class="stat-value" style="font-size:18px">${topSec?topSec.name:'—'}</div><div class="stat-sub">${topSec?(topSec.net/totNetS*100).toFixed(1)+'% NS':''}</div></div>
+    <div class="stat-card amber"><div class="stat-label">Total Category</div><div class="stat-value">${catRows.length}</div><div class="stat-sub">punya penjualan</div></div>
+    <div class="stat-card purple"><div class="stat-label">GM% Portofolio</div><div class="stat-value">${(totGmS/totNetS*100).toFixed(1)}%</div><div class="stat-sub">${money(totNetS)} NS</div></div>`;
+  const secBody=document.getElementById('scSectionBody');
+  if(secBody)secBody.innerHTML=secRows.map(r=>`<tr>
+    <td style="font-weight:600">${r.name}</td>
+    <td class="right">${r.plu.toLocaleString('en-US')}</td>
+    <td class="right">${(r.plu/totPluS*100).toFixed(1)}%</td>
+    <td class="right">${money(r.net)}</td>
+    <td class="right">${money(r.gm)}</td>
+    <td class="right">${(r.net?r.gm/r.net*100:0).toFixed(2)}%</td>
+    <td class="right"><b>${(r.net/totNetS*100).toFixed(2)}%</b></td></tr>`).join('');
+  const secFoot=document.getElementById('scSectionFoot');
+  if(secFoot)secFoot.innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td>TOTAL · ${secRows.length}</td><td class="right">${totPluS.toLocaleString('en-US')}</td><td class="right">100%</td><td class="right">${money(totNetS)}</td><td class="right">${money(totGmS)}</td><td class="right">${(totGmS/totNetS*100).toFixed(2)}%</td><td class="right">100%</td></tr>`;
+  const catBody=document.getElementById('scCatBody');
+  if(catBody)catBody.innerHTML=catRows.map(r=>`<tr>
+    <td style="font-weight:600">${r.name}</td>
+    <td class="right">${r.plu.toLocaleString('en-US')}</td>
+    <td class="right">${money(r.net)}</td>
+    <td class="right">${money(r.gm)}</td>
+    <td class="right">${(r.net?r.gm/r.net*100:0).toFixed(2)}%</td>
+    <td class="right"><b>${(r.net/totNetC*100).toFixed(2)}%</b></td></tr>`).join('');
+  const catFoot=document.getElementById('scCatFoot');
+  if(catFoot)catFoot.innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td>TOTAL · ${catRows.length}</td><td class="right">${totPluC.toLocaleString('en-US')}</td><td class="right">${money(totNetC)}</td><td class="right">${money(totGmC)}</td><td class="right">${(totGmC/totNetC*100).toFixed(2)}%</td><td class="right">100%</td></tr>`;
+  document.getElementById('scSectionTable').style.display=secRows.length?'':'none';
+  document.getElementById('scCatTable').style.display=catRows.length?'':'none';
+  if(box)box.style.display='none'; if(res)res.style.display='block'; if(dl)dl.style.display='';
+  _scSection={rows:secRows,totNet:totNetS,totPlu:totPluS,totGm:totGmS};
+  _scCat={rows:catRows,totNet:totNetC,totGm:totGmC};
+}
+function downloadExcelSectionContribution(){
+  if(!_scSection&&!_scCat){alert('Buka data dulu.');return;}
+  const R=Math.round, rows=[['=== %CONT NS BY SECTION ===']];
+  if(_scSection){ rows.push(['Section','PLU Active','%Cont PLU','NS','GM','%GM','%Cont NS']);
+    _scSection.rows.forEach(r=>rows.push([r.name,r.plu,parseFloat((r.plu/_scSection.totPlu*100).toFixed(1)),R(r.net),R(r.gm),parseFloat((r.net?r.gm/r.net*100:0).toFixed(2)),parseFloat((r.net/_scSection.totNet*100).toFixed(2))])); }
+  rows.push([],['=== %CONT NS BY CATEGORY ===']);
+  if(_scCat){ rows.push(['Category','PLU Active','NS','GM','%GM','%Cont NS']);
+    _scCat.rows.forEach(r=>rows.push([r.name,r.plu,R(r.net),R(r.gm),parseFloat((r.net?r.gm/r.net*100:0).toFixed(2)),parseFloat((r.net/_scCat.totNet*100).toFixed(2))])); }
+  if(typeof xlsDownload==='function')xlsDownload(rows,'Section Contribution','section_contribution');
 }
 
 // ══════════════════════════════════════════════
@@ -12955,7 +13083,7 @@ const PANEL_GROUP_MAP = {
   'mem-demo':'grp-members','mem-transactions':'grp-members','mem-retention':'grp-members',
   'mem-category':'grp-members',
   'promo-effectiveness':'grp-marketing','juklak-lookup':'grp-marketing','juklak-recap':'grp-marketing','promo-contribution':'grp-marketing','promo-member':'grp-marketing','promo-items':'grp-marketing',
-  'promo-categories':'grp-marketing','basket':'grp-marketing','brand-perf':'grp-marketing','principal-perf':'grp-marketing','promo-mechanic':'grp-marketing',
+  'promo-categories':'grp-marketing','basket':'grp-marketing','brand-perf':'grp-marketing','principal-perf':'grp-marketing','section-contribution':'grp-marketing','promo-mechanic':'grp-marketing',
   'sku-pareto':'grp-catmgmt','cat-overview':'grp-catmgmt','cat-promo-potential':'grp-catmgmt',
   'cat-member':'grp-catmgmt','cat-trend':'grp-catmgmt','cat-time':'grp-catmgmt','cat-detail':'grp-catmgmt',
   'revenue-drivers':'grp-analytics','peak-hours':'grp-analytics','void-return':'grp-analytics','ai-strategy':'grp-analytics','ai-chat':'grp-analytics',
