@@ -3628,7 +3628,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 
   <!-- ── RECEIPT VALUE THRESHOLD (berapa struk di atas nilai X) ── -->
   <div class="chart-card" style="margin-top:20px">
-    <div class="chart-header"><div><div class="chart-title">Receipts Above a Value</div><div class="chart-subtitle">Count how many receipts (transactions) have a basket value ≥ the value you enter</div></div></div>
+    <div class="chart-header"><div><div class="chart-title">Receipts Above a Value</div><div class="chart-subtitle">Count how many receipts (transactions) have a basket value ≥ the value you enter · <b style="color:var(--text2)">Filter Bulan &amp; Toko di bawah ini juga berlaku untuk kartu “Basket Affinity”</b></div></div></div>
     <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:6px 0 18px">
       <div style="display:flex;flex-direction:column;gap:5px">
         <label style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Minimum value (Tk)</label>
@@ -3702,6 +3702,14 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
         <button class="filter-btn" onclick="rcSet('271')">Rokok 271</button>
         <button class="filter-btn" onclick="rcSet('112')">Minyak 112</button>
       </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Bulan</label>
+        <select class="filter-select" id="rcMonthSel" onchange="renderRtCategory()" style="min-width:150px"><option value="ALL">Semua Bulan</option></select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Toko</label>
+        <select class="filter-select" id="rcStoreSel" onchange="renderRtCategory()" style="min-width:150px"><option value="ALL">Semua Toko</option></select>
+      </div>
     </div>
     <div class="stats-grid">
       <div class="stat-card blue"><div class="stat-label">Receipts</div><div class="stat-value" id="rc-count">—</div><div class="stat-sub" id="rc-count-sub">Type a keyword above</div></div>
@@ -3713,7 +3721,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 
   <!-- ── BASKET AFFINITY (kategori sering dibeli bersamaan) ── -->
   <div class="chart-card" style="margin-top:20px">
-    <div class="chart-header"><div><div class="chart-title">Basket Affinity — Categories Bought Together</div><div class="chart-subtitle" id="ba-sub">Which category pairs appear in the same receipt most often — for cross-sell &amp; shelf placement</div></div></div>
+    <div class="chart-header"><div><div class="chart-title">Basket Affinity — Categories Bought Together <span style="font-size:10.5px;font-weight:600;color:var(--accent);background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);border-radius:5px;padding:2px 7px;margin-left:7px;vertical-align:middle">mengikuti filter di kartu “Receipts Above a Value”</span></div><div class="chart-subtitle" id="ba-sub">Which category pairs appear in the same receipt most often — for cross-sell &amp; shelf placement</div></div></div>
     <div id="ba-empty" style="display:none;padding:24px;text-align:center;color:var(--text3);font-size:13px">Category column not detected — affinity needs a category field in the sales data.</div>
     <div style="overflow-x:auto">
       <table id="ba-table" class="data-table" style="width:100%;font-size:12.5px;margin-top:6px">
@@ -8112,15 +8120,6 @@ function rtFillMonthSel(){
     st.dataset.stamp=stamp;
   }
 }
-function rtFillMonthSelOld(){
-  const sel=document.getElementById('rtMonthSel');
-  if(!sel||sel.dataset.filled==='1'||!_rtReceipts) return;
-  const set=new Set(); _rtReceipts.forEach(o=>{ if(o.month!=null) set.add(o.month); });
-  const ms=[...set].sort((a,b)=>a-b);
-  if(!ms.length) return;
-  sel.innerHTML='<option value="ALL">Semua Bulan</option>'+ms.map(m=>'<option value="'+m+'">'+(RT_MON[m-1]||m)+'</option>').join('');
-  sel.dataset.filled='1';
-}
 // Tabel sebaran per rentang nilai — TIDAK kumulatif (tiap struk masuk satu band)
 function rtRenderBands(view, th){
   const body=document.getElementById('rtBandBody'), foot=document.getElementById('rtBandFoot');
@@ -8152,7 +8151,7 @@ function rtRenderBands(view, th){
     +'<td class="right">'+fmt(b.cnt?b.net/b.cnt:0)+'</td>'
     +'<td class="right" style="font-weight:600">'+b.cum.toLocaleString('en-US')+'</td>'
     +'<td class="right">'+(tCnt?(b.cum/tCnt*100):0).toFixed(1)+'%</td></tr>';}).join('')
-    || '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:18px">Tidak ada struk pada bulan terpilih</td></tr>';
+    || '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:18px">Tidak ada struk pada filter ini</td></tr>';
   if(foot) foot.innerHTML='<tr style="font-weight:700;border-top:2px solid var(--border2)"><td>TOTAL</td><td class="right">'+tCnt.toLocaleString('en-US')+'</td><td class="right">100%</td><td class="right">'+fmt(tNet)+'</td><td class="right">100%</td><td class="right">'+fmt(tCnt?tNet/tCnt:0)+'</td><td class="right">'+tCnt.toLocaleString('en-US')+'</td><td class="right">100%</td></tr>';
 }
 function renderReceiptThreshold() {
@@ -8163,27 +8162,27 @@ function renderReceiptThreshold() {
   const th = thEl ? (parseFloat(String(thEl.value).replace(/[^\d.]/g,''))||0) : 0;
   const VIEW = rtViewReceipts();
   const totReceipts = VIEW.length;
+  const hasAnyData = !!(_rtReceipts && _rtReceipts.length);
   if (!totReceipts) {
     ['rt-count','rt-pct','rt-rev','rt-revpct'].forEach(id=>set(id,'—'));
-    set('rt-count-sub','No sales data yet'); set('rt-pct-sub','—'); set('rt-rev-sub','—');
-    rtRenderBands([], th);
-    renderRtBreakdowns(th, false);
-    return;
+    set('rt-count-sub', hasAnyData?'Tidak ada struk pada filter ini':'No sales data yet'); set('rt-pct-sub','—'); set('rt-rev-sub','—');
+  } else {
+    let cnt=0, rev=0, viewNet=0;
+    VIEW.forEach(o=>{ viewNet+=o.net; if(o.net>=th){ cnt++; rev+=o.net; } });
+    set('rt-count', cnt.toLocaleString('en-US'));
+    set('rt-count-sub', 'of '+totReceipts.toLocaleString('en-US')+' total receipts');
+    set('rt-pct', (cnt/totReceipts*100).toFixed(1)+'%');
+    set('rt-pct-sub', 'receipts worth ≥ Tk '+th.toLocaleString('en-US'));
+    set('rt-rev', fmt(rev));
+    set('rt-rev-sub', 'total sales of these receipts');
+    set('rt-revpct', (viewNet>0?rev/viewNet*100:0).toFixed(1)+'%');
   }
-  let cnt=0, rev=0, viewNet=0;
-  VIEW.forEach(o=>{ viewNet+=o.net; if(o.net>=th){ cnt++; rev+=o.net; } });
-  const pct = totReceipts>0 ? (cnt/totReceipts*100) : 0;
-  const revPct = viewNet>0 ? (rev/viewNet*100) : 0;
-  rtRenderBands(VIEW, th);
-  set('rt-count', cnt.toLocaleString('en-US'));
-  set('rt-count-sub', 'of '+totReceipts.toLocaleString('en-US')+' total receipts');
-  set('rt-pct', pct.toFixed(1)+'%');
-  set('rt-pct-sub', 'receipts worth ≥ Tk '+th.toLocaleString('en-US'));
-  set('rt-rev', fmt(rev));
-  set('rt-rev-sub', 'total sales of these receipts');
-  set('rt-revpct', revPct.toFixed(1)+'%');
-  renderRtBreakdowns(th, true);
+  // SATU jalur keluar: seluruh blok turunan selalu dirender ulang, sehingga tidak ada
+  // blok yang menyimpan angka dari filter sebelumnya.
+  rtRenderBands(totReceipts?VIEW:[], th);
+  renderRtBreakdowns(th, totReceipts>0);
   renderRtCategory();
+  renderBasketAffinity();
 }
 
 // ── Cari berapa struk mengandung kategori/produk tertentu (mis. "rokok") ──
@@ -8193,11 +8192,30 @@ function renderRtCategory() {
   const inp = document.getElementById('rtCatSearch');
   const term = inp ? String(inp.value||'').toLowerCase().trim() : '';
   rtFillMonthSel();
-  const VIEW = rtViewReceipts();          // ikut filter Bulan & Toko di blok atas
-  const tot = VIEW ? VIEW.length : 0;
+  rtFillMonthSel();
+  // filter sendiri untuk kartu ini (independen dari blok Receipts Above a Value)
+  const mSel=document.getElementById('rcMonthSel'), sSel=document.getElementById('rcStoreSel');
+  const stamp=_rtReceipts?(_rtReceipts.length+'|'+_rtSourceLen):'';
+  const fill=(sel,html)=>{const keep=sel.value;sel.innerHTML=html;sel.value=[...sel.options].some(o=>o.value===keep)?keep:'ALL';};
+  if(mSel&&_rtReceipts&&mSel.dataset.stamp!==stamp){
+    const set2=new Set();_rtReceipts.forEach(o=>{if(o.month!=null)set2.add(o.month);});
+    fill(mSel,'<option value="ALL">Semua Bulan</option>'+[...set2].sort((a,b)=>a-b).map(m=>`<option value="${m}">${MONTH_NAMES[m-1]||m}</option>`).join(''));
+    mSel.dataset.stamp=stamp;
+  }
+  if(sSel&&_rtReceipts&&sSel.dataset.stamp!==stamp){
+    const set2=new Set();_rtReceipts.forEach(o=>{if(o.store&&o.store!=='—')set2.add(o.store);});
+    fill(sSel,'<option value="ALL">Semua Toko</option>'+[...set2].sort().map(v=>`<option value="${v}">${v}</option>`).join(''));
+    sSel.dataset.stamp=stamp;
+  }
+  const vm=mSel?mSel.value:'ALL', vs=sSel?sSel.value:'ALL';
+  let VIEW=_rtReceipts||[];
+  if(vm!=='ALL')VIEW=VIEW.filter(o=>String(o.month)===String(vm));
+  if(vs!=='ALL')VIEW=VIEW.filter(o=>String(o.store)===String(vs));
+  const tot = VIEW.length;
   if (!tot || !_rtHas.cat) {
     ['rc-count','rc-pct','rc-rev','rc-avg'].forEach(id=>set(id,'—'));
-    set('rc-count-sub', !_rtHas.cat ? 'Category/product column not detected' : 'No sales data yet');
+    set('rc-count-sub', !_rtHas.cat ? 'Category/product column not detected' : ((_rtReceipts&&_rtReceipts.length)?'Tidak ada struk pada filter ini':'No sales data yet'));
+    set('rc-pct-sub','—'); set('rc-rev-sub','—');
     return;
   }
   if (!term) { ['rc-count','rc-pct','rc-rev','rc-avg'].forEach(id=>set(id,'—')); set('rc-count-sub','Type a keyword above'); set('rc-pct-sub','—'); set('rc-rev-sub','—'); return; }
@@ -8221,11 +8239,12 @@ function renderBasketAffinity(){
   const empty=document.getElementById('ba-empty');
   const table=document.getElementById('ba-table');
   if(!body) return;
-  const recs=(_rtReceipts||[]).filter(o=>o.catSet&&o.catSet.size>=1);
+  const recs=rtViewReceipts().filter(o=>o.catSet&&o.catSet.size>=1);
   const multi=recs.filter(o=>o.catSet.size>=2);
   if(!_rtHas.cat || !multi.length){
-    if(empty){empty.style.display='block'; empty.textContent=!_rtHas.cat?'Category column not detected — affinity needs a category field in the sales data.':'Not enough multi-category receipts to compute affinity.';}
+    if(empty){empty.style.display='block'; empty.textContent=!_rtHas.cat?'Category column not detected — affinity needs a category field in the sales data.':(!recs.length?'Tidak ada struk pada filter ini.':'Not enough multi-category receipts to compute affinity.');}
     if(table)table.style.display='none';
+    const _sub=document.getElementById('ba-sub'); if(_sub)_sub.textContent='—';
     body.innerHTML=''; return;
   }
   if(empty)empty.style.display='none'; if(table)table.style.display='';
@@ -8265,7 +8284,15 @@ function renderBasketAffinity(){
 // ── Breakdown "struk besar (≥T)" per dimensi ──
 function renderRtBreakdowns(th, hasData) {
   const VIEW = (typeof rtViewReceipts==='function') ? rtViewReceipts() : (VIEW||[]);
-  if (!hasData || !VIEW.length) return;
+  if (!hasData || !VIEW.length) {
+    // Wajib membersihkan output: instance Chart.js yang tidak dirender ulang akan tetap
+    // menampilkan data filter sebelumnya (mis. toko yang justru sudah difilter keluar).
+    ['rtStoreChart','rtMonthChart','rtSegChart','rtDowChart','rtHourChart'].forEach(id=>{
+      if(typeof destroyChart==='function')destroyChart(id);
+    });
+    ['rt-store-note','rt-seg-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='—';});
+    return;
+  }
   const big = VIEW.filter(o=>o.net>=th);
   const noteId = (id,txt)=>{ const el=document.getElementById(id); if(el) el.textContent=txt; };
   const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
