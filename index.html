@@ -1734,6 +1734,10 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="2" width="13" height="3" rx="1"/><rect x="1.5" y="6.5" width="13" height="3" rx="1"/><rect x="1.5" y="11" width="13" height="3" rx="1"/></svg>
           Kontribusi Section
         </button>
+        <button class="nav-item" onclick="showPanel('promo-discount',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 3L3 13"/><circle cx="4.5" cy="4.5" r="1.8"/><circle cx="11.5" cy="11.5" r="1.8"/></svg>
+          Breakdown Diskon
+        </button>
         <button class="nav-item" onclick="showPanel('promo-mechanic',this)">
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 5h5v9H2zM9 5h5v9H9z"/><path d="M4.5 5V2.5M11.5 5V2.5"/></svg>
           Promo Mechanic
@@ -4784,6 +4788,50 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 </div>
 
 <!-- ══════════════════════════════════
+     PANEL: BREAKDOWN DISKON PROMO
+══════════════════════════════════ -->
+<div id="panel-promo-discount" class="panel">
+  <div class="page-header">
+    <div><div class="page-title">🏷 Breakdown Diskon Promo</div><div class="page-subtitle">Sebaran promo menurut %diskon, nominal diskon, dan range harga promo yang paling banyak dibeli konsumen</div></div>
+    <button class="btn-dl" id="pdcDl" onclick="downloadExcelPromoDiscount()" style="display:none">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg>Export Excel
+    </button>
+  </div>
+  <div id="pdcAlert" style="display:none" class="alert-box amber"><span style="font-size:16px">⚠️</span><div id="pdcAlertText"></div></div>
+  <div id="pdc-result" style="display:none">
+    <div class="stats-grid" id="pdc-kpi" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px"></div>
+
+    <div class="section-title">Breakdown by %Diskon</div>
+    <div class="chart-card" style="margin-bottom:20px">
+      <div class="chart-subtitle" style="margin-bottom:10px">Diskon = (harga normal − harga promo) ÷ harga normal. Tiap PLU masuk satu band.</div>
+      <div class="table-wrap"><table class="data-table"><thead><tr>
+        <th>Band %Diskon</th><th class="right"># PLU</th><th class="right">Qty Terjual</th>
+        <th class="right">Net Sales</th><th class="right">% Qty</th><th class="right">% Net Sales</th><th class="right">Avg Diskon</th>
+      </tr></thead><tbody id="pdcPctBody"></tbody><tfoot id="pdcPctFoot"></tfoot></table></div>
+    </div>
+
+    <div class="section-title">Breakdown by Nominal Diskon (Tk)</div>
+    <div class="chart-card" style="margin-bottom:20px">
+      <div class="chart-subtitle" style="margin-bottom:10px">Nominal diskon per unit = harga normal − harga promo.</div>
+      <div class="table-wrap"><table class="data-table"><thead><tr>
+        <th>Band Nominal</th><th class="right"># PLU</th><th class="right">Qty Terjual</th>
+        <th class="right">Net Sales</th><th class="right">% Qty</th><th class="right">Total Diskon Diberikan</th>
+      </tr></thead><tbody id="pdcNomBody"></tbody><tfoot id="pdcNomFoot"></tfoot></table></div>
+    </div>
+
+    <div class="section-title">Range Harga Promo — Paling Banyak Dibeli</div>
+    <div class="chart-card">
+      <div class="chart-subtitle" style="margin-bottom:10px">Pada harga promo berapa konsumen paling banyak membeli. Diurut dari qty terbanyak.</div>
+      <div class="table-wrap"><table class="data-table"><thead><tr>
+        <th>Range Harga Promo</th><th class="right"># PLU</th><th class="right">Qty Terjual</th>
+        <th class="right">Net Sales</th><th class="right">% Qty</th><th class="right">Avg Harga Promo</th>
+      </tr></thead><tbody id="pdcPriceBody"></tbody><tfoot id="pdcPriceFoot"></tfoot></table></div>
+      <div id="pdcSweet" style="margin-top:14px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:12.5px;color:var(--text2);line-height:1.7"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
      PANEL: PROMO MECHANIC
 ══════════════════════════════════ -->
 <div id="panel-promo-mechanic" class="panel">
@@ -6113,6 +6161,7 @@ function renderPanel(id) {
     case 'brand-perf': renderBrandPerf(); break;
     case 'principal-perf': renderPrincipalPerf(); break;
     case 'section-contribution': renderSectionContribution(); break;
+    case 'promo-discount': renderPromoDiscount(); break;
     case 'promo-mechanic': renderPromoMechanic(); break;
     case 'peak-hours': renderPeakHours(); break;
     case 'price-elasticity': renderPriceElasticity(); break;
@@ -6715,10 +6764,23 @@ function buildMasterAttrMap(){
   const cBrand=mkFind(pc,['nama merek','nama_merek','brand_name','namamerek','brand','merek','merk']);
   const cPrin=mkFind(pc,['nama prinsipal','prinsipal','principal','nama_prinsipal','principle']);
   const cSupp=mkFind(pc,['nama supplier','supplier','nama_supplier','vendor','pemasok']);
-  const cSection=mkFind(pc,['section','seksi','nama section','nama_section','section name']);
-  const cRack=mkFind(pc,['rack','reguler rack','regular rack','nama rack','rack name','no rack','no_rack']);
-  const cCat=mkFind(pc,['category','kategori','nama category','nama_kategori','category name','subdept','sub dept','sub_dept']);
-  const cCatCode=mkFind(pc,['category code','kode kategori','cat code','catcode','kode_kategori','kode category','subdept code','kode subdept']);
+  const cSection=mkFind(pc,['section','seksi','nama section','nama_section','section name','sectionname','nama seksi','dept','department','departemen','nama dept','nama departemen','dept name','deptname','divisi','division','div','grup','group','kelompok']);
+  const cRack=mkFind(pc,['rack','reguler rack','regular rack','nama rack','rack name','no rack','no_rack','jumlah rack','jml rack','qty rack']);
+  const cCatCode=mkFind(pc,['category code','kode kategori','cat code','catcode','kode_kategori','kode category','subdept code','kode subdept','kodesubdept','sub dept code','kode sub dept','category id','cat id']);
+  const cCat=mkFind(pc,['category name','nama category','nama kategori','nama_kategori','category desc','deskripsi kategori','nama subdept','subdept name','nama sub dept','sub dept name','subdept','sub dept','sub_dept','category','kategori','katagori','deskripsi subdept']);
+  // Kolom seperti "SECTION"/"CATEGORY" di Oramas kadang berisi KODE, sementara namanya ada di kolom lain.
+  // Pilih otomatis kolom yang isinya teks (nama), bukan angka.
+  const _numish=col=>{if(!col)return 1;let n=0,t=0;for(let i=0;i<prod.length&&t<200;i++){const v=String(prod[i][col]==null?'':prod[i][col]).trim();if(!v)continue;t++;if(/^[0-9.,\-\s]+$/.test(v))n++;}return t?n/t:1;};
+  const _pickName=(picked,words)=>{
+    if(picked&&_numish(picked)<0.8)return picked;                      // sudah berisi teks
+    const cands=pc.filter(c=>{const s=String(c).toLowerCase();return words.some(w=>s.includes(w));});
+    let best=picked,bestScore=picked?_numish(picked):1;
+    cands.forEach(c=>{const sc=_numish(c);if(sc<bestScore){bestScore=sc;best=c;}});
+    return best;
+  };
+  const cSectionName=_pickName(cSection,['section','seksi','dept','divisi','division','grup','group']);
+  const cCatName=_pickName(cCat,['category','kategori','katagori','subdept','sub dept']);
+  const cSectionCode=(cSection&&cSection!==cSectionName)?cSection:null;
   const map=new Map();
   prod.forEach(p=>{
     const k=mkPlu(p[cPlu]);if(!k)return;
@@ -6726,13 +6788,15 @@ function buildMasterAttrMap(){
       brand:cBrand?String(p[cBrand]||'').trim():'',
       principal:cPrin?String(p[cPrin]||'').trim():'',
       supplier:cSupp?String(p[cSupp]||'').trim():'',
-      section:cSection?String(p[cSection]||'').trim():'',
+      section:cSectionName?String(p[cSectionName]||'').trim():'',
+      sectionCode:cSectionCode?String(p[cSectionCode]||'').trim():'',
       rack:cRack?String(p[cRack]||'').trim():'',
-      category:cCat?String(p[cCat]||'').trim():'',
+      category:cCatName?String(p[cCatName]||'').trim():'',
       catCode:cCatCode?String(p[cCatCode]||'').trim():''
     });
   });
-  return {map,has:{brand:!!cBrand,principal:!!cPrin,supplier:!!cSupp,section:!!cSection,rack:!!cRack,category:!!cCat,catCode:!!cCatCode}};
+  return {map,has:{brand:!!cBrand,principal:!!cPrin,supplier:!!cSupp,section:!!cSectionName,rack:!!cRack,category:!!cCatName,catCode:!!cCatCode},
+    cols:{section:cSectionName||null,sectionCode:cSectionCode,rack:cRack||null,category:cCatName||null,catCode:cCatCode||null},allCols:pc};
 }
 // Self-heal: master Oramas mungkin belum ter-restore saat panel dibuka — coba muat dari IndexedDB lalu render ulang
 let _prodEnsureBusy=false;
@@ -6945,6 +7009,117 @@ function ppExportCSV(){
 }
 
 // ══════════════════════════════════════════════
+//  BREAKDOWN DISKON PROMO (%diskon, nominal, range harga)
+// ══════════════════════════════════════════════
+let _pdcLast=null;
+function renderPromoDiscount(){
+  const box=document.getElementById('pdcAlert'),txt=document.getElementById('pdcAlertText'),res=document.getElementById('pdc-result'),dl=document.getElementById('pdcDl');
+  const bail=m=>{if(box){box.style.display='flex';txt.innerHTML=m;}if(res)res.style.display='none';if(dl)dl.style.display='none';_pdcLast=null;};
+  const juk=(Array.isArray(uploads.promo))?uploads.promo:[];
+  const sales=(Array.isArray(uploads.sales))?uploads.sales:[];
+  if(!juk.length) return bail('<strong>Data Juklak belum ada.</strong> Aktifkan/upload juklak di Data Management dulu.');
+  if(!sales.length) return bail('<strong>Data Sales belum ada.</strong>');
+  const jCols=jColDetect(juk), sCols=sColDetect(sales);
+  if(!jCols.code) return bail('<strong>Kolom PLU juklak tidak ditemukan.</strong>');
+  if(!jCols.promoPrice) return bail('<strong>Kolom harga promo tidak ditemukan di juklak.</strong> Perlu kolom seperti "Consumer Promo Price" / "Harga Promo".');
+  const jukF=jklRowsFilled();
+  const pN=v=>{const n=parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,''));return isNaN(n)?0:n;};
+  // PLU -> {promoP, normP, disc, discPct, range aktif}
+  const info=new Map();
+  jukF.forEach(r=>{
+    const raw=String(r[jCols.code]||'').trim(); if(!raw)return;
+    const key=raw.replace(/^0+/,'')||raw;
+    let promoP=pN(r[jCols.promoPrice]);
+    let normP=jCols.normPrice?pN(r[jCols.normPrice]):0;
+    if(normP<=0&&typeof masterPriceOf==='function'){try{normP=masterPriceOf(raw)||0;}catch(_){}}
+    if(promoP<=0)return;
+    const s=jCols.startDate?pfParseDate(r[jCols.startDate]):null, e=jCols.endDate?pfParseDate(r[jCols.endDate]):null;
+    let it=info.get(key);
+    if(!it){it={plu:raw,promoP,normP,s,e,qty:0,net:0};info.set(key,it);}
+    else{ if(it.promoP<=0)it.promoP=promoP; if(it.normP<=0)it.normP=normP;
+      if(s!=null)it.s=(it.s==null)?s:Math.min(it.s,s); if(e!=null)it.e=(it.e==null)?e:Math.max(it.e,e); }
+  });
+  if(!info.size) return bail('<strong>Tidak ada PLU juklak dengan harga promo terisi.</strong>');
+  // sales dalam periode promo
+  sales.forEach(r=>{
+    if(!sCols.plu)return;
+    const raw=String(r[sCols.plu]||'').trim(); if(!raw)return;
+    const key=raw.replace(/^0+/,'')||raw;
+    const it=info.get(key); if(!it)return;
+    const sd=sCols.date?pfParseDate(r[sCols.date]):null;
+    if((it.s!=null||it.e!=null)&&sd!=null){ if(it.s!=null&&sd<it.s)return; if(it.e!=null&&sd>it.e+864e5-1)return; }
+    it.qty+=sCols.qty?pN(r[sCols.qty]):0;
+    it.net+=sCols.net?pN(r[sCols.net]):0;
+  });
+  const items=[...info.values()];
+  const withPct=items.filter(i=>i.normP>0&&i.promoP>0&&i.normP>=i.promoP);
+  const money=v=>(typeof fmt==='function')?fmt(v):Math.round(v).toLocaleString('en-US');
+  const N=v=>Math.round(v).toLocaleString('en-US');
+  // ── band builders
+  const mkBands=(defs,pick,src)=>{
+    const bs=defs.map(d=>({label:d.label,lo:d.lo,hi:d.hi,plu:0,qty:0,net:0,sum:0}));
+    src.forEach(i=>{const v=pick(i);if(v==null||!isFinite(v))return;
+      const b=bs.find(x=>(x.lo==null||v>x.lo)&&(x.hi==null||v<=x.hi)); if(!b)return;
+      b.plu++;b.qty+=i.qty;b.net+=i.net;b.sum+=v;});
+    return bs;
+  };
+  const pctDefs=[{label:'≤ 5%',lo:null,hi:5},{label:'5,1 – 10%',lo:5,hi:10},{label:'10,1 – 15%',lo:10,hi:15},{label:'15,1 – 20%',lo:15,hi:20},{label:'20,1 – 30%',lo:20,hi:30},{label:'30,1 – 50%',lo:30,hi:50},{label:'> 50%',lo:50,hi:null}];
+  const nomDefs=[{label:'≤ Tk 5',lo:null,hi:5},{label:'Tk 6 – 10',lo:5,hi:10},{label:'Tk 11 – 25',lo:10,hi:25},{label:'Tk 26 – 50',lo:25,hi:50},{label:'Tk 51 – 100',lo:50,hi:100},{label:'Tk 101 – 250',lo:100,hi:250},{label:'> Tk 250',lo:250,hi:null}];
+  const prcDefs=[{label:'≤ Tk 50',lo:null,hi:50},{label:'Tk 51 – 100',lo:50,hi:100},{label:'Tk 101 – 200',lo:100,hi:200},{label:'Tk 201 – 350',lo:200,hi:350},{label:'Tk 351 – 500',lo:350,hi:500},{label:'Tk 501 – 1.000',lo:500,hi:1000},{label:'> Tk 1.000',lo:1000,hi:null}];
+  const pctB=mkBands(pctDefs,i=>(i.normP-i.promoP)/i.normP*100,withPct);
+  const nomB=mkBands(nomDefs,i=>i.normP-i.promoP,withPct);
+  const prcB=mkBands(prcDefs,i=>i.promoP,items);
+  const tQtyP=pctB.reduce((s,b)=>s+b.qty,0)||1,tNetP=pctB.reduce((s,b)=>s+b.net,0)||1,tPluP=pctB.reduce((s,b)=>s+b.plu,0);
+  const tQtyN=nomB.reduce((s,b)=>s+b.qty,0)||1,tNetN=nomB.reduce((s,b)=>s+b.net,0),tPluN=nomB.reduce((s,b)=>s+b.plu,0);
+  const tQtyR=prcB.reduce((s,b)=>s+b.qty,0)||1,tNetR=prcB.reduce((s,b)=>s+b.net,0),tPluR=prcB.reduce((s,b)=>s+b.plu,0);
+  // KPI
+  const avgDisc=withPct.length?withPct.reduce((s,i)=>s+(i.normP-i.promoP)/i.normP*100,0)/withPct.length:0;
+  const totDiscGiven=withPct.reduce((s,i)=>s+(i.normP-i.promoP)*i.qty,0);
+  const bestPct=[...pctB].sort((a,b)=>b.qty-a.qty)[0], bestPrc=[...prcB].sort((a,b)=>b.qty-a.qty)[0];
+  const kpi=document.getElementById('pdc-kpi');
+  if(kpi)kpi.innerHTML=`
+    <div class="stat-card blue"><div class="stat-label">PLU Promo</div><div class="stat-value">${items.length}</div><div class="stat-sub">${withPct.length} punya harga normal</div></div>
+    <div class="stat-card amber"><div class="stat-label">Rata-rata Diskon</div><div class="stat-value">${avgDisc.toFixed(1)}%</div><div class="stat-sub">seluruh PLU promo</div></div>
+    <div class="stat-card green"><div class="stat-label">Band Paling Laku</div><div class="stat-value" style="font-size:17px">${bestPct?bestPct.label:'—'}</div><div class="stat-sub">${bestPct?N(bestPct.qty)+' unit':''}</div></div>
+    <div class="stat-card red"><div class="stat-label">Total Diskon Diberikan</div><div class="stat-value">${money(totDiscGiven)}</div><div class="stat-sub">nominal × qty terjual</div></div>`;
+  // tables
+  const rowsPct=pctB.map(b=>`<tr${b.qty===bestPct.qty&&b.qty>0?' style="background:rgba(63,185,80,0.07)"':''}>
+    <td style="font-weight:600">${b.label}</td><td class="right">${b.plu}</td><td class="right">${N(b.qty)}</td>
+    <td class="right">${money(b.net)}</td><td class="right">${(b.qty/tQtyP*100).toFixed(1)}%</td>
+    <td class="right">${(b.net/tNetP*100).toFixed(1)}%</td><td class="right">${b.plu?(b.sum/b.plu).toFixed(1)+'%':'—'}</td></tr>`).join('');
+  document.getElementById('pdcPctBody').innerHTML=rowsPct;
+  document.getElementById('pdcPctFoot').innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td>TOTAL</td><td class="right">${tPluP}</td><td class="right">${N(tQtyP)}</td><td class="right">${money(tNetP)}</td><td class="right">100%</td><td class="right">100%</td><td class="right">${avgDisc.toFixed(1)}%</td></tr>`;
+  document.getElementById('pdcNomBody').innerHTML=nomB.map(b=>`<tr>
+    <td style="font-weight:600">${b.label}</td><td class="right">${b.plu}</td><td class="right">${N(b.qty)}</td>
+    <td class="right">${money(b.net)}</td><td class="right">${(b.qty/tQtyN*100).toFixed(1)}%</td>
+    <td class="right">${money(b.plu?(b.sum/b.plu)*b.qty:0)}</td></tr>`).join('');
+  document.getElementById('pdcNomFoot').innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td>TOTAL</td><td class="right">${tPluN}</td><td class="right">${N(tQtyN)}</td><td class="right">${money(tNetN)}</td><td class="right">100%</td><td class="right">${money(totDiscGiven)}</td></tr>`;
+  const prcSorted=[...prcB].sort((a,b)=>b.qty-a.qty);
+  document.getElementById('pdcPriceBody').innerHTML=prcSorted.map((b,i)=>`<tr${i===0&&b.qty>0?' style="background:rgba(88,166,255,0.08)"':''}>
+    <td style="font-weight:600">${b.label}${i===0&&b.qty>0?' <span style="font-size:10px;color:var(--accent);font-weight:700">● TERLARIS</span>':''}</td>
+    <td class="right">${b.plu}</td><td class="right">${N(b.qty)}</td><td class="right">${money(b.net)}</td>
+    <td class="right">${(b.qty/tQtyR*100).toFixed(1)}%</td><td class="right">${b.plu?money(b.sum/b.plu):'—'}</td></tr>`).join('');
+  document.getElementById('pdcPriceFoot').innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td>TOTAL</td><td class="right">${tPluR}</td><td class="right">${N(tQtyR)}</td><td class="right">${money(tNetR)}</td><td class="right">100%</td><td class="right">—</td></tr>`;
+  const sw=document.getElementById('pdcSweet');
+  if(sw)sw.innerHTML=bestPrc&&bestPrc.qty>0
+    ?`<b style="color:var(--text)">Sweet spot harga:</b> konsumen paling banyak membeli produk promo di range <b style="color:var(--accent)">${bestPrc.label}</b> — ${N(bestPrc.qty)} unit (${(bestPrc.qty/tQtyR*100).toFixed(1)}% dari total qty promo), rata-rata harga promo ${money(bestPrc.plu?bestPrc.sum/bestPrc.plu:0)}.<br>Band %diskon paling responsif: <b style="color:var(--green)">${bestPct?bestPct.label:'—'}</b>. Gunakan dua angka ini sebagai acuan menyusun harga promo berikutnya — diskon lebih dalam dari band ini belum tentu menambah volume, tapi pasti menambah biaya.`
+    :'Belum ada penjualan pada periode promo untuk dihitung.';
+  if(box)box.style.display='none'; if(res)res.style.display='block'; if(dl)dl.style.display='';
+  _pdcLast={pctB,nomB,prcSorted,totDiscGiven,avgDisc};
+}
+function downloadExcelPromoDiscount(){
+  if(!_pdcLast){alert('Buka data dulu.');return;}
+  const R=Math.round,P=_pdcLast;
+  const rows=[['=== BREAKDOWN BY %DISKON ==='],['Band','#PLU','Qty','Net Sales','Avg Diskon %']];
+  P.pctB.forEach(b=>rows.push([b.label,b.plu,R(b.qty),R(b.net),b.plu?parseFloat((b.sum/b.plu).toFixed(1)):'']));
+  rows.push([],['=== BREAKDOWN BY NOMINAL DISKON ==='],['Band','#PLU','Qty','Net Sales']);
+  P.nomB.forEach(b=>rows.push([b.label,b.plu,R(b.qty),R(b.net)]));
+  rows.push([],['=== RANGE HARGA PROMO (urut terlaris) ==='],['Range','#PLU','Qty','Net Sales','Avg Harga Promo']);
+  P.prcSorted.forEach(b=>rows.push([b.label,b.plu,R(b.qty),R(b.net),b.plu?R(b.sum/b.plu):'']));
+  if(typeof xlsDownload==='function')xlsDownload(rows,'Breakdown Diskon Promo','breakdown_diskon_promo');
+}
+
+// ══════════════════════════════════════════════
 //  KONTRIBUSI SECTION & CATEGORY (Oramas)
 // ══════════════════════════════════════════════
 let _scSection=null,_scCat=null;
@@ -6955,7 +7130,7 @@ function renderSectionContribution(){
   if(!sales.length) return bail('<strong>Belum ada data sales.</strong> Upload di Data Management dulu.');
   const master=buildMasterAttrMap();
   if(!master){ pfEnsureProductLoaded(renderSectionContribution); return bail('<strong>Product Master (Oramas) belum diunggah.</strong> Menu ini membaca Section &amp; Category dari master lalu disambungkan ke sales via PLU.'); }
-  if(!master.has.section && !master.has.category) return bail('<strong>Kolom Section / Category tidak ditemukan di Product Master.</strong> Pastikan master Oramas memuat kolom Section dan/atau Category.');
+  if(!master.has.section && !master.has.category) return bail('<strong>Kolom Section / Category tidak ditemukan di Product Master.</strong><br>Kolom yang ada di master Anda: <span style="font-family:var(--mono);font-size:11px">'+((master.allCols||[]).join(', ')||'—')+'</span><br>Sebutkan mana yang berisi Section &amp; Category, nanti saya sambungkan.');
   const sc=Object.keys(sales[0]||{});
   const cPlu=mkFind(sc,['plu','item_code','kode_barang','barcode','sku']);
   if(!cPlu) return bail('<strong>Kolom PLU tidak terdeteksi di data sales.</strong>');
@@ -7010,6 +7185,9 @@ function renderSectionContribution(){
   if(catFoot)catFoot.innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td>TOTAL · ${catRows.length}</td><td class="right">${totPluC.toLocaleString('en-US')}</td><td class="right">${money(totNetC)}</td><td class="right">${money(totGmC)}</td><td class="right">${(totGmC/totNetC*100).toFixed(2)}%</td><td class="right">100%</td></tr>`;
   document.getElementById('scSectionTable').style.display=secRows.length?'':'none';
   document.getElementById('scCatTable').style.display=catRows.length?'':'none';
+  // tampilkan kolom master yang dipakai (untuk diagnosa bila ada yang meleset)
+  const subEl=document.querySelector('#panel-section-contribution .page-subtitle');
+  if(subEl){const c=master.cols||{};subEl.innerHTML='%Cont NS per Section &amp; Category — kolom master terdeteksi: Section='+(c.section?'<b>'+c.section+'</b>':'<span style="color:var(--red)">tidak ada</span>')+' · Category='+(c.category?'<b>'+c.category+'</b>':(c.catCode?'kode saja ('+c.catCode+')':'<span style="color:var(--red)">tidak ada</span>'))+(c.catCode?' · Kode='+c.catCode:'');}
   if(box)box.style.display='none'; if(res)res.style.display='block'; if(dl)dl.style.display='';
   _scSection={rows:secRows,totNet:totNetS,totPlu:totPluS,totGm:totGmS};
   _scCat={rows:catRows,totNet:totNetC,totGm:totGmC};
@@ -13083,7 +13261,7 @@ const PANEL_GROUP_MAP = {
   'mem-demo':'grp-members','mem-transactions':'grp-members','mem-retention':'grp-members',
   'mem-category':'grp-members',
   'promo-effectiveness':'grp-marketing','juklak-lookup':'grp-marketing','juklak-recap':'grp-marketing','promo-contribution':'grp-marketing','promo-member':'grp-marketing','promo-items':'grp-marketing',
-  'promo-categories':'grp-marketing','basket':'grp-marketing','brand-perf':'grp-marketing','principal-perf':'grp-marketing','section-contribution':'grp-marketing','promo-mechanic':'grp-marketing',
+  'promo-categories':'grp-marketing','basket':'grp-marketing','brand-perf':'grp-marketing','principal-perf':'grp-marketing','section-contribution':'grp-marketing','promo-discount':'grp-marketing','promo-mechanic':'grp-marketing',
   'sku-pareto':'grp-catmgmt','cat-overview':'grp-catmgmt','cat-promo-potential':'grp-catmgmt',
   'cat-member':'grp-catmgmt','cat-trend':'grp-catmgmt','cat-time':'grp-catmgmt','cat-detail':'grp-catmgmt',
   'revenue-drivers':'grp-analytics','peak-hours':'grp-analytics','void-return':'grp-analytics','ai-strategy':'grp-analytics','ai-chat':'grp-analytics',
