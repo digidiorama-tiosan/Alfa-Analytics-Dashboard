@@ -3644,6 +3644,10 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
         <label style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Bulan</label>
         <select class="filter-select" id="rtMonthSel" onchange="renderReceiptThreshold()" style="min-width:150px"><option value="ALL">Semua Bulan</option></select>
       </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Toko</label>
+        <select class="filter-select" id="rtStoreSel" onchange="renderReceiptThreshold()" style="min-width:150px"><option value="ALL">Semua Toko</option></select>
+      </div>
     </div>
     <div class="stats-grid">
       <div class="stat-card blue"><div class="stat-label">Receipts ≥ Value</div><div class="stat-value" id="rt-count">—</div><div class="stat-sub" id="rt-count-sub">—</div></div>
@@ -4798,6 +4802,13 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     </button>
   </div>
   <div id="pdcAlert" style="display:none" class="alert-box amber"><span style="font-size:16px">⚠️</span><div id="pdcAlertText"></div></div>
+  <div class="store-filter-bar" style="margin-bottom:16px">
+    <span class="filter-label">Bulan</span>
+    <select class="filter-select" id="pdcMonth" onchange="renderPromoDiscount()" style="min-width:150px"><option value="ALL">Semua Bulan</option></select>
+    <span class="filter-label" style="margin-left:8px">Toko</span>
+    <select class="filter-select" id="pdcStore" onchange="renderPromoDiscount()" style="min-width:150px"><option value="ALL">Semua Toko</option></select>
+    <button class="filter-btn" onclick="document.getElementById('pdcMonth').value='ALL';document.getElementById('pdcStore').value='ALL';renderPromoDiscount()" style="margin-left:auto">✕ Reset</button>
+  </div>
   <div id="pdc-result" style="display:none">
     <div class="stats-grid" id="pdc-kpi" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px"></div>
 
@@ -7043,19 +7054,40 @@ function renderPromoDiscount(){
       if(s!=null)it.s=(it.s==null)?s:Math.min(it.s,s); if(e!=null)it.e=(it.e==null)?e:Math.max(it.e,e); }
   });
   if(!info.size) return bail('<strong>Tidak ada PLU juklak dengan harga promo terisi.</strong>');
+  // isi dropdown bulan & toko — dibangun ulang bila dataset berubah (mis. sync server
+  // datang beberapa menit setelah paint, atau toko baru dibuka pertengahan tahun)
+  const moSel=document.getElementById('pdcMonth'), stSel=document.getElementById('pdcStore');
+  const dStamp=sales.length+'|'+Object.keys(sales[0]||{}).join(',');
+  const _fill=(sel,html)=>{const keep=sel.value;sel.innerHTML=html;sel.value=[...sel.options].some(o=>o.value===keep)?keep:'ALL';};
+  if(moSel&&moSel.dataset.stamp!==dStamp){
+    const mm=new Map();
+    sales.forEach(r=>{const mo=getMonthFromRow(r,sCols),yr=getYearFromRow(r,sCols);if(mo){const k=yr?`${yr}-${String(mo).padStart(2,'0')}`:String(mo).padStart(2,'0');mm.set(k,yr?`${MONTH_NAMES[mo-1]} ${yr}`:MONTH_NAMES[mo-1]);}});
+    _fill(moSel,'<option value="ALL">Semua Bulan</option>'+[...mm.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([k,l])=>`<option value="${k}">${l}</option>`).join(''));
+    moSel.dataset.stamp=dStamp;
+  }
+  if(stSel&&stSel.dataset.stamp!==dStamp){
+    const st=new Set();
+    if(sCols.store)sales.forEach(r=>{const v=String(r[sCols.store]||'').trim();if(v)st.add(v);});
+    _fill(stSel,'<option value="ALL">Semua Toko</option>'+[...st].sort().map(v=>`<option value="${v}">${v}</option>`).join(''));
+    stSel.dataset.stamp=dStamp;
+  }
+  const selMo=(moSel&&moSel.value)||'ALL', selSt=(stSel&&stSel.value)||'ALL';
   // sales dalam periode promo
   sales.forEach(r=>{
     if(!sCols.plu)return;
     const raw=String(r[sCols.plu]||'').trim(); if(!raw)return;
     const key=raw.replace(/^0+/,'')||raw;
     const it=info.get(key); if(!it)return;
+    if(selSt!=='ALL'&&sCols.store&&String(r[sCols.store]||'').trim()!==selSt)return;
+    if(selMo!=='ALL'){const mo=getMonthFromRow(r,sCols),yr=getYearFromRow(r,sCols);if(!mo)return;const k=yr?`${yr}-${String(mo).padStart(2,'0')}`:String(mo).padStart(2,'0');if(k!==selMo)return;}
     const sd=sCols.date?pfParseDate(r[sCols.date]):null;
     if((it.s!=null||it.e!=null)&&sd!=null){ if(it.s!=null&&sd<it.s)return; if(it.e!=null&&sd>it.e+864e5-1)return; }
     it.qty+=sCols.qty?pN(r[sCols.qty]):0;
     it.net+=sCols.net?pN(r[sCols.net]):0;
   });
   const items=[...info.values()];
-  const withPct=items.filter(i=>i.normP>0&&i.promoP>0&&i.normP>=i.promoP);
+  const scoped=items.filter(i=>i.qty>0);   // hanya PLU yang terjual pada scope filter aktif
+  const withPct=scoped.filter(i=>i.normP>0&&i.promoP>0&&i.normP>=i.promoP);
   const money=v=>(typeof fmt==='function')?fmt(v):Math.round(v).toLocaleString('en-US');
   const N=v=>Math.round(v).toLocaleString('en-US');
   // ── band builders
@@ -7072,7 +7104,7 @@ function renderPromoDiscount(){
   const prcDefs=[{label:'≤ Tk 50',lo:null,hi:50},{label:'Tk 51 – 100',lo:50,hi:100},{label:'Tk 101 – 200',lo:100,hi:200},{label:'Tk 201 – 350',lo:200,hi:350},{label:'Tk 351 – 500',lo:350,hi:500},{label:'Tk 501 – 1.000',lo:500,hi:1000},{label:'> Tk 1.000',lo:1000,hi:null}];
   const pctB=mkBands(pctDefs,i=>(i.normP-i.promoP)/i.normP*100,withPct);
   const nomB=mkBands(nomDefs,i=>i.normP-i.promoP,withPct);
-  const prcB=mkBands(prcDefs,i=>i.promoP,items);
+  const prcB=mkBands(prcDefs,i=>i.promoP,scoped);
   const tQtyP=pctB.reduce((s,b)=>s+b.qty,0)||1,tNetP=pctB.reduce((s,b)=>s+b.net,0)||1,tPluP=pctB.reduce((s,b)=>s+b.plu,0);
   const tQtyN=nomB.reduce((s,b)=>s+b.qty,0)||1,tNetN=nomB.reduce((s,b)=>s+b.net,0),tPluN=nomB.reduce((s,b)=>s+b.plu,0);
   const tQtyR=prcB.reduce((s,b)=>s+b.qty,0)||1,tNetR=prcB.reduce((s,b)=>s+b.net,0),tPluR=prcB.reduce((s,b)=>s+b.plu,0);
@@ -7082,23 +7114,23 @@ function renderPromoDiscount(){
   const bestPct=[...pctB].sort((a,b)=>b.qty-a.qty)[0], bestPrc=[...prcB].sort((a,b)=>b.qty-a.qty)[0];
   const kpi=document.getElementById('pdc-kpi');
   if(kpi)kpi.innerHTML=`
-    <div class="stat-card blue"><div class="stat-label">PLU Promo</div><div class="stat-value">${items.length}</div><div class="stat-sub">${withPct.length} punya harga normal</div></div>
-    <div class="stat-card amber"><div class="stat-label">Rata-rata Diskon</div><div class="stat-value">${avgDisc.toFixed(1)}%</div><div class="stat-sub">seluruh PLU promo</div></div>
-    <div class="stat-card green"><div class="stat-label">Band Paling Laku</div><div class="stat-value" style="font-size:17px">${bestPct?bestPct.label:'—'}</div><div class="stat-sub">${bestPct?N(bestPct.qty)+' unit':''}</div></div>
+    <div class="stat-card blue"><div class="stat-label">PLU Promo Terjual</div><div class="stat-value">${scoped.length}</div><div class="stat-sub">${withPct.length} punya harga normal · dari ${items.length} PLU juklak</div></div>
+    <div class="stat-card amber"><div class="stat-label">Rata-rata Diskon</div><div class="stat-value">${avgDisc.toFixed(1)}%</div><div class="stat-sub">${withPct.length} PLU terjual pada filter ini</div></div>
+    <div class="stat-card green"><div class="stat-label">Band Paling Laku</div><div class="stat-value" style="font-size:17px">${(bestPct&&bestPct.qty>0)?bestPct.label:'—'}</div><div class="stat-sub">${(bestPct&&bestPct.qty>0)?N(bestPct.qty)+' unit':'tidak ada penjualan'}</div></div>
     <div class="stat-card red"><div class="stat-label">Total Diskon Diberikan</div><div class="stat-value">${money(totDiscGiven)}</div><div class="stat-sub">nominal × qty terjual</div></div>`;
   // tables
-  const rowsPct=pctB.map(b=>`<tr${b.qty===bestPct.qty&&b.qty>0?' style="background:rgba(63,185,80,0.07)"':''}>
+  const rowsPct=pctB.filter(b=>b.plu>0||b.qty>0).map(b=>`<tr${b.qty===bestPct.qty&&b.qty>0?' style="background:rgba(63,185,80,0.07)"':''}>
     <td style="font-weight:600">${b.label}</td><td class="right">${b.plu}</td><td class="right">${N(b.qty)}</td>
     <td class="right">${money(b.net)}</td><td class="right">${(b.qty/tQtyP*100).toFixed(1)}%</td>
     <td class="right">${(b.net/tNetP*100).toFixed(1)}%</td><td class="right">${b.plu?(b.sum/b.plu).toFixed(1)+'%':'—'}</td></tr>`).join('');
-  document.getElementById('pdcPctBody').innerHTML=rowsPct;
+  document.getElementById('pdcPctBody').innerHTML=rowsPct||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">Tidak ada penjualan promo pada filter ini</td></tr>';
   document.getElementById('pdcPctFoot').innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td>TOTAL</td><td class="right">${tPluP}</td><td class="right">${N(tQtyP)}</td><td class="right">${money(tNetP)}</td><td class="right">100%</td><td class="right">100%</td><td class="right">${avgDisc.toFixed(1)}%</td></tr>`;
-  document.getElementById('pdcNomBody').innerHTML=nomB.map(b=>`<tr>
+  document.getElementById('pdcNomBody').innerHTML=nomB.filter(b=>b.plu>0||b.qty>0).map(b=>`<tr>
     <td style="font-weight:600">${b.label}</td><td class="right">${b.plu}</td><td class="right">${N(b.qty)}</td>
     <td class="right">${money(b.net)}</td><td class="right">${(b.qty/tQtyN*100).toFixed(1)}%</td>
     <td class="right">${money(b.disc)}</td></tr>`).join('');
   document.getElementById('pdcNomFoot').innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td>TOTAL</td><td class="right">${tPluN}</td><td class="right">${N(tQtyN)}</td><td class="right">${money(tNetN)}</td><td class="right">100%</td><td class="right">${money(totDiscGiven)}</td></tr>`;
-  const prcSorted=[...prcB].sort((a,b)=>b.qty-a.qty);
+  const prcSorted=[...prcB].filter(b=>b.plu>0||b.qty>0).sort((a,b)=>b.qty-a.qty);
   document.getElementById('pdcPriceBody').innerHTML=prcSorted.map((b,i)=>`<tr${i===0&&b.qty>0?' style="background:rgba(88,166,255,0.08)"':''}>
     <td style="font-weight:600">${b.label}${i===0&&b.qty>0?' <span style="font-size:10px;color:var(--accent);font-weight:700">● TERLARIS</span>':''}</td>
     <td class="right">${b.plu}</td><td class="right">${N(b.qty)}</td><td class="right">${money(b.net)}</td>
@@ -8051,16 +8083,36 @@ function rtBuildReceipts() {
 let _rtHas = {};
 function rtSet(v){ const el=document.getElementById('rtThreshold'); if(el){ el.value=v; renderReceiptThreshold(); } }
 const RT_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-// Struk sesuai filter bulan yang dipilih
+// Struk sesuai filter bulan & toko yang dipilih
 function rtViewReceipts(){
-  const sel=document.getElementById('rtMonthSel');
-  const v=sel?sel.value:'ALL';
+  const selM=document.getElementById('rtMonthSel'), selS=document.getElementById('rtStoreSel');
+  const vm=selM?selM.value:'ALL', vs=selS?selS.value:'ALL';
   if(!_rtReceipts) return [];
-  if(!v||v==='ALL') return _rtReceipts;
-  const m=parseInt(v,10);
-  return _rtReceipts.filter(o=>o.month===m);
+  let out=_rtReceipts;
+  if(vm!=='ALL')out=out.filter(o=>String(o.month)===String(vm));
+  if(vs!=='ALL')out=out.filter(o=>String(o.store)===String(vs));
+  return out;
 }
 function rtFillMonthSel(){
+  const sel=document.getElementById('rtMonthSel');
+  const stamp=_rtReceipts?(_rtReceipts.length+'|'+_rtSourceLen):'';
+  if(sel&&_rtReceipts&&sel.dataset.stamp!==stamp){
+    const set=new Set(); _rtReceipts.forEach(o=>{ if(o.month!=null) set.add(o.month); });
+    const keep=sel.value;
+    sel.innerHTML='<option value="ALL">Semua Bulan</option>'+[...set].sort((a,b)=>a-b).map(m=>`<option value="${m}">${MONTH_NAMES[m-1]||m}</option>`).join('');
+    sel.value=[...sel.options].some(o=>o.value===keep)?keep:'ALL';
+    sel.dataset.stamp=stamp;
+  }
+  const st=document.getElementById('rtStoreSel');
+  if(st&&_rtReceipts&&st.dataset.stamp!==stamp){
+    const set=new Set(); _rtReceipts.forEach(o=>{ if(o.store&&o.store!=='—') set.add(o.store); });
+    const keep=st.value;
+    st.innerHTML='<option value="ALL">Semua Toko</option>'+[...set].sort().map(v=>`<option value="${v}">${v}</option>`).join('');
+    st.value=[...st.options].some(o=>o.value===keep)?keep:'ALL';
+    st.dataset.stamp=stamp;
+  }
+}
+function rtFillMonthSelOld(){
   const sel=document.getElementById('rtMonthSel');
   if(!sel||sel.dataset.filled==='1'||!_rtReceipts) return;
   const set=new Set(); _rtReceipts.forEach(o=>{ if(o.month!=null) set.add(o.month); });
@@ -8140,7 +8192,9 @@ function renderRtCategory() {
   const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
   const inp = document.getElementById('rtCatSearch');
   const term = inp ? String(inp.value||'').toLowerCase().trim() : '';
-  const tot = _rtReceipts ? _rtReceipts.length : 0;
+  rtFillMonthSel();
+  const VIEW = rtViewReceipts();          // ikut filter Bulan & Toko di blok atas
+  const tot = VIEW ? VIEW.length : 0;
   if (!tot || !_rtHas.cat) {
     ['rc-count','rc-pct','rc-rev','rc-avg'].forEach(id=>set(id,'—'));
     set('rc-count-sub', !_rtHas.cat ? 'Category/product column not detected' : 'No sales data yet');
@@ -8149,7 +8203,7 @@ function renderRtCategory() {
   if (!term) { ['rc-count','rc-pct','rc-rev','rc-avg'].forEach(id=>set(id,'—')); set('rc-count-sub','Type a keyword above'); set('rc-pct-sub','—'); set('rc-rev-sub','—'); return; }
   let cnt=0, rev=0;
   const isNum = /^\d+$/.test(term);
-  _rtReceipts.forEach(o=>{ if(!o.cats) return; const hit = isNum ? ('|'+o.cats).indexOf('|'+term+'|')>=0 : o.cats.indexOf(term)>=0; if(hit){ cnt++; rev+=o.net; } });
+  VIEW.forEach(o=>{ if(!o.cats) return; const hit = isNum ? ('|'+o.cats).indexOf('|'+term+'|')>=0 : o.cats.indexOf(term)>=0; if(hit){ cnt++; rev+=o.net; } });
   set('rc-count', cnt.toLocaleString('en-US'));
   set('rc-count-sub', 'of '+tot.toLocaleString('en-US')+' receipts contain "'+term+'"');
   set('rc-pct', (tot?cnt/tot*100:0).toFixed(1)+'%');
