@@ -7031,7 +7031,10 @@ function renderPromoDiscount(){
     const key=raw.replace(/^0+/,'')||raw;
     let promoP=pN(r[jCols.promoPrice]);
     let normP=jCols.normPrice?pN(r[jCols.normPrice]):0;
-    if(normP<=0&&typeof masterPriceOf==='function'){try{normP=masterPriceOf(raw)||0;}catch(_){}}
+    // Pengaman: bila kolom harga normal ternyata menunjuk nilai yang sama dengan harga promo
+    // (diskon mustahil 0 untuk seluruh PLU), abaikan dan ambil dari master Oramas.
+    if(normP>0&&promoP>0&&normP===promoP)normP=0;
+    if(normP<=0)normP=pfMasterNormPrice(raw)||0;
     if(promoP<=0)return;
     const s=jCols.startDate?pfParseDate(r[jCols.startDate]):null, e=jCols.endDate?pfParseDate(r[jCols.endDate]):null;
     let it=info.get(key);
@@ -14745,17 +14748,57 @@ function jklRowsFilled(){
   return out;
 }
 
+// Peta PLU → harga normal dari Product Master (Oramas). Global + cache, dipakai sebagai
+// fallback oleh menu-menu juklak bila file juklak tidak memuat kolom harga normal.
+let _pfMNCache=null,_pfMNStamp=null;
+function pfMasterNormMap(){
+  const prod=(typeof uploads!=='undefined'&&Array.isArray(uploads.product))?uploads.product:[];
+  if(!prod.length)return {};
+  const stamp=prod.length+'|'+Object.keys(prod[0]||{}).join(',');
+  if(_pfMNCache&&_pfMNStamp===stamp)return _pfMNCache;
+  const out={};
+  const pc=Object.keys(prod[0]||{});
+  const nm=s=>String(s||'').toLowerCase().replace(/[\s_\-\.]+/g,'').replace(/[^a-z0-9]/g,'');
+  const pf=c=>{for(const x of c){const f=pc.find(k=>nm(k)===nm(x));if(f)return f;}for(const x of c){const nx=nm(x);const f=pc.find(k=>nm(k).includes(nx));if(f)return f;}return null;};
+  const pPlu=pf(['plu','itemcode','kodebarang','barcode','sku','kode']);
+  const pPrice=pf(['hargajual','harganormal','normalprice','harga','hna','hnappn','price','hjr','hargajualnormal']);
+  const pn=v=>{const n=parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,''));return isNaN(n)?0:n;};
+  if(pPlu&&pPrice)prod.forEach(p=>{const k=String(p[pPlu]==null?'':p[pPlu]).trim().replace(/\.0+$/,'');const v=pn(p[pPrice]);if(k&&v>0){out[k]=v;const s=k.replace(/^0+/,'')||k;if(!(s in out))out[s]=v;}});
+  _pfMNCache=out;_pfMNStamp=stamp;
+  return out;
+}
+function pfMasterNormPrice(plu){
+  if(!plu)return 0;
+  const m=pfMasterNormMap();
+  const k=String(plu).trim().replace(/\.0+$/,'');
+  if(m[k])return m[k];
+  const s=k.replace(/^0+/,'')||k;
+  return m[s]||0;
+}
+
 // Deteksi kolom di juklak
 function jColDetect(rows){
   if(!rows||!rows.length) return {};
-  const jCols=Object.keys(rows[0]||{});
-  function jCol(cands){return jCols.find(k=>cands.some(c=>k.toLowerCase().replace(/[^a-z0-9]/g,'').includes(c)))||null;}
+  // Gabungkan nama kolom dari beberapa baris pertama — baris ke-0 kadang baris kosong
+  // (pola merged-cell Excel) atau berbeda setelah sync server, sehingga deteksi bisa meleset.
+  const jCols=(function(){const s=new Set();for(let i=0;i<Math.min(rows.length,25);i++){Object.keys(rows[i]||{}).forEach(k=>s.add(k));}return [...s];})();
+  function jCol(cands,exclude){return jCols.find(k=>{
+    if(exclude&&exclude.indexOf(k)>-1)return false;
+    const n=k.toLowerCase().replace(/[^a-z0-9]/g,'');
+    return cands.some(c=>n.includes(c));
+  })||null;}
+  // Harga promo dideteksi LEBIH DULU, lalu kolom itu DIKECUALIKAN dari kandidat harga normal.
+  // Tanpa ini, kandidat generik 'harga'/'price' bisa ikut mencocokkan kolom "HARGA PROMO"
+  // sehingga harga normal = harga promo → diskon terhitung 0%.
+  const _cPromoPrice = jCol(['promoprice','hargapromo','hargaspesial','specialprice','pprice','hrgpromo','harga_promo','consumerpromo']);
+  const _cNormPrice  = jCol(['normalprice','harganormal','hargajual','normalpric','regularprice','hrgjual','hargareguler'],[_cPromoPrice])
+                    || jCol(['harga','price'],[_cPromoPrice]);
   return {
     code: jCol(['itemcode','plu','kodebarang','barcode','sku','code','kode']),
     name: jCol(['itemname','namabarang','namaproduk','namaitem','name','desc','uraian','keterangan']),
     cat:  jCol(['category','kategori','cat','group','grup','divisi']),
-    promoPrice: jCol(['promoprice','hargapromo','hargaspesial','specialprice','pprice','hrgpromo','harga_promo']),
-    normPrice:  jCol(['normalprice','hargajual','harga','normalpric','regularprice','price','harga_normal','hrgjual']),
+    promoPrice: _cPromoPrice,
+    normPrice:  _cNormPrice,
     startDate:  jCol(['startdate','start_date','tgl_mulai','tanggal_mulai','dari','from','tglmulai','periode_dari']),
     endDate:    jCol(['enddate','end_date','tgl_akhir','tanggal_akhir','sampai','to','tglakhir','periode_sampai']),
     promoType:  jCol(['tipopromo','tipe_promo','tippromo','promo_type','promotype','jenis_promo','jenispromo','type_promo']),
@@ -14921,7 +14964,7 @@ function renderJuklakLookup(){
     const key=raw.replace(/^0+/,'')||raw;
     if(pluInfo.has(key))return;
     let normP=jCols.normPrice?parseN(r[jCols.normPrice]):0;
-    if(normP<=0&&typeof masterPriceOf==='function'){try{normP=masterPriceOf(raw)||0;}catch(_){}}
+    if(normP<=0)normP=pfMasterNormPrice(raw)||0;
     const promoP=jCols.promoPrice?parseN(r[jCols.promoPrice]):0;
     pluInfo.set(key,{plu:raw,desc:jCols.name?String(r[jCols.name]||'').trim():'',cat:jCols.cat?String(r[jCols.cat]||'').trim():'',normP,promoP,disc:(normP>0&&promoP>0)?(normP-promoP)/normP*100:null});
   });
@@ -15205,7 +15248,7 @@ function jklBuildAgg(){
     const jkKey=(jkNo||'—')+' ‖ '+(skNo||'—');
     let promoP=jCols.promoPrice?parseN(r[jCols.promoPrice]):0;
     let normP=jCols.normPrice?parseN(r[jCols.normPrice]):0;
-    if(normP<=0&&typeof masterPriceOf==='function'){try{normP=masterPriceOf(raw)||0;}catch(_){}}
+    if(normP<=0)normP=pfMasterNormPrice(raw)||0;
     let pm=pluMeta.get(key); if(!pm){pm={plu:raw,desc:jCols.name?String(r[jCols.name]||'').trim():'',cat:jCols.cat?String(r[jCols.cat]||'').trim():'',promoP,normP,jkKeys:new Set()};pluMeta.set(key,pm);}
     if(promoP>0&&pm.promoP<=0)pm.promoP=promoP; if(normP>0&&pm.normP<=0)pm.normP=normP;
     pm.jkKeys.add(jkKey);
