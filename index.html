@@ -4965,6 +4965,22 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       </div>
     </div>
 
+    <!-- Table 3: Monthly Resume -->
+    <div class="section-title" id="tjTitle3" style="margin-bottom:8px"></div>
+    <div class="chart-card" style="margin-bottom:20px">
+      <div style="overflow-x:auto">
+        <table class="data-table" style="width:100%;font-size:12.5px">
+          <thead><tr>
+            <th>Periode</th>
+            <th class="right">STRUK</th><th class="right">QTY</th>
+            <th class="right">NET (Rp)</th><th class="right">GM (Rp)</th><th class="right">GM%</th>
+          </tr></thead>
+          <tbody id="tjBodyMonth"></tbody>
+          <tfoot id="tjFootMonth"></tfoot>
+        </table>
+      </div>
+    </div>
+
     <!-- Table 2: by Store -->
     <div class="section-title" id="tjTitle2" style="margin-bottom:8px"></div>
     <div class="chart-card" style="margin-bottom:20px">
@@ -7456,8 +7472,8 @@ function _tjInit(){
   const jCols=jColDetect(juk);
   const themas=new Set();
   // Preset thema umum selalu ditampilkan
-  ['Payday','Reguler','Expired Promo'].forEach(t=>themas.add(t));
-  if(jCols.thema){juk.forEach(r=>{const v=String(r[jCols.thema]||'').trim();if(v)themas.add(v);});}
+  ['Payday','Reguler','Expired Promo','Promo GO'].forEach(t=>themas.add(t));
+  if(jCols.thema){juk.forEach(r=>{const v=String(r[jCols.thema]||'').trim();themas.add(v||'Reguler');});}
   sel.innerHTML='<option value="">— pilih thema —</option>';
   [...themas].sort().forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o);});
 }
@@ -7490,15 +7506,21 @@ function renderThemaJuklak(){
   const periodeLabel=`${fmtD(dateFrom)} — ${fmtD(dateTo)}`;
   // Filter juklak by thema
   let juklakPLUs;
+  const isReguler=thema.toLowerCase()==='reguler';
   if(jCols.thema){
     const tm=thema.toLowerCase();
-    const filtered=juk.filter(r=>String(r[jCols.thema]||'').toLowerCase().includes(tm));
+    const filtered=juk.filter(r=>{
+      const v=String(r[jCols.thema]||'').trim();
+      // Baris tanpa thema dianggap Reguler
+      const eff=v||'Reguler';
+      return eff.toLowerCase().includes(tm)||(isReguler&&!v);
+    });
     juklakPLUs=filtered.length?new Set(filtered.map(r=>mkPlu(r[jCols.code]))):null;
-    if(!juklakPLUs||!juklakPLUs.size){
-      // fallback: no rows match thema, use all PLUs and note
-      juklakPLUs=null;
-    }
-  } else { juklakPLUs=null; }
+    if(!juklakPLUs||!juklakPLUs.size)juklakPLUs=null;
+  } else {
+    // Kolom thema tidak ada → semua juklak dianggap Reguler
+    juklakPLUs=isReguler?new Set(juk.map(r=>mkPlu(r[jCols.code]))):null;
+  }
   // Build PLU name map from juklak
   const pluName={};
   juk.forEach(r=>{const p=mkPlu(r[jCols.code]);if(p&&jCols.name)pluName[p]=String(r[jCols.name]||'').trim();});
@@ -7517,6 +7539,7 @@ function renderThemaJuklak(){
   // Aggregate by PLU
   const byPlu=new Map();
   const byStore=new Map();
+  const byMonth=new Map();
   const receipts=new Set();
   targetSales.forEach(r=>{
     const plu=mkPlu(r[sCols.plu]);if(!plu)return;
@@ -7530,12 +7553,19 @@ function renderThemaJuklak(){
     // Store aggregation
     if(!byStore.has(store))byStore.set(store,{store,struk:new Set(),qty:0,net:0,gm:0});
     const sp=byStore.get(store);if(bon)sp.struk.add(bon);sp.qty+=qty;sp.net+=net;sp.gm+=gm;
+    // Month aggregation
+    const rawD=String(r[sCols.date]||'');const dObj=new Date(rawD);
+    const mKey=isNaN(dObj)?'?':(dObj.getFullYear()+'-'+String(dObj.getMonth()+1).padStart(2,'0'));
+    const mLabel=isNaN(dObj)?'?':dObj.toLocaleDateString('id-ID',{month:'short',year:'numeric'});
+    if(!byMonth.has(mKey))byMonth.set(mKey,{key:mKey,label:mLabel,struk:new Set(),qty:0,net:0,gm:0});
+    const mp=byMonth.get(mKey);if(bon)mp.struk.add(bon);mp.qty+=qty;mp.net+=net;mp.gm+=gm;
   });
   const pluRows=[...byPlu.values()].sort((a,b)=>b.net-a.net);
   const storeRows=[...byStore.values()].sort((a,b)=>b.net-a.net);
   const totPlu={struk:receipts.size,qty:pluRows.reduce((s,r)=>s+r.qty,0),net:pluRows.reduce((s,r)=>s+r.net,0),gm:pluRows.reduce((s,r)=>s+r.gm,0)};
   const totStore={struk:receipts.size,qty:storeRows.reduce((s,r)=>s+r.qty,0),net:storeRows.reduce((s,r)=>s+r.net,0),gm:storeRows.reduce((s,r)=>s+r.gm,0)};
-  _tjLastData={thema,periodeLabel,dateFrom,dateTo,pluRows,storeRows,totPlu};
+  const monthRows=[...byMonth.values()].sort((a,b)=>a.key.localeCompare(b.key));
+  _tjLastData={thema,periodeLabel,dateFrom,dateTo,pluRows,storeRows,monthRows,totPlu};
   const R=v=>Math.round(v),fmt=v=>R(v).toLocaleString('id-ID'),pct=(a,b)=>b?((a/b)*100).toFixed(1)+'%':'—';
   // KPI
   const kpi=document.getElementById('tjKpi');
@@ -7545,9 +7575,10 @@ function renderThemaJuklak(){
     <div class="stat-card purple"><div class="stat-label">Net Sales</div><div class="stat-value" style="font-size:16px">Rp ${fmt(totPlu.net)}</div><div class="stat-sub">${pluRows.length} PLU aktif</div></div>
     <div class="stat-card amber"><div class="stat-label">Gross Margin</div><div class="stat-value" style="font-size:16px">${pct(totPlu.gm,totPlu.net)}</div><div class="stat-sub">Rp ${fmt(totPlu.gm)}</div></div>`;
   // Labels
-  const t1=document.getElementById('tjTitle1'),t2=document.getElementById('tjTitle2');
+  const t1=document.getElementById('tjTitle1'),t2=document.getElementById('tjTitle2'),t3=document.getElementById('tjTitle3');
   if(t1)t1.textContent=`Sales ${thema} — per PLU`;
   if(t2)t2.textContent=`Sales ${thema} — per Toko`;
+  if(t3)t3.textContent=`Resume Sales ${thema} — per Bulan`;
   ['tjPeriodeLabel1','tjPeriodeLabel2'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=periodeLabel;});
   // PLU table
   const bodyPlu=document.getElementById('tjBodyPlu'),footPlu=document.getElementById('tjFootPlu');
@@ -7560,6 +7591,22 @@ function renderThemaJuklak(){
     <td class="right">${pct(r.gm,r.net)}</td></tr>`).join('');
   if(footPlu)footPlu.innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border);background:var(--surface2)">
     <td colspan="2">TOTAL</td>
+    <td class="right">${fmt(totPlu.struk)}</td>
+    <td class="right">${fmt(totPlu.qty)}</td>
+    <td class="right">${fmt(totPlu.net)}</td>
+    <td class="right">${fmt(totPlu.gm)}</td>
+    <td class="right">${pct(totPlu.gm,totPlu.net)}</td></tr>`;
+  // Monthly table
+  const bodyMonth=document.getElementById('tjBodyMonth'),footMonth=document.getElementById('tjFootMonth');
+  if(bodyMonth)bodyMonth.innerHTML=monthRows.map(r=>`<tr>
+    <td style="font-weight:600">${r.label}</td>
+    <td class="right">${r.struk.size.toLocaleString('id-ID')}</td>
+    <td class="right">${fmt(r.qty)}</td>
+    <td class="right">${fmt(r.net)}</td>
+    <td class="right">${fmt(r.gm)}</td>
+    <td class="right">${pct(r.gm,r.net)}</td></tr>`).join('');
+  if(footMonth)footMonth.innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border);background:var(--surface2)">
+    <td>TOTAL</td>
     <td class="right">${fmt(totPlu.struk)}</td>
     <td class="right">${fmt(totPlu.qty)}</td>
     <td class="right">${fmt(totPlu.net)}</td>
@@ -7598,6 +7645,10 @@ function downloadThemaJuklak(){
     [],[`Sales ${thema} — per Toko`],[`Periode: ${periodeLabel}`],[],
     ['Kode Toko','STRUK','QTY','NET (Rp)','GM (Rp)','GM%'],
     ...storeRows.map(r=>[r.store,r.struk.size,R(r.qty),R(r.net),R(r.gm),pct(r.gm,r.net)]),
+    ['TOTAL',totPlu.struk,R(totPlu.qty),R(totPlu.net),R(totPlu.gm),pct(totPlu.gm,totPlu.net)],
+    [],[`Resume Sales ${thema} per Bulan`],[],
+    ['Periode','STRUK','QTY','NET (Rp)','GM (Rp)','GM%'],
+    ...monthRows.map(r=>[r.label,r.struk.size,R(r.qty),R(r.net),R(r.gm),pct(r.gm,r.net)]),
     ['TOTAL',totPlu.struk,R(totPlu.qty),R(totPlu.net),R(totPlu.gm),pct(totPlu.gm,totPlu.net)]
   ];
   if(typeof xlsDownload==='function'){xlsDownload(rows,`Sales ${thema}`,`Report_Thema_${thema.replace(/\s+/g,'_')}_${dateFrom}_${dateTo}`);}
@@ -15146,7 +15197,7 @@ function jColDetect(rows){
     notes:      jCol(['notes','keterangan','catatan','remark','description','desc']),
     guideline:  jCol(['nojuklak','no_juklak','juklakno','juklak','nomorjuklak','noguideline','guideline']),
     skp:        jCol(['noskp','no_skp','skpno','skp','nomorskp']),
-    thema:      jCol(['thema','tema','thema_juklak','tema_juklak','nama_juklak','namajuklak','jenis_juklak','jenisjuklak','tipe_juklak','tipejuklak','nama_promo','namapromo','promo_name']),
+    thema:      jCol(['thema','tema','thema_juklak','tema_juklak','nama_juklak','namajuklak','jenis_juklak','jenisjuklak','tipe_juklak','tipejuklak','nama_promo','namapromo','promo_name','keterangan_promo','ket_promo','ketpromo']),
   };
 }
 
