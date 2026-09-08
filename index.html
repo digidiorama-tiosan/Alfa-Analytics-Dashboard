@@ -3646,18 +3646,34 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       </div>
       <div style="display:flex;flex-direction:column;gap:5px">
         <label style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Bulan</label>
-        <select class="filter-select" id="rtMonthSel" onchange="renderReceiptThreshold()" style="min-width:150px"><option value="ALL">Semua Bulan</option></select>
+        <select class="filter-select" id="rtMonthSel" onchange="rtOnFilterChange()" style="min-width:130px"><option value="ALL">Semua Bulan</option></select>
       </div>
       <div style="display:flex;flex-direction:column;gap:5px">
         <label style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Toko</label>
-        <select class="filter-select" id="rtStoreSel" onchange="renderReceiptThreshold()" style="min-width:150px"><option value="ALL">Semua Toko</option></select>
+        <select class="filter-select" id="rtStoreSel" onchange="rtOnFilterChange()" style="min-width:130px"><option value="ALL">Semua Toko</option></select>
       </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Tgl Awal</label>
+        <input type="date" class="filter-select" id="rtDateFrom" onchange="rtOnFilterChange()" style="min-width:145px">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Tgl Akhir</label>
+        <input type="date" class="filter-select" id="rtDateTo" onchange="rtOnFilterChange()" style="min-width:145px">
+      </div>
+      <button class="filter-btn" onclick="rtClearDates()" style="align-self:flex-end">✕ Clear Tanggal</button>
     </div>
     <div class="stats-grid">
       <div class="stat-card blue"><div class="stat-label">Receipts ≥ Value</div><div class="stat-value" id="rt-count">—</div><div class="stat-sub" id="rt-count-sub">—</div></div>
       <div class="stat-card green"><div class="stat-label">% of Total Receipts</div><div class="stat-value" id="rt-pct">—</div><div class="stat-sub" id="rt-pct-sub">—</div></div>
       <div class="stat-card amber"><div class="stat-label">Sales Value (These Receipts)</div><div class="stat-value" id="rt-rev">—</div><div class="stat-sub" id="rt-rev-sub">—</div></div>
       <div class="stat-card purple"><div class="stat-label">% of Total Net Sales</div><div class="stat-value" id="rt-revpct">—</div><div class="stat-sub">Revenue contribution</div></div>
+    </div>
+    <div id="rtDailyWrap" style="margin-top:20px;display:none">
+      <div class="chart-title" style="font-size:14px;margin-bottom:4px">Rincian per Hari</div>
+      <div class="chart-subtitle" style="margin-bottom:10px">Semua struk pada rentang tanggal yang dipilih — dikelompokkan per hari</div>
+      <div class="table-wrap"><table class="data-table" id="rtDailyTable"><thead><tr>
+        <th>Tanggal</th><th>Hari</th><th class="right"># Struk</th><th class="right">Net Sales</th><th class="right">Avg Basket</th><th class="right">Struk ≥ Nilai</th><th class="right">% Struk ≥ Nilai</th>
+      </tr></thead><tbody id="rtDailyBody"></tbody><tfoot id="rtDailyFoot"></tfoot></table></div>
     </div>
     <div style="margin-top:20px">
       <div class="chart-title" style="font-size:14px">Sebaran Struk per Rentang Nilai (tidak tumpang tindih)</div>
@@ -8367,6 +8383,7 @@ function rtBuildReceipts() {
   const isMemVal = v => { if(v===null||v===undefined) return false; const s=String(v).trim().replace(/[^0-9a-z]/gi,''); return s!=='' && s!=='0' && !/^n(one|a|ull)?$/i.test(s); };
   const getMonth = r => { if(r.__month) return +r.__month; if(cMonth){const m=parseInt(r[cMonth]);if(!isNaN(m)&&m>=1&&m<=12)return m;} if(cDate){const s=String(r[cDate]||'');let m2=s.match(/^(\d{4})[-\/](\d{1,2})/);if(m2)return +m2[2];m2=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);if(m2){const a=+m2[1],b=+m2[2];return a>12?b:a;}const d=new Date(s);if(!isNaN(d))return d.getMonth()+1;} return null; };
   const getDow = r => { if(cDate){const s=String(r[cDate]||'').trim().slice(0,10);const d=new Date(s);if(!isNaN(d))return d.getDay();} return null; };
+  const getDateStr = r => { if(!cDate)return null; const s=String(r[cDate]||'').trim(); const m=s.match(/^(\d{4}-\d{2}-\d{2})/); if(m)return m[1]; const m2=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/); if(m2)return m2[3]+'-'+String(m2[2]).padStart(2,'0')+'-'+String(m2[1]).padStart(2,'0'); const d=new Date(s);if(!isNaN(d))return d.toISOString().slice(0,10); return null; };
   const getHour = r => { if(cHour){const s=String(r[cHour]||'').trim();const m=s.match(/(\d{1,2})/);if(m){const h=+m[1];if(h>=0&&h<=23)return h;}} if(cDate){const s=String(r[cDate]||'');const m=s.match(/\s(\d{1,2}):/);if(m)return +m[1];} return null; };
   const map = {};
   let revTotal = 0;
@@ -8375,7 +8392,7 @@ function rtBuildReceipts() {
     revTotal += line;
     const key = (cStore ? String(r[cStore]||'')+'|' : '') + (cBon ? String(r[cBon]||'') : ('row'+i));
     let o = map[key];
-    if (!o) { o = map[key] = { net:0, store: cStore?String(r[cStore]||'—'):'—', month:getMonth(r), dow:getDow(r), hour:getHour(r), mem:false, promo:false, cats:'', catSet:null }; }
+    if (!o) { o = map[key] = { net:0, store: cStore?String(r[cStore]||'—'):'—', month:getMonth(r), dow:getDow(r), hour:getHour(r), dateStr:getDateStr(r), mem:false, promo:false, cats:'', catSet:null }; }
     o.net += line;
     if (cMem && isMemVal(r[cMem])) o.mem = true;
     // Promo definition: POS type flag (L = promo line) first, else discount > 0
@@ -8401,6 +8418,8 @@ function rtBuildReceipts() {
 }
 let _rtHas = {};
 function rtSet(v){ const el=document.getElementById('rtThreshold'); if(el){ el.value=v; renderReceiptThreshold(); } }
+function rtOnFilterChange(){ const df=document.getElementById('rtDateFrom'),dt=document.getElementById('rtDateTo'); if(df&&df.value||dt&&dt.value){ const ms=document.getElementById('rtMonthSel');if(ms)ms.value='ALL'; } renderReceiptThreshold(); }
+function rtClearDates(){ ['rtDateFrom','rtDateTo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); renderReceiptThreshold(); }
 const RT_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 // Struk sesuai filter bulan & toko yang dipilih
 function rtViewReceipts(){
@@ -8408,7 +8427,14 @@ function rtViewReceipts(){
   const vm=selM?selM.value:'ALL', vs=selS?selS.value:'ALL';
   if(!_rtReceipts) return [];
   let out=_rtReceipts;
-  if(vm!=='ALL')out=out.filter(o=>String(o.month)===String(vm));
+  const df=(document.getElementById('rtDateFrom')||{}).value||'';
+  const dt=(document.getElementById('rtDateTo')||{}).value||'';
+  if(df||dt){
+    if(df)out=out.filter(o=>o.dateStr&&o.dateStr>=df);
+    if(dt)out=out.filter(o=>o.dateStr&&o.dateStr<=dt);
+  } else {
+    if(vm!=='ALL')out=out.filter(o=>String(o.month)===String(vm));
+  }
   if(vs!=='ALL')out=out.filter(o=>String(o.store)===String(vs));
   return out;
 }
@@ -8491,11 +8517,42 @@ function renderReceiptThreshold() {
   // SATU jalur keluar: seluruh blok turunan selalu dirender ulang, sehingga tidak ada
   // blok yang menyimpan angka dari filter sebelumnya.
   rtRenderBands(totReceipts?VIEW:[], th);
+  rtRenderDaily(VIEW, th);
   renderRtBreakdowns(th, totReceipts>0);
   renderRtCategory();
   renderBasketAffinity();
 }
 
+const _DOW_NAMES=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+function rtRenderDaily(view, th){
+  const wrap=document.getElementById('rtDailyWrap');
+  const body=document.getElementById('rtDailyBody'),foot=document.getElementById('rtDailyFoot');
+  if(!wrap||!body)return;
+  const df=(document.getElementById('rtDateFrom')||{}).value||'';
+  const dt=(document.getElementById('rtDateTo')||{}).value||'';
+  if(!df&&!dt){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  // aggregate per day
+  const dayMap=new Map();
+  view.forEach(o=>{
+    const k=o.dateStr||'?';
+    if(!dayMap.has(k))dayMap.set(k,{cnt:0,net:0,above:0,dow:null});
+    const d=dayMap.get(k);
+    d.cnt++;d.net+=o.net;
+    if(o.net>=th)d.above++;
+    if(d.dow==null&&o.dateStr){const dd=new Date(o.dateStr);if(!isNaN(dd))d.dow=dd.getDay();}
+  });
+  const days=[...dayMap.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+  let tCnt=0,tNet=0,tAbove=0;
+  body.innerHTML=days.map(([k,d])=>{
+    tCnt+=d.cnt;tNet+=d.net;tAbove+=d.above;
+    const pct=d.cnt?((d.above/d.cnt)*100).toFixed(1)+'%':'—';
+    const dow=d.dow!=null?_DOW_NAMES[d.dow]:'—';
+    const fmtDate=k!=='?'?new Date(k).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}):k;
+    return `<tr><td style="font-weight:600">${fmtDate}</td><td>${dow}</td><td class="right">${d.cnt.toLocaleString('id-ID')}</td><td class="right">${fmt(d.net)}</td><td class="right">${fmt(d.cnt?d.net/d.cnt:0)}</td><td class="right">${d.above.toLocaleString('id-ID')}</td><td class="right">${pct}</td></tr>`;
+  }).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:18px">Tidak ada data</td></tr>';
+  if(foot)foot.innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border2)"><td>TOTAL (${days.length} hari)</td><td></td><td class="right">${tCnt.toLocaleString('id-ID')}</td><td class="right">${fmt(tNet)}</td><td class="right">${fmt(tCnt?tNet/tCnt:0)}</td><td class="right">${tAbove.toLocaleString('id-ID')}</td><td class="right">${tCnt?(tAbove/tCnt*100).toFixed(1)+'%':'—'}</td></tr>`;
+}
 // ── Cari berapa struk mengandung kategori/produk tertentu (mis. "rokok") ──
 function renderRtCategory() {
   rtBuildReceipts();
