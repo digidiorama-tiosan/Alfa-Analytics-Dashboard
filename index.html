@@ -8462,7 +8462,7 @@ function rtRenderBands(view, th){
   const body=document.getElementById('rtBandBody'), foot=document.getElementById('rtBandFoot');
   if(!body) return;
   // batas ATAS inklusif: ≤1.000 · 1.001–2.000 · 2.001–3.000 · 3.001–4.000 · >4.000
-  const caps=[1000,2000,3000,4000];
+  const caps=[500,1000,2000,3000,4000];
   const bands=caps.map((hi,i)=>({lo:i===0?null:caps[i-1]+1,hi,label:i===0?('≤ '+hi.toLocaleString('en-US')):((caps[i-1]+1).toLocaleString('en-US')+' – '+hi.toLocaleString('en-US')),cnt:0,net:0}));
   bands.push({lo:caps[caps.length-1]+1,hi:null,label:'> '+caps[caps.length-1].toLocaleString('en-US'),cnt:0,net:0});
   let tCnt=0,tNet=0;
