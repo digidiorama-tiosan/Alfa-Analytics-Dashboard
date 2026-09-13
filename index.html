@@ -4755,11 +4755,25 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     </div>
   </div>
   <div id="ppAlert" style="display:none" class="alert-box amber"><span style="font-size:16px">⚠️</span><div id="ppAlertText"></div></div>
-  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
+  <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap">
+    <span class="filter-label">Bulan</span>
+    <select class="filter-select" id="ppMonthSel" onchange="renderPrincipalPerf()" style="min-width:140px"><option value="ALL">Semua Bulan</option></select>
+    <span class="filter-label" style="margin-left:8px">Toko</span>
+    <select class="filter-select" id="ppStoreSel" onchange="renderPrincipalPerf()" style="min-width:140px"><option value="ALL">Semua Toko</option></select>
+    <span class="filter-label" style="margin-left:8px">Status Promo</span>
+    <div class="src-toggle" id="ppPromoTog">
+      <button class="active" data-mode="all" onclick="ppSetPromoFilter('all')">Semua</button>
+      <button data-mode="promo" onclick="ppSetPromoFilter('promo')">Dengan Promo</button>
+      <button data-mode="nonpromo" onclick="ppSetPromoFilter('nonpromo')">Tanpa Promo</button>
+    </div>
+    <button class="filter-btn" onclick="document.getElementById('ppMonthSel').value='ALL';document.getElementById('ppStoreSel').value='ALL';ppSetPromoFilter('all')" style="margin-left:auto">✕ Reset</button>
+  </div>
+  <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:18px">
     <div class="stat-card blue"><div class="stat-label" id="pp-count-label">Prinsipal Aktif</div><div class="stat-value" id="pp-count">—</div><div class="stat-sub" id="pp-count-sub">punya penjualan</div></div>
     <div class="stat-card green"><div class="stat-label">Kontributor Margin Teratas</div><div class="stat-value" id="pp-topmargin" style="font-size:19px">—</div><div class="stat-sub" id="pp-topmargin-sub">margin terbesar</div></div>
     <div class="stat-card purple"><div class="stat-label">Konsentrasi Top 5</div><div class="stat-value" id="pp-conc">—</div><div class="stat-sub">porsi omzet 5 teratas</div></div>
     <div class="stat-card amber"><div class="stat-label">Ikut Promo</div><div class="stat-value" id="pp-promo">—</div><div class="stat-sub" id="pp-promo-sub">punya item di juklak</div></div>
+    <div class="stat-card red"><div class="stat-label">Tanpa Penjualan 3 Bulan</div><div class="stat-value" id="pp-dormant">—</div><div class="stat-sub" id="pp-dormant-sub">lihat tabel di bawah</div></div>
   </div>
   <div class="charts-grid cols-2" style="margin-bottom:16px">
     <div class="chart-card">
@@ -4778,8 +4792,20 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     </div>
     <div style="overflow-x:auto;max-height:520px">
       <table class="data-table" style="width:100%;font-size:12.5px">
-        <thead><tr><th style="text-align:left">#</th><th style="text-align:left" id="ppNameHead">Prinsipal</th><th style="text-align:right">Omzet</th><th style="text-align:right">Share</th><th style="text-align:right">Margin</th><th style="text-align:right">GM%</th><th style="text-align:right">SKU</th><th style="text-align:right">SKU Promo</th><th style="text-align:right">Uplift</th></tr></thead>
+        <thead><tr><th style="text-align:left">#</th><th style="text-align:left" id="ppNameHead">Prinsipal</th><th style="text-align:right">Omzet</th><th style="text-align:right">Share</th><th style="text-align:right">Net Promo</th><th style="text-align:right">Net Non-Promo</th><th style="text-align:right">Margin</th><th style="text-align:right">GM%</th><th style="text-align:right">SKU</th><th style="text-align:right">SKU Promo</th><th style="text-align:right">Uplift</th></tr></thead>
         <tbody id="ppBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="chart-card" style="margin-top:16px">
+    <div class="chart-header">
+      <div><div class="chart-title">⚠️ Tidak Ada Penjualan 3 Bulan Terakhir</div><div class="chart-subtitle" id="ppDormantSub">Dibandingkan dengan 3 bulan terakhir pada data sales (tidak terpengaruh filter di atas)</div></div>
+      <button class="filter-btn primary" onclick="ppExportDormantCSV()" style="white-space:nowrap">⬇️ Export CSV</button>
+    </div>
+    <div style="overflow-x:auto;max-height:320px">
+      <table class="data-table" style="width:100%;font-size:12.5px">
+        <thead><tr><th style="text-align:left" id="ppDormantHead">Prinsipal</th><th style="text-align:right">Bulan Terakhir Ada Penjualan</th></tr></thead>
+        <tbody id="ppDormantBody"></tbody>
       </table>
     </div>
   </div>
@@ -6966,7 +6992,8 @@ async function pfEnsureProductLoaded(rerender){
   _prodEnsureBusy=false;return false;
 }
 // Agregasi sales per atribut master (brand/principal/supplier)
-function aggregateSalesByAttr(attrKey){
+function aggregateSalesByAttr(attrKey, opts){
+  opts=opts||{};
   const rows=(typeof uploads!=='undefined'&&Array.isArray(uploads.sales))?uploads.sales:[];
   if(!rows.length)return {err:'nosales'};
   const master=buildMasterAttrMap();
@@ -6981,24 +7008,36 @@ function aggregateSalesByAttr(attrKey){
   const cAvgCost=mkFind(sc,['avg_cost','avgcost','harga_pokok']);
   const cType=mkFind(sc,['type','tipe','jenis']);
   const cDate=mkFind(sc,['tgl_trs','tr_date','tanggal','date','date_sys']);
+  const cStore=mkFind(sc,['kode_toko','kodetoko','store_code','storecode','kd_toko','toko','store','site','outlet']);
   const monthOf=r=>{if(!cDate)return null;const s=String(r[cDate]||'').trim();let m=s.match(/^(\d{4})[-\/](\d{1,2})/);if(m)return m[1]+'-'+String(+m[2]).padStart(2,'0');m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})/);if(m)return m[3]+'-'+String(+m[2]).padStart(2,'0');const d=new Date(s);return isNaN(d)?null:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');};
-  const agg={},months={};
+  const jset=opts.jset||null;
+  const fMonth=opts.month&&opts.month!=='ALL'?opts.month:null;
+  const fStore=opts.store&&opts.store!=='ALL'?String(opts.store):null;
+  const agg={},months={},stores={};
   rows.forEach(r=>{
     if(cType){const t=String(r[cType]||'').trim().toUpperCase();if(/^[VRX]/.test(t))return;}
-    const info=master.map.get(mkPlu(r[cPlu]));
+    const mo=monthOf(r);
+    if(mo)months[mo]=1;
+    let stv=null;
+    if(cStore){stv=String(r[cStore]||'').trim();if(stv)stores[stv]=1;}
+    if(fStore&&stv!==fStore)return;
+    if(fMonth&&mo!==fMonth)return;
+    const plu=mkPlu(r[cPlu]);
+    const info=master.map.get(plu);
     const name=(info&&info[attrKey])||'';
     if(!name)return;
     const qty=cQty?mkNum(r[cQty]):0;
     const net=cNet?mkNum(r[cNet]):0;
     const cogs=cCogs?mkNum(r[cCogs]):(cAvgCost?mkNum(r[cAvgCost])*qty:0);
     let a=agg[name];
-    if(!a)a=agg[name]={name,net:0,qty:0,cogs:0,skus:new Set(),byMonth:{}};
-    a.net+=net;a.qty+=qty;a.cogs+=cogs;a.skus.add(mkPlu(r[cPlu]));
-    const mo=monthOf(r);
-    if(mo){a.byMonth[mo]=(a.byMonth[mo]||0)+net;months[mo]=1;}
+    if(!a)a=agg[name]={name,net:0,qty:0,cogs:0,skus:new Set(),byMonth:{},promoNet:0,promoQty:0,regNet:0,regQty:0};
+    a.net+=net;a.qty+=qty;a.cogs+=cogs;a.skus.add(plu);
+    if(mo){a.byMonth[mo]=(a.byMonth[mo]||0)+net;}
+    if(jset&&jset.has(plu)){a.promoNet+=net;a.promoQty+=qty;}else{a.regNet+=net;a.regQty+=qty;}
   });
   const monthList=Object.keys(months).sort();
-  return {agg,monthList};
+  const storeList=Object.keys(stores).sort();
+  return {agg,monthList,storeList,master};
 }
 // PLU yang ada di juklak (untuk menandai keikutsertaan promo)
 function juklakPluSet(){
@@ -7090,10 +7129,16 @@ function dlCSV(lines,name){
 // ══════════════════════════════════════════════
 //  PRINCIPAL & SUPPLIER
 // ══════════════════════════════════════════════
-let _ppRows=null,_ppMode='principal';
+let _ppRows=null,_ppMode='principal',_ppPromoFilter='all',_ppDormantRows=null;
 function ppSetMode(m){
   _ppMode=m;
   const tog=document.getElementById('pptog');
+  if(tog)tog.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));
+  renderPrincipalPerf();
+}
+function ppSetPromoFilter(m){
+  _ppPromoFilter=m;
+  const tog=document.getElementById('ppPromoTog');
   if(tog)tog.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));
   renderPrincipalPerf();
 }
@@ -7104,20 +7149,33 @@ function renderPrincipalPerf(){
   const label=_ppMode==='principal'?'Prinsipal':'Supplier';
   setT('pp-count-label',label+' Aktif');
   const th=document.getElementById('ppNameHead');if(th)th.textContent=label;
+  const dh=document.getElementById('ppDormantHead');if(dh)dh.textContent=label;
   const tt=document.getElementById('ppTblTitle');if(tt)tt.textContent='Rincian per '+label;
   const c1=document.getElementById('pp-chart1-title');if(c1)c1.textContent='Top 10 '+label+' — Kontribusi Margin';
-  const KPI=['pp-count','pp-topmargin','pp-conc','pp-promo'];
-  const res=aggregateSalesByAttr(_ppMode);
-  if(res.err){_ppRows=null;if(res.err==='nomaster')pfEnsureProductLoaded(renderPrincipalPerf);return attrBail(res.err,box,txt,KPI,body,setT);}
-  if(box)box.style.display='none';
+  const KPI=['pp-count','pp-topmargin','pp-conc','pp-promo','pp-dormant'];
   const jset=juklakPluSet();
-  const arr=Object.values(res.agg).map(a=>{
+  const monthSel=(document.getElementById('ppMonthSel')||{}).value||'ALL';
+  const storeSel=(document.getElementById('ppStoreSel')||{}).value||'ALL';
+  // Agregasi penuh (tanpa filter bulan/toko) — dasar untuk isi dropdown & deteksi dormant
+  const full=aggregateSalesByAttr(_ppMode,{jset});
+  if(full.err){_ppRows=null;if(full.err==='nomaster')pfEnsureProductLoaded(renderPrincipalPerf);return attrBail(full.err,box,txt,KPI,body,setT);}
+  // Isi dropdown bulan/toko (pertahankan pilihan)
+  const mSel=document.getElementById('ppMonthSel'),sSel=document.getElementById('ppStoreSel');
+  if(mSel){const cur=mSel.value;mSel.innerHTML='<option value="ALL">Semua Bulan</option>'+full.monthList.map(m=>`<option value="${m}">${m}</option>`).join('');mSel.value=(cur&&(cur==='ALL'||full.monthList.includes(cur)))?cur:'ALL';}
+  if(sSel){const cur=sSel.value;sSel.innerHTML='<option value="ALL">Semua Toko</option>'+full.storeList.map(s=>`<option value="${s}">${s}</option>`).join('');sSel.value=(cur&&(cur==='ALL'||full.storeList.includes(cur)))?cur:'ALL';}
+  // Agregasi sesuai filter aktif untuk tabel utama
+  const res=(monthSel==='ALL'&&storeSel==='ALL')?full:aggregateSalesByAttr(_ppMode,{jset,month:monthSel,store:storeSel});
+  if(res.err){_ppRows=null;return attrBail(res.err,box,txt,KPI,body,setT);}
+  if(box)box.style.display='none';
+  let arr=Object.values(res.agg).map(a=>{
     const margin=a.net-a.cogs;
     let promoSku=0;
     if(jset)a.skus.forEach(p=>{if(jset.has(p))promoSku++;});
-    return {name:a.name,net:a.net,qty:a.qty,margin,gm:a.net>0?margin/a.net*100:null,skus:a.skus.size,promoSku:jset?promoSku:null};
+    return {name:a.name,net:a.net,qty:a.qty,margin,gm:a.net>0?margin/a.net*100:null,skus:a.skus.size,promoSku:jset?promoSku:null,promoNet:a.promoNet,regNet:a.regNet};
   }).sort((x,y)=>y.margin-x.margin);
-  if(!arr.length){_ppRows=null;return attrBail('nocol',box,txt,KPI,body,setT);}
+  if(_ppPromoFilter==='promo')arr=arr.filter(a=>a.promoNet>0);
+  else if(_ppPromoFilter==='nonpromo')arr=arr.filter(a=>a.promoNet<=0);
+  if(!arr.length){_ppRows=null;body.innerHTML='';const sub=document.getElementById('ppTblSub');if(sub)sub.textContent='Tidak ada data untuk filter ini.';KPI.forEach(id=>setT(id,'—'));return;}
   _ppRows=arr;
   const total=arr.reduce((s,a)=>s+a.net,0);
   const nf=n=>Math.round(n).toLocaleString('en-US');
@@ -7129,11 +7187,31 @@ function renderPrincipalPerf(){
   const withPromo=jset?arr.filter(a=>a.promoSku>0).length:null;
   setT('pp-promo',withPromo===null?'—':nf(withPromo));
   setT('pp-promo-sub',withPromo===null?'upload Juklak untuk melihat':(arr.length?(withPromo/arr.length*100).toFixed(0)+'% dari total':'—'));
+  // Dormant: nama dari master (semua PLU) yang tidak ada penjualan di 3 bulan terakhir keseluruhan data
+  const allNames=new Set();
+  full.master.map.forEach(info=>{const n=(info&&info[_ppMode])||'';if(n)allNames.add(n);});
+  const last3=full.monthList.slice(-3);
+  const dormant=[...allNames].map(name=>{
+    const a=full.agg[name];
+    const sum3=a&&last3.length?last3.reduce((s,m)=>s+(a.byMonth[m]||0),0):0;
+    const hasAny=!!a;
+    let lastMonth='Belum pernah ada penjualan';
+    if(a){const ms=Object.keys(a.byMonth).filter(m=>a.byMonth[m]>0).sort();if(ms.length)lastMonth=ms[ms.length-1];}
+    return {name,sum3,hasAny,lastMonth,dormant: last3.length? sum3<=0 : !hasAny};
+  }).filter(d=>d.dormant).sort((x,y)=>x.name.localeCompare(y.name));
+  _ppDormantRows=dormant;
+  setT('pp-dormant',nf(dormant.length));
+  const dsub=document.getElementById('ppDormantSub');
+  if(dsub)dsub.textContent=last3.length?`Dibandingkan 3 bulan terakhir pada data (${last3.join(', ')}) — tidak terpengaruh filter di atas`:'Data bulan tidak cukup untuk menghitung 3 bulan terakhir.';
+  const dbody=document.getElementById('ppDormantBody');
+  if(dbody)dbody.innerHTML=dormant.length?dormant.map(d=>`<tr><td>${d.name.replace(/</g,'&lt;')}</td><td style="text-align:right;color:var(--text3)">${d.lastMonth}</td></tr>`).join(''):`<tr><td colspan="2" style="text-align:center;color:var(--text3);padding:14px">Tidak ada — semua ${label.toLowerCase()} masih terjual dalam 3 bulan terakhir.</td></tr>`;
   body.innerHTML=arr.slice(0,200).map((a,i)=>`<tr>
     <td style="text-align:right;color:var(--text3);font-family:var(--mono)">${i+1}</td>
     <td style="font-weight:600">${a.name.replace(/</g,'&lt;')}</td>
     <td style="text-align:right;font-family:var(--mono)">Tk ${nf(a.net)}</td>
     <td style="text-align:right;font-family:var(--mono);color:#58a6ff">${(total?a.net/total*100:0).toFixed(2)}%</td>
+    <td style="text-align:right;font-family:var(--mono);color:#a371f7">Tk ${nf(a.promoNet)}</td>
+    <td style="text-align:right;font-family:var(--mono);color:var(--text3)">Tk ${nf(a.regNet)}</td>
     <td style="text-align:right;font-family:var(--mono);font-weight:700">Tk ${nf(a.margin)}</td>
     <td style="text-align:right;font-family:var(--mono);color:${a.gm===null?'var(--text3)':a.gm>=0?'#3fb950':'#f85149'}">${a.gm===null?'—':a.gm.toFixed(1)+'%'}</td>
     <td style="text-align:right;font-family:var(--mono);color:var(--text3)">${a.skus}</td>
@@ -7141,7 +7219,7 @@ function renderPrincipalPerf(){
     <td style="text-align:right;font-family:var(--mono);color:var(--text3)">${a.promoSku===null||!a.skus?'—':(a.promoSku/a.skus*100).toFixed(0)+'%'}</td>
   </tr>`).join('');
   const sub=document.getElementById('ppTblSub');
-  if(sub)sub.textContent=`${arr.length} ${label.toLowerCase()}`+(arr.length>200?' (menampilkan 200 teratas — CSV memuat semua)':'')+' · kolom terakhir = % SKU yang ikut promo';
+  if(sub)sub.textContent=`${arr.length} ${label.toLowerCase()}`+(arr.length>200?' (menampilkan 200 teratas — CSV memuat semua)':'')+' · Net Promo/Non-Promo dari status PLU di Juklak';
   const top=arr.slice(0,10),cut=s=>s.length>14?s.slice(0,12)+'…':s;
   makeChart('ppMarginChart',{type:'bar',data:{labels:top.map(a=>cut(a.name)),datasets:[{label:'Margin',data:top.map(a=>Math.round(a.margin)),backgroundColor:'rgba(63,185,80,0.75)',borderRadius:4}]},options:{...chartDefaults,indexAxis:'y',plugins:{...chartDefaults.plugins,legend:{display:false}},scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,ticks:{...chartDefaults.scales.x.ticks,callback:v=>'Tk '+(v/1000).toFixed(0)+'K'}}}}});
   const pts=arr.filter(a=>a.gm!==null&&a.net>0).slice(0,60).map(a=>({x:Math.round(a.net),y:parseFloat(a.gm.toFixed(1)),label:a.name}));
@@ -7152,9 +7230,17 @@ function ppExportCSV(){
   const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"',R=Math.round;
   const total=_ppRows.reduce((s,a)=>s+a.net,0);
   const label=_ppMode==='principal'?'Prinsipal':'Supplier';
-  const lines=['Rank,'+label+',Omzet,Share %,Margin,GM %,SKU,SKU Promo,% SKU Promo'];
-  _ppRows.forEach((a,i)=>lines.push([i+1,q(a.name),R(a.net),(total?a.net/total*100:0).toFixed(2),R(a.margin),a.gm===null?'':a.gm.toFixed(1),a.skus,a.promoSku===null?'':a.promoSku,a.promoSku===null||!a.skus?'':(a.promoSku/a.skus*100).toFixed(0)].join(',')));
+  const lines=['Rank,'+label+',Omzet,Share %,Net Promo,Net Non-Promo,Margin,GM %,SKU,SKU Promo,% SKU Promo'];
+  _ppRows.forEach((a,i)=>lines.push([i+1,q(a.name),R(a.net),(total?a.net/total*100:0).toFixed(2),R(a.promoNet),R(a.regNet),R(a.margin),a.gm===null?'':a.gm.toFixed(1),a.skus,a.promoSku===null?'':a.promoSku,a.promoSku===null||!a.skus?'':(a.promoSku/a.skus*100).toFixed(0)].join(',')));
   dlCSV(lines,label+'_Performance.csv');
+}
+function ppExportDormantCSV(){
+  if(!_ppDormantRows||!_ppDormantRows.length){alert('Tidak ada data dormant untuk diexport.');return;}
+  const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const label=_ppMode==='principal'?'Prinsipal':'Supplier';
+  const lines=[label+',Bulan Terakhir Ada Penjualan'];
+  _ppDormantRows.forEach(d=>lines.push([q(d.name),q(d.lastMonth)].join(',')));
+  dlCSV(lines,label+'_Tanpa_Penjualan_3_Bulan.csv');
 }
 
 // ══════════════════════════════════════════════
@@ -7404,6 +7490,7 @@ function renderPromoMechanic(){
   juk.forEach(r=>{
     const p=mkPlu(r[cPlu]);if(!p)return;
     let t=String(r[cType]||'').trim();if(!t)t='(tidak diisi)';
+    t=/gift/i.test(t)?'Direct Gift':'Discount';
     const n=cNorm?mkNum(r[cNorm]):0,pp=cPromoP?mkNum(r[cPromoP]):0;
     const disc=(n>0&&pp>0&&n>=pp)?(n-pp)/n*100:null;
     if(!pluType.has(p))pluType.set(p,{type:t,disc});
