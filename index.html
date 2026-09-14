@@ -8196,7 +8196,7 @@ function renderLapseMember(){
   const sub=document.getElementById('lapseSub');if(sub)sub.textContent=`${rowsOut.length} cabang · Bulan ${mo}`+(prevMo?` (dibanding ${prevMo})`:'');
   const body=document.getElementById('lapseBody');
   body.innerHTML=rowsOut.map(r=>`<tr>
-    <td style="font-family:monospace">${r.store}</td><td>${(r.name||'—').replace(/</g,'&lt;')}</td>
+    <td style="font-family:monospace">${r.store}</td><td>${(r.name||r.store||'—').replace(/</g,'&lt;')}</td>
     <td class="right" style="color:#f85149">${nf(r.lapsed)}</td>
     <td class="right">Rp ${nf(r.netBeforeLapse)}</td>
     <td class="right">${nf(r.total)}</td>
