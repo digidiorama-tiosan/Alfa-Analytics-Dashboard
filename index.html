@@ -2767,6 +2767,10 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       <div id="freqBreakdown"></div>
     </div>
   </div>
+  <div class="chart-card" style="margin-top:16px">
+    <div class="chart-header"><div><div class="chart-title">Rata-rata Kunjungan per Bulan</div><div class="chart-subtitle">Avg visits per member aktif, per bulan</div></div></div>
+    <div class="chart-wrap" style="height:220px"><canvas id="freqMonthlyChart"></canvas></div>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════
@@ -4757,9 +4761,9 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
   <div id="ppAlert" style="display:none" class="alert-box amber"><span style="font-size:16px">⚠️</span><div id="ppAlertText"></div></div>
   <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap">
     <span class="filter-label">Bulan</span>
-    <select class="filter-select" id="ppMonthSel" onchange="renderPrincipalPerf()" style="min-width:140px"><option value="ALL">Semua Bulan</option></select>
+    <select class="filter-select" id="ppMonthSel" onchange="_ppPage=1;renderPrincipalPerf()" style="min-width:140px"><option value="ALL">Semua Bulan</option></select>
     <span class="filter-label" style="margin-left:8px">Toko</span>
-    <select class="filter-select" id="ppStoreSel" onchange="renderPrincipalPerf()" style="min-width:140px"><option value="ALL">Semua Toko</option></select>
+    <select class="filter-select" id="ppStoreSel" onchange="_ppPage=1;renderPrincipalPerf()" style="min-width:140px"><option value="ALL">Semua Toko</option></select>
     <span class="filter-label" style="margin-left:8px">Status Promo</span>
     <div class="src-toggle" id="ppPromoTog">
       <button class="active" data-mode="all" onclick="ppSetPromoFilter('all')">Semua</button>
@@ -4796,6 +4800,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
         <tbody id="ppBody"></tbody>
       </table>
     </div>
+    <div id="ppPager" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:12.5px"></div>
   </div>
   <div class="chart-card" style="margin-top:16px">
     <div class="chart-header">
@@ -5907,7 +5912,7 @@ const SAMPLE = {
   gender_dist:{"Male":1409,"Female":336},
   marital_dist:{"Married":1230,"Single":515},
   reg_monthly:{"January":448,"February":340,"March":174},
-  visit_freq:{one:151,two:24,three_five:28,six_ten:14,eleven_plus:10,avg_visits:2.77,max_visits:26},
+  visit_freq:{one:151,two:24,three_five:28,six_ten:14,eleven_plus:10,avg_visits:2.77,max_visits:26,monthly:[{month:1,month_name:'January',active_members:120,avg_visits:1.9},{month:2,month_name:'February',active_members:135,avg_visits:2.1},{month:3,month_name:'March',active_members:150,avg_visits:2.4}]},
   promo_txns_member:123, promo_txns_nonmember:252,
   top_members:[
     {card:'****9900',sales:89432,txns:26,months:3},{card:'****4124',sales:54210,txns:14,months:3},
@@ -6903,6 +6908,7 @@ function pesExportCSV(){
 function mkNorm(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');}
 function mkFind(cols,cands){for(const c of cands){const f=cols.find(k=>mkNorm(k)===mkNorm(c));if(f)return f;}for(const c of cands){const nc=mkNorm(c);const f=cols.find(k=>mkNorm(k).includes(nc));if(f)return f;}return null;}
 function mkPlu(v){return String(v==null?'':v).trim().replace(/\.0+$/,'').replace(/^0+/,'');}
+function mkCleanName(v){return String(v==null?'':v).replace(/[\u200B-\u200F\u2060\uFEFF\u00A0]/g,' ').replace(/\s+/g,' ').trim();}
 function mkNum(v){if(v==null||v==='')return 0;const n=parseFloat(String(v).replace(/[^\d.\-]/g,''));return isNaN(n)?0:n;}
 // File Excel dengan baris judul kosong \u2192 header jadi __EMPTY_x dan header asli ada di baris data.
 // Deteksi & perbaiki: cari baris yang berisi 'PLU'/'MEREK'/'DESCP', jadikan header, buang baris di atasnya.
@@ -6960,14 +6966,14 @@ function buildMasterAttrMap(){
   prod.forEach(p=>{
     const k=mkPlu(p[cPlu]);if(!k)return;
     map.set(k,{
-      brand:cBrand?String(p[cBrand]||'').trim():'',
-      principal:cPrin?String(p[cPrin]||'').trim():'',
-      supplier:cSupp?String(p[cSupp]||'').trim():'',
-      section:cSectionName?String(p[cSectionName]||'').trim():'',
-      sectionCode:cSectionCode?String(p[cSectionCode]||'').trim():'',
-      rack:cRack?String(p[cRack]||'').trim():'',
-      category:cCatName?String(p[cCatName]||'').trim():'',
-      catCode:cCatCode?String(p[cCatCode]||'').trim():''
+      brand:cBrand?mkCleanName(p[cBrand]):'',
+      principal:cPrin?mkCleanName(p[cPrin]):'',
+      supplier:cSupp?mkCleanName(p[cSupp]):'',
+      section:cSectionName?mkCleanName(p[cSectionName]):'',
+      sectionCode:cSectionCode?mkCleanName(p[cSectionCode]):'',
+      rack:cRack?mkCleanName(p[cRack]):'',
+      category:cCatName?mkCleanName(p[cCatName]):'',
+      catCode:cCatCode?mkCleanName(p[cCatCode]):''
     });
   });
   return {map,has:{brand:!!cBrand,principal:!!cPrin,supplier:!!cSupp,section:!!cSectionName,rack:!!cRack,category:!!cCatName,catCode:!!cCatCode},
@@ -7024,8 +7030,9 @@ function aggregateSalesByAttr(attrKey, opts){
     if(fMonth&&mo!==fMonth)return;
     const plu=mkPlu(r[cPlu]);
     const info=master.map.get(plu);
-    const name=(info&&info[attrKey])||'';
-    if(!name)return;
+    if(!info)return;
+    const rawName=info[attrKey]||'';
+    const name=/^[-.\s0]*$|^(n\/?a|none|nil|tidak\s*ada)$/i.test(rawName)?'(Tanpa Nama '+(attrKey==='principal'?'Prinsipal':attrKey==='supplier'?'Supplier':attrKey)+')':rawName;
     const qty=cQty?mkNum(r[cQty]):0;
     const net=cNet?mkNum(r[cNet]):0;
     const cogs=cCogs?mkNum(r[cCogs]):(cAvgCost?mkNum(r[cAvgCost])*qty:0);
@@ -7129,20 +7136,26 @@ function dlCSV(lines,name){
 // ══════════════════════════════════════════════
 //  PRINCIPAL & SUPPLIER
 // ══════════════════════════════════════════════
-let _ppRows=null,_ppMode='principal',_ppPromoFilter='all',_ppDormantRows=null;
+let _ppRows=null,_ppMode='principal',_ppPromoFilter='all',_ppDormantRows=null,_ppPage=1;const _ppPageSize=30;
 function ppSetMode(m){
-  _ppMode=m;
+  _ppMode=m;_ppPage=1;
   const tog=document.getElementById('pptog');
   if(tog)tog.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));
   renderPrincipalPerf();
 }
 function ppSetPromoFilter(m){
-  _ppPromoFilter=m;
+  _ppPromoFilter=m;_ppPage=1;
   const tog=document.getElementById('ppPromoTog');
   if(tog)tog.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));
   renderPrincipalPerf();
 }
+let _ppRendering=false;
 function renderPrincipalPerf(){
+  if(_ppRendering)return;
+  _ppRendering=true;
+  try{ _renderPrincipalPerfInner(); } finally { _ppRendering=false; }
+}
+function _renderPrincipalPerfInner(){
   const setT=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   const box=document.getElementById('ppAlert'),txt=document.getElementById('ppAlertText'),body=document.getElementById('ppBody');
   if(!body)return;
@@ -7171,12 +7184,13 @@ function renderPrincipalPerf(){
     const margin=a.net-a.cogs;
     let promoSku=0;
     if(jset)a.skus.forEach(p=>{if(jset.has(p))promoSku++;});
-    return {name:a.name,net:a.net,qty:a.qty,margin,gm:a.net>0?margin/a.net*100:null,skus:a.skus.size,promoSku:jset?promoSku:null,promoNet:a.promoNet,regNet:a.regNet};
+    return {name:a.name,net:a.net,qty:a.qty,margin,gm:a.net>0?margin/a.net*100:null,skus:a.skus.size,promoSku:jset?promoSku:null,promoNet:a.promoNet,regNet:a.regNet,pluSample:[...a.skus].slice(0,8)};
   }).sort((x,y)=>y.margin-x.margin);
   if(_ppPromoFilter==='promo')arr=arr.filter(a=>a.promoNet>0);
   else if(_ppPromoFilter==='nonpromo')arr=arr.filter(a=>a.promoNet<=0);
   if(!arr.length){_ppRows=null;body.innerHTML='';const sub=document.getElementById('ppTblSub');if(sub)sub.textContent='Tidak ada data untuk filter ini.';KPI.forEach(id=>setT(id,'—'));return;}
   _ppRows=arr;
+  if(_ppPage>Math.ceil(arr.length/_ppPageSize))_ppPage=1;
   const total=arr.reduce((s,a)=>s+a.net,0);
   const nf=n=>Math.round(n).toLocaleString('en-US');
   const byNet=[...arr].sort((x,y)=>y.net-x.net);
@@ -7205,9 +7219,9 @@ function renderPrincipalPerf(){
   if(dsub)dsub.textContent=last3.length?`Dibandingkan 3 bulan terakhir pada data (${last3.join(', ')}) — tidak terpengaruh filter di atas`:'Data bulan tidak cukup untuk menghitung 3 bulan terakhir.';
   const dbody=document.getElementById('ppDormantBody');
   if(dbody)dbody.innerHTML=dormant.length?dormant.map(d=>`<tr><td>${d.name.replace(/</g,'&lt;')}</td><td style="text-align:right;color:var(--text3)">${d.lastMonth}</td></tr>`).join(''):`<tr><td colspan="2" style="text-align:center;color:var(--text3);padding:14px">Tidak ada — semua ${label.toLowerCase()} masih terjual dalam 3 bulan terakhir.</td></tr>`;
-  body.innerHTML=arr.slice(0,200).map((a,i)=>`<tr>
+  body.innerHTML=arr.slice((_ppPage-1)*_ppPageSize,_ppPage*_ppPageSize).map((a,i0)=>{const i=(_ppPage-1)*_ppPageSize+i0;const isFallback=/^\(Tanpa Nama/.test(a.name);const nameCell=isFallback?`<span title="Contoh PLU tanpa nama: ${a.pluSample.join(', ')}" style="border-bottom:1px dotted var(--text3);cursor:help">${a.name}</span>`:a.name.replace(/</g,'&lt;');return `<tr>
     <td style="text-align:right;color:var(--text3);font-family:var(--mono)">${i+1}</td>
-    <td style="font-weight:600">${a.name.replace(/</g,'&lt;')}</td>
+    <td style="font-weight:600">${nameCell}</td>
     <td style="text-align:right;font-family:var(--mono)">Tk ${nf(a.net)}</td>
     <td style="text-align:right;font-family:var(--mono);color:#58a6ff">${(total?a.net/total*100:0).toFixed(2)}%</td>
     <td style="text-align:right;font-family:var(--mono);color:#a371f7">Tk ${nf(a.promoNet)}</td>
@@ -7217,14 +7231,24 @@ function renderPrincipalPerf(){
     <td style="text-align:right;font-family:var(--mono);color:var(--text3)">${a.skus}</td>
     <td style="text-align:right;font-family:var(--mono);color:#a371f7">${a.promoSku===null?'—':a.promoSku}</td>
     <td style="text-align:right;font-family:var(--mono);color:var(--text3)">${a.promoSku===null||!a.skus?'—':(a.promoSku/a.skus*100).toFixed(0)+'%'}</td>
-  </tr>`).join('');
+  </tr>`;}).join('');
+  const totalPages=Math.max(1,Math.ceil(arr.length/_ppPageSize));
+  const pager=document.getElementById('ppPager');
+  if(pager){
+    if(totalPages<=1){pager.innerHTML='';}
+    else{
+      const mkBtn=(txt,p,dis)=>`<button class="filter-btn" ${dis?'disabled':''} onclick="ppGoPage(${p})" style="padding:5px 12px;${dis?'opacity:.4;cursor:default':''}">${txt}</button>`;
+      pager.innerHTML=mkBtn('‹ Sebelumnya',_ppPage-1,_ppPage<=1)+`<span style="color:var(--text3)">Halaman ${_ppPage} / ${totalPages} (${arr.length} ${label.toLowerCase()})</span>`+mkBtn('Berikutnya ›',_ppPage+1,_ppPage>=totalPages);
+    }
+  }
   const sub=document.getElementById('ppTblSub');
-  if(sub)sub.textContent=`${arr.length} ${label.toLowerCase()}`+(arr.length>200?' (menampilkan 200 teratas — CSV memuat semua)':'')+' · Net Promo/Non-Promo dari status PLU di Juklak';
+  if(sub)sub.textContent=`${arr.length} ${label.toLowerCase()} · 30/halaman · Net Promo/Non-Promo dari status PLU di Juklak`;
   const top=arr.slice(0,10),cut=s=>s.length>14?s.slice(0,12)+'…':s;
   makeChart('ppMarginChart',{type:'bar',data:{labels:top.map(a=>cut(a.name)),datasets:[{label:'Margin',data:top.map(a=>Math.round(a.margin)),backgroundColor:'rgba(63,185,80,0.75)',borderRadius:4}]},options:{...chartDefaults,indexAxis:'y',plugins:{...chartDefaults.plugins,legend:{display:false}},scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,ticks:{...chartDefaults.scales.x.ticks,callback:v=>'Tk '+(v/1000).toFixed(0)+'K'}}}}});
   const pts=arr.filter(a=>a.gm!==null&&a.net>0).slice(0,60).map(a=>({x:Math.round(a.net),y:parseFloat(a.gm.toFixed(1)),label:a.name}));
   makeChart('ppScatterChart',{type:'scatter',data:{datasets:[{label:label,data:pts,backgroundColor:pts.map(p=>p.y>=20?'#3fb950cc':p.y>=10?'#d29922cc':'#f85149cc'),pointRadius:5,pointHoverRadius:7}]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:false},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:ctx=>{const d=ctx.raw;return [String(d.label||'').slice(0,28),'Omzet: Tk '+d.x.toLocaleString('en-US'),'GM: '+d.y+'%'];}}}},scales:{x:{...chartDefaults.scales.x,title:{display:true,text:'Omzet →',color:'#8b949e',font:{size:11}},ticks:{...chartDefaults.scales.x.ticks,callback:v=>'Tk '+(v/1000).toFixed(0)+'K'}},y:{...chartDefaults.scales.y,title:{display:true,text:'GM% →',color:'#8b949e',font:{size:11}},ticks:{...chartDefaults.scales.y.ticks,callback:v=>v+'%'}}}}});
 }
+function ppGoPage(p){_ppPage=p;renderPrincipalPerf();}
 function ppExportCSV(){
   if(!_ppRows||!_ppRows.length){alert('Belum ada data untuk diexport.');return;}
   const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"',R=Math.round;
@@ -7998,6 +8022,9 @@ function renderRetention() {
     <div class="freq-bar-wrap"><div class="freq-bar" style="width:${total?t.count/total*100:0}%;background:${t.color.replace('99','')}"></div></div>
     <span class="freq-pct">${total?pct(t.count,total):0}%</span>
   </div>`).join('') + `<div style="padding:12px 0 0;font-size:12px;color:var(--text2)">Avg visits: <strong style="color:var(--text)">${vf.avg_visits}</strong> · Max: <strong style="color:var(--text)">${vf.max_visits}</strong></div>`;
+
+  const mon = vf.monthly||[];
+  makeChart('freqMonthlyChart',{type:'line',data:{labels:mon.map(m=>m.month_name),datasets:[{label:'Avg visits/member',data:mon.map(m=>m.avg_visits),borderColor:'#58a6ff',backgroundColor:'#58a6ff33',fill:true,tension:.3,pointRadius:4}]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:false},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:ctx=>{const m=mon[ctx.dataIndex];return [`Avg visits: ${m.avg_visits}`,`Member aktif: ${m.active_members}`];}}}}}});
 }
 
 // ══════════════════════════════════════════════
@@ -10233,6 +10260,7 @@ function rebuildDashboard() {
   // ── Revenue & Value Drivers data ────────────────────────────────
   // Per-store metrics
   const rvdStoreMap = {}; // store → {net, members:Set, bons:Set, promoNet, normalNet, memNet}
+  const memberVisitMap = {}; // mid → {overall:Set(txId), byMonth:{month:Set(txId)}}
   // Per-month metrics for all charts
   const rvdMonthMap = {}; // month → {net, promoNet, normalNet, promoBons:Set, normalBons:Set, memNet, bons:Set}
   // Discount calculation: promo price discount = where L price < N price for same SKU
@@ -10283,7 +10311,38 @@ function rebuildDashboard() {
     if (isN) { rvdMonthMap[month].normalNet += net; if(txId) rvdMonthMap[month].normalBons.add(txId); }
     if (isMem) rvdMonthMap[month].memNet += net;
     if (txId) rvdMonthMap[month].bons.add(txId);
+
+    // Member visit tracking (for Retention: overall + per month)
+    if (isMem && mid && txId) {
+      let mv = memberVisitMap[mid];
+      if (!mv) mv = memberVisitMap[mid] = { overall:new Set(), byMonth:{} };
+      mv.overall.add(txId);
+      if (!mv.byMonth[month]) mv.byMonth[month] = new Set();
+      mv.byMonth[month].add(txId);
+    }
   });
+
+  // ── Visit Frequency (real, per member + per month) ────────────────
+  let visit_freq = SAMPLE.visit_freq;
+  if (Object.keys(memberVisitMap).length) {
+    const overallCounts = Object.values(memberVisitMap).map(mv => mv.overall.size);
+    const tiers = { one:0, two:0, three_five:0, six_ten:0, eleven_plus:0 };
+    overallCounts.forEach(c => {
+      if (c === 1) tiers.one++;
+      else if (c === 2) tiers.two++;
+      else if (c >= 3 && c <= 5) tiers.three_five++;
+      else if (c >= 6 && c <= 10) tiers.six_ten++;
+      else if (c >= 11) tiers.eleven_plus++;
+    });
+    const avg_visits = overallCounts.length ? parseFloat((overallCounts.reduce((a,b)=>a+b,0)/overallCounts.length).toFixed(2)) : 0;
+    const max_visits = overallCounts.length ? Math.max(...overallCounts) : 0;
+    const monthly = Object.keys(rvdMonthMap).map(Number).sort((a,b)=>a-b).map(month => {
+      const active = Object.values(memberVisitMap).filter(mv => mv.byMonth[month] && mv.byMonth[month].size > 0);
+      const totVisits = active.reduce((s,mv) => s + mv.byMonth[month].size, 0);
+      return { month, month_name: monthNames[month-1], active_members: active.length, avg_visits: active.length ? parseFloat((totVisits/active.length).toFixed(2)) : 0 };
+    });
+    visit_freq = { ...tiers, avg_visits, max_visits, monthly };
+  }
 
   // Finalize
   const rvdMonthArr = Object.values(rvdMonthMap).map(m => ({
@@ -10406,7 +10465,7 @@ function rebuildDashboard() {
     promo_categories:sortCats(catMapPromo).length?sortCats(catMapPromo):SAMPLE.promo_categories,
     mem_categories:sortCats(catMapMem).length?sortCats(catMapMem):SAMPLE.mem_categories,
     age_dist, gender_dist, marital_dist, reg_monthly, demo_pivot,
-    visit_freq:SAMPLE.visit_freq,
+    visit_freq:visit_freq,
     promo_txns_member:promoBonMem.size||SAMPLE.promo_txns_member,
     promo_txns_nonmember:promoBonNon.size||SAMPLE.promo_txns_nonmember,
     top_members:SAMPLE.top_members,
