@@ -2771,6 +2771,15 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     <div class="chart-header"><div><div class="chart-title">Rata-rata Kunjungan per Bulan</div><div class="chart-subtitle">Avg visits per member aktif, per bulan</div></div></div>
     <div class="chart-wrap" style="height:220px"><canvas id="freqMonthlyChart"></canvas></div>
   </div>
+  <div class="chart-card" style="margin-top:16px">
+    <div class="chart-header"><div><div class="chart-title">Tabel Kunjungan per Bulan</div><div class="chart-subtitle">Klik baris untuk lihat detail per toko</div></div></div>
+    <div style="overflow-x:auto">
+      <table class="data-table" style="width:100%;font-size:12.5px">
+        <thead><tr><th>Bulan</th><th class="right">Member Aktif</th><th class="right">Avg Kunjungan</th><th></th></tr></thead>
+        <tbody id="rtMonthlyBody"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════
@@ -8025,6 +8034,17 @@ function renderRetention() {
 
   const mon = vf.monthly||[];
   makeChart('freqMonthlyChart',{type:'line',data:{labels:mon.map(m=>m.month_name),datasets:[{label:'Avg visits/member',data:mon.map(m=>m.avg_visits),borderColor:'#58a6ff',backgroundColor:'#58a6ff33',fill:true,tension:.3,pointRadius:4}]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:false},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:ctx=>{const m=mon[ctx.dataIndex];return [`Avg visits: ${m.avg_visits}`,`Member aktif: ${m.active_members}`];}}}}}});
+
+  const tbody = document.getElementById('rtMonthlyBody');
+  if (tbody) {
+    tbody.innerHTML = mon.map((m,i) => {
+      const stores = m.stores||[];
+      const storeRows = stores.length ? stores.map(s=>`<tr class="rt-store-row rt-store-${i}" style="display:none;background:var(--surface2)"><td style="padding-left:28px;color:var(--text2)">${s.store}</td><td class="right">${s.active_members}</td><td class="right">${s.avg_visits}</td><td></td></tr>`).join('') : `<tr class="rt-store-row rt-store-${i}" style="display:none;background:var(--surface2)"><td colspan="4" style="padding-left:28px;color:var(--text3)">Tidak ada data toko</td></tr>`;
+      return `<tr style="cursor:pointer" onclick="document.querySelectorAll('.rt-store-${i}').forEach(r=>r.style.display=r.style.display==='none'?'table-row':'none')">
+        <td style="font-weight:600">${m.month_name}</td><td class="right">${m.active_members}</td><td class="right">${m.avg_visits}</td><td style="color:var(--text3)">▾ detail toko</td>
+      </tr>${storeRows}`;
+    }).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:14px">Belum ada data</td></tr>';
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -10312,13 +10332,16 @@ function rebuildDashboard() {
     if (isMem) rvdMonthMap[month].memNet += net;
     if (txId) rvdMonthMap[month].bons.add(txId);
 
-    // Member visit tracking (for Retention: overall + per month)
+    // Member visit tracking (for Retention: overall + per month + per store)
     if (isMem && mid && txId) {
       let mv = memberVisitMap[mid];
       if (!mv) mv = memberVisitMap[mid] = { overall:new Set(), byMonth:{} };
       mv.overall.add(txId);
       if (!mv.byMonth[month]) mv.byMonth[month] = new Set();
       mv.byMonth[month].add(txId);
+      const mk = month+'|'+store;
+      if (!mv.byMonth[mk]) mv.byMonth[mk] = new Set();
+      mv.byMonth[mk].add(txId);
     }
   });
 
@@ -10339,7 +10362,18 @@ function rebuildDashboard() {
     const monthly = Object.keys(rvdMonthMap).map(Number).sort((a,b)=>a-b).map(month => {
       const active = Object.values(memberVisitMap).filter(mv => mv.byMonth[month] && mv.byMonth[month].size > 0);
       const totVisits = active.reduce((s,mv) => s + mv.byMonth[month].size, 0);
-      return { month, month_name: monthNames[month-1], active_members: active.length, avg_visits: active.length ? parseFloat((totVisits/active.length).toFixed(2)) : 0 };
+      const storeMap = {};
+      Object.values(memberVisitMap).forEach(mv => {
+        Object.keys(mv.byMonth).forEach(k => {
+          if (!k.startsWith(month+'|')) return;
+          const store = k.slice((month+'|').length);
+          if (!storeMap[store]) storeMap[store] = { visits:0, members:0 };
+          const sz = mv.byMonth[k].size;
+          if (sz > 0) { storeMap[store].visits += sz; storeMap[store].members++; }
+        });
+      });
+      const stores = Object.keys(storeMap).sort().map(store => ({ store, active_members: storeMap[store].members, avg_visits: storeMap[store].members ? parseFloat((storeMap[store].visits/storeMap[store].members).toFixed(2)) : 0 }));
+      return { month, month_name: monthNames[month-1], active_members: active.length, avg_visits: active.length ? parseFloat((totVisits/active.length).toFixed(2)) : 0, stores };
     });
     visit_freq = { ...tiers, avg_visits, max_visits, monthly };
   }
