@@ -1669,6 +1669,10 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/></svg>
           Transactions
         </button>
+        <button class="nav-item" onclick="showPanel('lapse-member',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v6l4 2"/><circle cx="8" cy="8" r="7"/></svg>
+          Summary Lapse Member
+        </button>
         <button class="nav-item" onclick="showPanel('mem-retention',this)">
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 8A5 5 0 113 8"/><path d="M13 8l-2-2M13 8l2-2"/></svg>
           Retention
@@ -2747,6 +2751,48 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       <table class="data-table">
         <thead><tr><th>#</th><th>Card / Member</th><th class="right">Net Sales (Tk)</th><th class="right">Transactions</th><th class="right">Months Active</th><th class="right">Avg Basket (Tk)</th></tr></thead>
         <tbody id="memberTransTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PANEL: SUMMARY LAPSE MEMBER
+══════════════════════════════════ -->
+<div id="panel-lapse-member" class="panel">
+  <div class="page-header">
+    <div><div class="page-title">Summary Lapse Member</div><div class="page-subtitle">Member yang berhenti belanja di cabang, per bulan</div></div>
+    <button class="btn-dl" onclick="lapseExportCSV()"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button>
+  </div>
+  <div class="insight-box" style="margin-bottom:14px">
+    <span class="insight-icon">💡</span>
+    <div class="insight-text" style="font-size:12px">
+      <strong>Lapsed Member:</strong> member yang ada di Total Member bulan lalu, namun tidak ada di Total Member bulan aktual.<br>
+      <strong>Total Member:</strong> member yang belanja min. 1x dalam 6 bulan terakhir (per cabang).<br>
+      <strong>Active Member:</strong> member yang belanja min. 1x dalam bulan berjalan (per cabang).
+    </div>
+  </div>
+  <div id="lapseAlert" style="display:none" class="alert-box amber"><span style="font-size:16px">⚠️</span><div id="lapseAlertText"></div></div>
+  <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap">
+    <span class="filter-label">Bulan</span>
+    <select class="filter-select" id="lapseMonthSel" onchange="renderLapseMember()" style="min-width:150px"></select>
+    <span class="filter-label" style="margin-left:8px">Cari Cabang</span>
+    <input type="text" class="filter-select" id="lapseSearch" oninput="renderLapseMember()" placeholder="Kode / Nama cabang…" style="min-width:180px">
+    <span style="margin-left:auto;font-size:12px;color:var(--text3)">Last Data Date: <strong id="lapseLastDate" style="color:var(--text)">—</strong></span>
+  </div>
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
+    <div class="stat-card red"><div class="stat-label">Total Lapsed Member</div><div class="stat-value" id="lm-lapsed">—</div><div class="stat-sub" id="lm-lapsed-sub">bulan terpilih</div></div>
+    <div class="stat-card green"><div class="stat-label">Total Active Member</div><div class="stat-value" id="lm-active">—</div><div class="stat-sub" id="lm-active-sub">bulan terpilih</div></div>
+    <div class="stat-card blue"><div class="stat-label">Total Member</div><div class="stat-value" id="lm-total">—</div><div class="stat-sub" id="lm-total-sub">6 bulan trailing</div></div>
+    <div class="stat-card amber"><div class="stat-label">Avg % Lapsed</div><div class="stat-value" id="lm-pct">—</div><div class="stat-sub">rata-rata seluruh cabang</div></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-header"><div><div class="chart-title">Rincian per Cabang</div><div class="chart-subtitle" id="lapseSub">—</div></div></div>
+    <div style="overflow-x:auto">
+      <table class="data-table" style="width:100%;font-size:12.5px">
+        <thead><tr><th>Kode Cabang</th><th>Nama Cabang</th><th class="right">Lapsed Member</th><th class="right">Net Sales sebelum Lapsed</th><th class="right">Total Member</th><th class="right">Active Member</th><th class="right">% Active/Total</th><th class="right">% Lapsed/Total</th></tr></thead>
+        <tbody id="lapseBody"></tbody>
+        <tfoot id="lapseFoot"></tfoot>
       </table>
     </div>
   </div>
@@ -6337,6 +6383,7 @@ function renderPanel(id) {
     case 'mem-demo': renderMemDemo(); break;
     case 'mem-transactions': renderMemTransactions(); break;
     case 'mem-retention': renderRetention(); break;
+    case 'lapse-member': renderLapseMember(); break;
     case 'mem-category': renderMemCategory(); break;
     case 'promo-effectiveness': renderPromoEffectiveness(); break;
     case 'juklak-lookup': renderJuklakLookup(); break;
@@ -8045,6 +8092,128 @@ function renderRetention() {
       </tr>${storeRows}`;
     }).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:14px">Belum ada data</td></tr>';
   }
+}
+
+// ══════════════════════════════════════════════
+//  SUMMARY LAPSE MEMBER
+// ══════════════════════════════════════════════
+let _lapseData=null;
+function computeLapseMember(){
+  const rows=(typeof uploads!=='undefined'&&Array.isArray(uploads.sales))?uploads.sales:[];
+  if(!rows.length)return {err:'nosales'};
+  const cols=Object.keys(rows[0]||{});
+  const norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const fc=cands=>{for(const c of cands){const f=cols.find(k=>norm(k)===norm(c));if(f)return f;}for(const c of cands){const nc=norm(c);const f=cols.find(k=>norm(k).includes(nc));if(f)return f;}return null;};
+  const cMem=fc(['members','no_kartu','card_no','member_id','memberid','kartu']);
+  const cStore=fc(['kode_toko','store_code','toko','store','outlet','kdtoko']);
+  const cStoreNm=fc(['nama_toko','store_name','namatoko']);
+  const cDate=fc(['tgl_trs','tr_date','tanggal','date','date_sys','trxdate']);
+  const cNet=fc(['net sales','net_sales','netsales','amount','nilai','total']);
+  const cType=fc(['type','tipe','jenis']);
+  if(!cMem||!cStore||!cDate)return {err:'nocol'};
+  const parseN=v=>{const n=parseFloat(String(v==null?'':v).replace(/[^0-9.-]/g,''));return isNaN(n)?0:n;};
+  const monthOf=s=>{s=String(s||'').trim();let m=s.match(/^(\d{4})[-\/](\d{1,2})/);if(m)return m[1]+'-'+String(+m[2]).padStart(2,'0');m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})/);if(m){let y=m[3];if(y.length===2)y='20'+y;return y+'-'+String(+m[2]).padStart(2,'0');}const d=new Date(s);return isNaN(d)?null:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');};
+  // store → month → Set(member), also store meta + lastDate
+  const storeMonthMembers={}, storeMeta={};
+  let lastDate=null;
+  rows.forEach(r=>{
+    if(cType){const t=String(r[cType]||'').trim().toUpperCase();if(/^[VRX]/.test(t))return;}
+    const mem=String(r[cMem]||'').trim();if(!mem||/^0+$/.test(mem))return;
+    const store=String(r[cStore]||'').trim();if(!store)return;
+    const mo=monthOf(r[cDate]);if(!mo)return;
+    if(!storeMeta[store])storeMeta[store]={name:cStoreNm?String(r[cStoreNm]||'').trim():''};
+    if(!storeMonthMembers[store])storeMonthMembers[store]={};
+    if(!storeMonthMembers[store][mo])storeMonthMembers[store][mo]={mem:new Set(),net:new Map()};
+    storeMonthMembers[store][mo].mem.add(mem);
+    const net=cNet?parseN(r[cNet]):0;
+    storeMonthMembers[store][mo].net.set(mem,(storeMonthMembers[store][mo].net.get(mem)||0)+net);
+    const rawD=String(r[cDate]||'');const dd=new Date(rawD);
+    if(!isNaN(dd)&&(!lastDate||dd>lastDate))lastDate=dd;
+  });
+  const allMonths=new Set();
+  Object.values(storeMonthMembers).forEach(sm=>Object.keys(sm).forEach(m=>allMonths.add(m)));
+  const monthList=[...allMonths].sort();
+  if(!monthList.length)return {err:'nodata'};
+  const idx=k=>monthList.indexOf(k);
+  const trailing6=(store,mo)=>{
+    const i=idx(mo);const from=Math.max(0,i-5);
+    const set=new Set();
+    for(let j=from;j<=i;j++){const mk=monthList[j];const d=storeMonthMembers[store]&&storeMonthMembers[store][mk];if(d)d.mem.forEach(m=>set.add(m));}
+    return set;
+  };
+  return {storeMonthMembers,storeMeta,monthList,trailing6,lastDate};
+}
+function lapseAttrBail(err,box,txt,ids){
+  const msgs={nosales:'Data sales belum ada. Upload data sales dulu.',nocol:'Kolom Member/Toko/Tanggal tidak ditemukan di data sales.',nodata:'Data bulan tidak cukup untuk dihitung.'};
+  if(box){box.style.display='flex';if(txt)txt.innerHTML='<strong>'+ (msgs[err]||'Data tidak tersedia.') +'</strong>';}
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='—';});
+  const body=document.getElementById('lapseBody');if(body)body.innerHTML='';
+}
+function renderLapseMember(){
+  const box=document.getElementById('lapseAlert'),txt=document.getElementById('lapseAlertText');
+  const KPI=['lm-lapsed','lm-active','lm-total','lm-pct'];
+  const D2=computeLapseMember();
+  if(D2.err){_lapseData=null;return lapseAttrBail(D2.err,box,txt,KPI);}
+  if(box)box.style.display='none';
+  const {storeMonthMembers,storeMeta,monthList,trailing6,lastDate}=D2;
+  const sel=document.getElementById('lapseMonthSel');
+  if(sel && sel.options.length!==monthList.length){
+    const cur=sel.value;
+    sel.innerHTML=monthList.map(m=>`<option value="${m}">${m}</option>`).join('');
+    sel.value=monthList.includes(cur)?cur:monthList[monthList.length-1];
+  }
+  const mo=sel?sel.value:monthList[monthList.length-1];
+  const i=idx0(monthList,mo);
+  const prevMo=i>0?monthList[i-1]:null;
+  const ld=document.getElementById('lapseLastDate');
+  if(ld)ld.textContent=lastDate?lastDate.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}):'—';
+  const stores=Object.keys(storeMonthMembers).sort();
+  const search=(document.getElementById('lapseSearch')||{}).value?.trim().toLowerCase()||'';
+  const rowsOut=[];
+  stores.forEach(store=>{
+    const name=(storeMeta[store]&&storeMeta[store].name)||'';
+    if(search && !store.toLowerCase().includes(search) && !name.toLowerCase().includes(search))return;
+    const totalSet=trailing6(store,mo);
+    const activeSet=(storeMonthMembers[store][mo]&&storeMonthMembers[store][mo].mem)||new Set();
+    const prevTotalSet=prevMo?trailing6(store,prevMo):new Set();
+    const lapsedSet=new Set([...prevTotalSet].filter(m=>!totalSet.has(m)));
+    let netBeforeLapse=0;
+    if(prevMo && storeMonthMembers[store][prevMo]){
+      lapsedSet.forEach(m=>{netBeforeLapse+=storeMonthMembers[store][prevMo].net.get(m)||0;});
+    }
+    rowsOut.push({store,name,lapsed:lapsedSet.size,netBeforeLapse,total:totalSet.size,active:activeSet.size,pctActive:totalSet.size?activeSet.size/totalSet.size*100:0,pctLapsed:prevTotalSet.size?lapsedSet.size/prevTotalSet.size*100:0});
+  });
+  rowsOut.sort((a,b)=>b.total-a.total);
+  _lapseData={rows:rowsOut,month:mo};
+  const nf=n=>Math.round(n).toLocaleString('id-ID');
+  const tLapsed=rowsOut.reduce((s,r)=>s+r.lapsed,0),tActive=rowsOut.reduce((s,r)=>s+r.active,0),tTotal=rowsOut.reduce((s,r)=>s+r.total,0);
+  const avgPctLapsed=rowsOut.length?rowsOut.reduce((s,r)=>s+r.pctLapsed,0)/rowsOut.length:0;
+  document.getElementById('lm-lapsed').textContent=nf(tLapsed);
+  document.getElementById('lm-lapsed-sub').textContent='periode '+mo+(prevMo?'':' (bulan pertama data)');
+  document.getElementById('lm-active').textContent=nf(tActive);
+  document.getElementById('lm-total').textContent=nf(tTotal);
+  document.getElementById('lm-pct').textContent=avgPctLapsed.toFixed(1)+'%';
+  const sub=document.getElementById('lapseSub');if(sub)sub.textContent=`${rowsOut.length} cabang · Bulan ${mo}`+(prevMo?` (dibanding ${prevMo})`:'');
+  const body=document.getElementById('lapseBody');
+  body.innerHTML=rowsOut.map(r=>`<tr>
+    <td style="font-family:monospace">${r.store}</td><td>${(r.name||'—').replace(/</g,'&lt;')}</td>
+    <td class="right" style="color:#f85149">${nf(r.lapsed)}</td>
+    <td class="right">Rp ${nf(r.netBeforeLapse)}</td>
+    <td class="right">${nf(r.total)}</td>
+    <td class="right" style="color:#3fb950">${nf(r.active)}</td>
+    <td class="right">${r.pctActive.toFixed(2)}%</td>
+    <td class="right" style="color:#f85149">${r.pctLapsed.toFixed(2)}%</td>
+  </tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:14px">Tidak ada data untuk filter ini.</td></tr>';
+  const foot=document.getElementById('lapseFoot');
+  if(foot)foot.innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border);background:var(--surface2)"><td colspan="2">TOTAL</td><td class="right">${nf(tLapsed)}</td><td class="right">Rp ${nf(rowsOut.reduce((s,r)=>s+r.netBeforeLapse,0))}</td><td class="right">${nf(tTotal)}</td><td class="right">${nf(tActive)}</td><td class="right">${tTotal?(tActive/tTotal*100).toFixed(2)+'%':'—'}</td><td class="right">${avgPctLapsed.toFixed(2)}%</td></tr>`;
+}
+function idx0(list,v){return list.indexOf(v);}
+function lapseExportCSV(){
+  if(!_lapseData||!_lapseData.rows.length){alert('Belum ada data untuk diexport.');return;}
+  const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"',R=Math.round;
+  const lines=[`Summary Lapse Member - ${_lapseData.month}`,'Kode Cabang,Nama Cabang,Lapsed Member,Net Sales sebelum Lapsed,Total Member,Active Member,% Active/Total,% Lapsed/Total'];
+  _lapseData.rows.forEach(r=>lines.push([q(r.store),q(r.name),r.lapsed,R(r.netBeforeLapse),r.total,r.active,r.pctActive.toFixed(2),r.pctLapsed.toFixed(2)].join(',')));
+  dlCSV(lines,`Summary_Lapse_Member_${_lapseData.month}.csv`);
 }
 
 // ══════════════════════════════════════════════
@@ -13891,7 +14060,7 @@ const PANEL_GROUP_MAP = {
   'store-sales':'grp-sales','target-actuals':'grp-sales','report-all':'grp-sales',
   'churn-risk':'grp-members','mem-detail':'grp-members','mem-contribution':'grp-members',
   'mem-vs-promo':'grp-members','mem-trend':'grp-members','mem-database':'grp-members','mem-homestore':'grp-members',
-  'mem-demo':'grp-members','mem-transactions':'grp-members','mem-retention':'grp-members',
+  'mem-demo':'grp-members','mem-transactions':'grp-members','mem-retention':'grp-members','lapse-member':'grp-members',
   'mem-category':'grp-members',
   'promo-effectiveness':'grp-marketing','juklak-lookup':'grp-marketing','juklak-recap':'grp-marketing','promo-contribution':'grp-marketing','promo-member':'grp-marketing','promo-items':'grp-marketing',
   'promo-categories':'grp-marketing','basket':'grp-marketing','brand-perf':'grp-marketing','principal-perf':'grp-marketing','section-contribution':'grp-marketing','promo-discount':'grp-marketing','promo-mechanic':'grp-marketing',
@@ -18374,7 +18543,7 @@ async function downloadMcKinseyPPTX(){
   const MENU_GROUPS = [
     { id:'grp-platform', label:'Platform', items:[['command-center','Command Center'],['data-engine','Data Engine']] },
     { id:'grp-sales', label:'Sales Reports', items:[['exec-summary','Executive Summary'],['sales','Sales Report'],['store-sales','Sales by Store'],['daily-sales','Daily Sales Trend'],['target-actuals','Target vs Actuals'],['report-all','Export PDF Report']] },
-    { id:'grp-members', label:'Members', items:[['churn-risk','Member Churn Risk'],['mem-detail','Member Detail'],['mem-contribution','Contribution'],['mem-vs-promo','Member vs Promo'],['mem-trend','Sales Trend'],['mem-database','Database'],['mem-homestore','Member by Store'],['mem-demo','Demographics'],['mem-transactions','Transactions'],['mem-retention','Retention'],['mem-category','Sales by Category']] },
+    { id:'grp-members', label:'Members', items:[['lapse-member','Summary Lapse Member'],['churn-risk','Member Churn Risk'],['mem-detail','Member Detail'],['mem-contribution','Contribution'],['mem-vs-promo','Member vs Promo'],['mem-trend','Sales Trend'],['mem-database','Database'],['mem-homestore','Member by Store'],['mem-demo','Demographics'],['mem-transactions','Transactions'],['mem-retention','Retention'],['mem-category','Sales by Category']] },
     { id:'grp-marketing', label:'Marketing', items:[['promo-effectiveness','Promo Effectiveness'],['promo-contribution','Promo vs Sales'],['promo-member','Member × Promo'],['promo-items','Top Promo Items'],['promo-categories','Top Categories'],['basket','Basket Size'],['brand-perf','Brand Performance'],['principal-perf','Principal & Supplier'],['promo-mechanic','Promo Mechanic'],['thema-juklak','Report Thema Juklak']] },
     { id:'grp-catmgmt', label:'Category Management', items:[['sku-pareto','SKU Rationalization'],['cat-overview','Overview'],['cat-promo-potential','Promo Potential'],['cat-member','Member Category'],['cat-trend','Monthly Trend'],['cat-time','Time & Day'],['cat-detail','Category Detail']] },
     { id:'grp-analytics', label:'Analytics', items:[['revenue-drivers','Revenue & Value Drivers'],['peak-hours','Peak Hours & Days'],['void-return','Void & Return'],['cohort-analysis','Cohort Analysis'],['sales-forecast','Sales Forecasting'],['price-elasticity','Price Elasticity & ROI'],['data-quality','Data Quality'],['rokok-report','Category Basket Report']] },
