@@ -4845,6 +4845,10 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       <div style="height:300px"><canvas id="ppScatterChart"></canvas></div>
     </div>
   </div>
+  <div class="chart-card" style="margin-top:16px">
+    <div class="chart-header"><div><div class="chart-title" id="pp-chart3-title">Top 10 — Net Sales</div><div class="chart-subtitle">Omzet terbesar (Tk) · mengikuti filter di atas</div></div></div>
+    <div style="height:300px"><canvas id="ppNetChart"></canvas></div>
+  </div>
   <div class="chart-card">
     <div class="chart-header">
       <div><div class="chart-title" id="ppTblTitle">Rincian per Prinsipal</div><div class="chart-subtitle" id="ppTblSub">Diurut kontribusi margin</div></div>
@@ -7222,6 +7226,7 @@ function _renderPrincipalPerfInner(){
   const dh=document.getElementById('ppDormantHead');if(dh)dh.textContent=label;
   const tt=document.getElementById('ppTblTitle');if(tt)tt.textContent='Rincian per '+label;
   const c1=document.getElementById('pp-chart1-title');if(c1)c1.textContent='Top 10 '+label+' — Kontribusi Margin';
+  const c3=document.getElementById('pp-chart3-title');if(c3)c3.textContent='Top 10 '+label+' — Net Sales';
   const KPI=['pp-count','pp-topmargin','pp-conc','pp-promo','pp-dormant'];
   const jset=juklakPluSet();
   const monthSel=(document.getElementById('ppMonthSel')||{}).value||'ALL';
@@ -7304,6 +7309,8 @@ function _renderPrincipalPerfInner(){
   makeChart('ppMarginChart',{type:'bar',data:{labels:top.map(a=>cut(a.name)),datasets:[{label:'Margin',data:top.map(a=>Math.round(a.margin)),backgroundColor:'rgba(63,185,80,0.75)',borderRadius:4}]},options:{...chartDefaults,indexAxis:'y',plugins:{...chartDefaults.plugins,legend:{display:false}},scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,ticks:{...chartDefaults.scales.x.ticks,callback:v=>'Tk '+(v/1000).toFixed(0)+'K'}}}}});
   const pts=arr.filter(a=>a.gm!==null&&a.net>0).slice(0,60).map(a=>({x:Math.round(a.net),y:parseFloat(a.gm.toFixed(1)),label:a.name}));
   makeChart('ppScatterChart',{type:'scatter',data:{datasets:[{label:label,data:pts,backgroundColor:pts.map(p=>p.y>=20?'#3fb950cc':p.y>=10?'#d29922cc':'#f85149cc'),pointRadius:5,pointHoverRadius:7}]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:false},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:ctx=>{const d=ctx.raw;return [String(d.label||'').slice(0,28),'Omzet: Tk '+d.x.toLocaleString('en-US'),'GM: '+d.y+'%'];}}}},scales:{x:{...chartDefaults.scales.x,title:{display:true,text:'Omzet →',color:'#8b949e',font:{size:11}},ticks:{...chartDefaults.scales.x.ticks,callback:v=>'Tk '+(v/1000).toFixed(0)+'K'}},y:{...chartDefaults.scales.y,title:{display:true,text:'GM% →',color:'#8b949e',font:{size:11}},ticks:{...chartDefaults.scales.y.ticks,callback:v=>v+'%'}}}}});
+  const topNet=[...arr].sort((x,y)=>y.net-x.net).slice(0,10);
+  makeChart('ppNetChart',{type:'bar',data:{labels:topNet.map(a=>cut(a.name)),datasets:[{label:'Net Sales',data:topNet.map(a=>Math.round(a.net)),backgroundColor:'rgba(88,166,255,0.75)',borderRadius:4}]},options:{...chartDefaults,indexAxis:'y',plugins:{...chartDefaults.plugins,legend:{display:false},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:ctx=>{const a=topNet[ctx.dataIndex];return ['Net Sales: Tk '+Math.round(a.net).toLocaleString('en-US'),'Share: '+(total?(a.net/total*100).toFixed(2):0)+'%','Margin: Tk '+Math.round(a.margin).toLocaleString('en-US'),'GM: '+(a.gm===null?'—':a.gm.toFixed(1)+'%')];}}}},scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,ticks:{...chartDefaults.scales.x.ticks,callback:v=>'Tk '+(v/1000).toFixed(0)+'K'}}}}});
 }
 function ppGoPage(p){_ppPage=p;renderPrincipalPerf();}
 function ppExportCSV(){
