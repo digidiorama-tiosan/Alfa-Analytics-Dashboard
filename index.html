@@ -2784,7 +2784,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     <div class="stat-card red"><div class="stat-label">Total Lapsed Member</div><div class="stat-value" id="lm-lapsed">—</div><div class="stat-sub" id="lm-lapsed-sub">bulan terpilih</div></div>
     <div class="stat-card green"><div class="stat-label">Total Active Member</div><div class="stat-value" id="lm-active">—</div><div class="stat-sub" id="lm-active-sub">bulan terpilih</div></div>
     <div class="stat-card blue"><div class="stat-label">Total Member</div><div class="stat-value" id="lm-total">—</div><div class="stat-sub" id="lm-total-sub">6 bulan trailing</div></div>
-    <div class="stat-card amber"><div class="stat-label">Avg % Lapsed</div><div class="stat-value" id="lm-pct">—</div><div class="stat-sub">rata-rata seluruh cabang</div></div>
+    <div class="stat-card amber"><div class="stat-label">% Lapsed to Total</div><div class="stat-value" id="lm-pct">—</div><div class="stat-sub">lapsed ÷ total member</div></div>
   </div>
   <div class="chart-card">
     <div class="chart-header"><div><div class="chart-title">Rincian per Cabang</div><div class="chart-subtitle" id="lapseSub">—</div></div></div>
@@ -8181,21 +8181,30 @@ function renderLapseMember(){
     if(prevMo && storeMonthMembers[store][prevMo]){
       lapsedSet.forEach(m=>{netBeforeLapse+=storeMonthMembers[store][prevMo].net.get(m)||0;});
     }
-    rowsOut.push({store,name,lapsed:lapsedSet.size,netBeforeLapse,total:totalSet.size,active:activeSet.size,pctActive:totalSet.size?activeSet.size/totalSet.size*100:0,pctLapsed:prevTotalSet.size?lapsedSet.size/prevTotalSet.size*100:0});
+    rowsOut.push({store,name,lapsed:lapsedSet.size,netBeforeLapse,total:totalSet.size,active:activeSet.size,pctActive:totalSet.size?activeSet.size/totalSet.size*100:0,pctLapsed:totalSet.size?lapsedSet.size/totalSet.size*100:0,_total:totalSet,_active:activeSet,_lapsed:lapsedSet});
   });
   rowsOut.sort((a,b)=>b.total-a.total);
+  // Baris ALL — dedup member lintas cabang (member sama di 2 cabang dihitung sekali)
+  if(rowsOut.length>1){
+    const uT=new Set(),uA=new Set(),uL=new Set();
+    rowsOut.forEach(r=>{r._total.forEach(m=>uT.add(m));r._active.forEach(m=>uA.add(m));r._lapsed.forEach(m=>uL.add(m));});
+    rowsOut.unshift({store:'ALL',name:'ALL',lapsed:uL.size,netBeforeLapse:rowsOut.reduce((s,r)=>s+r.netBeforeLapse,0),total:uT.size,active:uA.size,pctActive:uT.size?uA.size/uT.size*100:0,pctLapsed:uT.size?uL.size/uT.size*100:0,isAll:true});
+  }
   _lapseData={rows:rowsOut,month:mo};
   const nf=n=>Math.round(n).toLocaleString('id-ID');
-  const tLapsed=rowsOut.reduce((s,r)=>s+r.lapsed,0),tActive=rowsOut.reduce((s,r)=>s+r.active,0),tTotal=rowsOut.reduce((s,r)=>s+r.total,0);
-  const avgPctLapsed=rowsOut.length?rowsOut.reduce((s,r)=>s+r.pctLapsed,0)/rowsOut.length:0;
+  const dataRows=rowsOut.filter(r=>!r.isAll),allRow=rowsOut.find(r=>r.isAll);
+  const tLapsed=allRow?allRow.lapsed:dataRows.reduce((s,r)=>s+r.lapsed,0);
+  const tActive=allRow?allRow.active:dataRows.reduce((s,r)=>s+r.active,0);
+  const tTotal=allRow?allRow.total:dataRows.reduce((s,r)=>s+r.total,0);
+  const avgPctLapsed=tTotal?tLapsed/tTotal*100:0;
   document.getElementById('lm-lapsed').textContent=nf(tLapsed);
   document.getElementById('lm-lapsed-sub').textContent='periode '+mo+(prevMo?'':' (bulan pertama data)');
   document.getElementById('lm-active').textContent=nf(tActive);
   document.getElementById('lm-total').textContent=nf(tTotal);
-  document.getElementById('lm-pct').textContent=avgPctLapsed.toFixed(1)+'%';
-  const sub=document.getElementById('lapseSub');if(sub)sub.textContent=`${rowsOut.length} cabang · Bulan ${mo}`+(prevMo?` (dibanding ${prevMo})`:'');
+  document.getElementById('lm-pct').textContent=avgPctLapsed.toFixed(2)+'%';
+  const sub=document.getElementById('lapseSub');if(sub)sub.textContent=`${dataRows.length} cabang · Bulan ${mo}`+(prevMo?` (dibanding ${prevMo})`:'');
   const body=document.getElementById('lapseBody');
-  body.innerHTML=rowsOut.map(r=>`<tr>
+  body.innerHTML=rowsOut.map(r=>`<tr${r.isAll?' style="font-weight:700;background:var(--surface2)"':''}>
     <td style="font-family:monospace">${r.store}</td><td>${(r.name||r.store||'—').replace(/</g,'&lt;')}</td>
     <td class="right" style="color:#f85149">${nf(r.lapsed)}</td>
     <td class="right">Rp ${nf(r.netBeforeLapse)}</td>
@@ -8205,7 +8214,7 @@ function renderLapseMember(){
     <td class="right" style="color:#f85149">${r.pctLapsed.toFixed(2)}%</td>
   </tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:14px">Tidak ada data untuk filter ini.</td></tr>';
   const foot=document.getElementById('lapseFoot');
-  if(foot)foot.innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border);background:var(--surface2)"><td colspan="2">TOTAL</td><td class="right">${nf(tLapsed)}</td><td class="right">Rp ${nf(rowsOut.reduce((s,r)=>s+r.netBeforeLapse,0))}</td><td class="right">${nf(tTotal)}</td><td class="right">${nf(tActive)}</td><td class="right">${tTotal?(tActive/tTotal*100).toFixed(2)+'%':'—'}</td><td class="right">${avgPctLapsed.toFixed(2)}%</td></tr>`;
+  if(foot)foot.innerHTML='';
 }
 function idx0(list,v){return list.indexOf(v);}
 function lapseExportCSV(){
