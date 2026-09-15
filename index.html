@@ -2769,7 +2769,8 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     <div class="insight-text" style="font-size:12px">
       <strong>Lapsed Member:</strong> member yang ada di Total Member bulan lalu, namun tidak ada di Total Member bulan aktual.<br>
       <strong>Total Member:</strong> member yang belanja min. 1x dalam 6 bulan terakhir (per cabang).<br>
-      <strong>Active Member:</strong> member yang belanja min. 1x dalam bulan berjalan (per cabang).
+      <strong>Active Member:</strong> member yang belanja min. 1x dalam bulan berjalan (per cabang).<br>
+      <strong>Net Sales before Lapsed:</strong> total net sales (Tk) yang dihasilkan member-member lapsed pada bulan terakhir mereka masih aktif.
     </div>
   </div>
   <div id="lapseAlert" style="display:none" class="alert-box amber"><span style="font-size:16px">⚠️</span><div id="lapseAlertText"></div></div>
@@ -2790,7 +2791,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     <div class="chart-header"><div><div class="chart-title">Rincian per Cabang</div><div class="chart-subtitle" id="lapseSub">—</div></div></div>
     <div style="overflow-x:auto">
       <table class="data-table" style="width:100%;font-size:12.5px">
-        <thead><tr><th>Kode Cabang</th><th>Nama Cabang</th><th class="right">Lapsed Member</th><th class="right">Net Sales sebelum Lapsed</th><th class="right">Total Member</th><th class="right">Active Member</th><th class="right">% Active/Total</th><th class="right">% Lapsed/Total</th></tr></thead>
+        <thead><tr><th>Kode Cabang</th><th>Nama Cabang</th><th class="right">Lapsed Member</th><th class="right">Net Sales before Lapsed (Tk)</th><th class="right">Total Member</th><th class="right">Active Member</th><th class="right">% Active/Total</th><th class="right">% Lapsed/Total</th></tr></thead>
         <tbody id="lapseBody"></tbody>
         <tfoot id="lapseFoot"></tfoot>
       </table>
@@ -8203,11 +8204,16 @@ function renderLapseMember(){
   document.getElementById('lm-total').textContent=nf(tTotal);
   document.getElementById('lm-pct').textContent=avgPctLapsed.toFixed(2)+'%';
   const sub=document.getElementById('lapseSub');if(sub)sub.textContent=`${dataRows.length} cabang · Bulan ${mo}`+(prevMo?` (dibanding ${prevMo})`:'');
+  // Peringatan: window 6 bulan butuh ≥7 bulan data agar Lapsed bisa >0
+  if(box&&monthList.length<7){
+    box.style.display='flex';
+    if(txt)txt.innerHTML=`<strong>Lapsed Member masih 0 — ini normal.</strong> Data Anda baru <strong>${monthList.length} bulan</strong> (${monthList.join(', ')}). Total Member memakai window <em>6 bulan trailing</em>, jadi member bulan lalu selalu masih masuk window bulan ini — belum ada yang bisa “keluar”. Lapsed baru muncul setelah data mencapai <strong>minimal 7 bulan</strong>. <span style="opacity:.8">Net Sales before Lapsed juga Tk 0 karena belum ada member lapsed.</span>`;
+  }
   const body=document.getElementById('lapseBody');
   body.innerHTML=rowsOut.map(r=>`<tr${r.isAll?' style="font-weight:700;background:var(--surface2)"':''}>
     <td style="font-family:monospace">${r.store}</td><td>${(r.name||r.store||'—').replace(/</g,'&lt;')}</td>
     <td class="right" style="color:#f85149">${nf(r.lapsed)}</td>
-    <td class="right">Rp ${nf(r.netBeforeLapse)}</td>
+    <td class="right">Tk ${nf(r.netBeforeLapse)}</td>
     <td class="right">${nf(r.total)}</td>
     <td class="right" style="color:#3fb950">${nf(r.active)}</td>
     <td class="right">${r.pctActive.toFixed(2)}%</td>
@@ -8220,7 +8226,7 @@ function idx0(list,v){return list.indexOf(v);}
 function lapseExportCSV(){
   if(!_lapseData||!_lapseData.rows.length){alert('Belum ada data untuk diexport.');return;}
   const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"',R=Math.round;
-  const lines=[`Summary Lapse Member - ${_lapseData.month}`,'Kode Cabang,Nama Cabang,Lapsed Member,Net Sales sebelum Lapsed,Total Member,Active Member,% Active/Total,% Lapsed/Total'];
+  const lines=[`Summary Lapse Member - ${_lapseData.month}`,'Kode Cabang,Nama Cabang,Lapsed Member,Net Sales before Lapsed (Tk),Total Member,Active Member,% Active/Total,% Lapsed/Total'];
   _lapseData.rows.forEach(r=>lines.push([q(r.store),q(r.name),r.lapsed,R(r.netBeforeLapse),r.total,r.active,r.pctActive.toFixed(2),r.pctLapsed.toFixed(2)].join(',')));
   dlCSV(lines,`Summary_Lapse_Member_${_lapseData.month}.csv`);
 }
