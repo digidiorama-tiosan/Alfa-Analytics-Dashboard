@@ -2242,7 +2242,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
         <option value="net">Net Sales</option>
         <option value="gm">GM%</option>
         <option value="txns">Transactions</option>
-        <option value="apc">Avg Basket</option>
+        <option value="apc">APC</option>
       </select>
       <button class="btn-dl" onclick="downloadExcelDailySales()">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg>
@@ -2420,7 +2420,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       <div class="kpi-formula">distinct bon+kasir+tgl</div>
     </div>
     <div class="stat-card red">
-      <div class="stat-label" style="display:flex;align-items:center;gap:5px;">STD Txns <span title="Exclude types containing V, R or X" style="cursor:help;color:var(--text3);font-size:13px;">ℹ</span></div>
+      <div class="stat-label" style="display:flex;align-items:center;gap:5px;">Valid Txns <span title="Exclude types containing V, R or X" style="cursor:help;color:var(--text3);font-size:13px;">ℹ</span></div>
       <div class="stat-value" id="kpi-std">—</div>
       <div class="stat-sub" id="kpi-std-sub">—</div>
       <div class="kpi-formula">excl. V / R / X types</div>
@@ -2453,8 +2453,11 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
             <th>Store</th><th>Month</th>
             <th class="right">Net Sales (Tk)</th><th class="right">COGS (Tk)</th>
             <th class="right">Gross Margin (Tk)</th><th class="right">GM %</th>
-            <th class="right">Txns (All)</th><th class="right" title="Standard Transactions: excl. Void/Return/Exchange">STD Txns</th>
-            <th class="right" title="Net Sales ÷ STD Transactions">Avg Basket (STD)</th>
+            <th class="right">Txns (All)</th><th class="right" title="Valid Transactions: excl. Void/Return/Exchange">Valid Txns</th>
+            <th class="right" title="Jumlah hari yang ada transaksi">Hari</th>
+            <th class="right" title="SPD = Total Net Sales ÷ Jumlah Hari Kerja">SPD (Tk)</th>
+            <th class="right" title="STD = Total Qty Struk ÷ Jumlah Hari Kerja">STD</th>
+            <th class="right" title="APC = Net Sales ÷ Valid Transactions (rata-rata belanja per struk)">APC (Tk)</th>
             <th class="right">Member Sales (Tk)</th><th class="right">Member %</th>
           </tr>
         </thead>
@@ -2483,7 +2486,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
         END
       </code>
       <div style="margin-top:8px;font-size:11.5px;color:var(--text2)">
-        STD counts <strong style="color:var(--text)">only valid forward transactions</strong> — the composite key <code style="font-family:var(--mono);font-size:10.5px;background:var(--surface2);padding:1px 5px;border-radius:3px">store+receipt+cashier+date</code> is generated only when the transaction <code style="font-family:var(--mono);font-size:10.5px;background:var(--surface2);padding:1px 5px;border-radius:3px">type</code> does <em>not</em> match the pattern <code style="font-family:var(--mono);font-size:10.5px;background:var(--surface2);padding:1px 5px;border-radius:3px">(?i).V.|.R.|.X.</code> — i.e. excludes Void, Return, Exchange, Refund, and any reversal-type transaction. The distinct count of non-null keys = STD. <strong style="color:var(--amber2)">Avg Basket (STD) = Net Sales ÷ STD</strong> is more accurate than raw Avg Basket because it excludes the distorting effect of void/return bills.
+        STD counts <strong style="color:var(--text)">only valid forward transactions</strong> — the composite key <code style="font-family:var(--mono);font-size:10.5px;background:var(--surface2);padding:1px 5px;border-radius:3px">store+receipt+cashier+date</code> is generated only when the transaction <code style="font-family:var(--mono);font-size:10.5px;background:var(--surface2);padding:1px 5px;border-radius:3px">type</code> does <em>not</em> match the pattern <code style="font-family:var(--mono);font-size:10.5px;background:var(--surface2);padding:1px 5px;border-radius:3px">(?i).V.|.R.|.X.</code> — i.e. excludes Void, Return, Exchange, Refund, and any reversal-type transaction. The distinct count of non-null keys = STD. <strong style="color:var(--amber2)">APC = Net Sales ÷ STD</strong> is more accurate than raw APC because it excludes the distorting effect of void/return bills.
       </div>
     </div>
   </div>
@@ -2522,9 +2525,9 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     <div class="stat-card blue"><div class="stat-label">Net Sales</div><div class="stat-value" id="sk-net">—</div><div class="stat-sub" id="sk-net-sub">filtered total</div></div>
     <div class="stat-card green"><div class="stat-label">Gross Margin</div><div class="stat-value" id="sk-gm">—</div><div class="stat-sub" id="sk-gm-sub">—</div></div>
     <div class="stat-card amber"><div class="stat-label">Txns (All)</div><div class="stat-value" id="sk-txns">—</div><div class="stat-sub" id="sk-txns-sub">incl. voids &amp; returns</div></div>
-    <div class="stat-card red"><div class="stat-label" style="display:flex;align-items:center;gap:5px;">STD Txns <span title="Excl. Void/Return/Exchange types" style="cursor:help;color:var(--text3);font-size:13px;">ℹ</span></div><div class="stat-value" id="sk-std">—</div><div class="stat-sub" id="sk-std-sub">valid forward bills</div></div>
+    <div class="stat-card red"><div class="stat-label" style="display:flex;align-items:center;gap:5px;">Valid Txns <span title="Excl. Void/Return/Exchange types" style="cursor:help;color:var(--text3);font-size:13px;">ℹ</span></div><div class="stat-value" id="sk-std">—</div><div class="stat-sub" id="sk-std-sub">valid forward bills</div></div>
     <div class="stat-card purple"><div class="stat-label">Member Sales</div><div class="stat-value" id="sk-msales">—</div><div class="stat-sub" id="sk-msales-sub">—</div></div>
-    <div class="stat-card teal"><div class="stat-label">Avg Basket (STD)</div><div class="stat-value" id="sk-basket">—</div><div class="stat-sub" id="sk-basket-sub">Net Sales ÷ STD</div></div>
+    <div class="stat-card teal"><div class="stat-label">APC — Avg per Customer</div><div class="stat-value" id="sk-basket">—</div><div class="stat-sub" id="sk-basket-sub">Net Sales ÷ Valid Txns</div></div>
   </div>
 
   <div class="charts-grid cols-2">
@@ -2547,8 +2550,11 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
             <th>#</th><th>Store Code</th><th>Month</th>
             <th class="right">Net Sales (Tk)</th><th class="right">COGS (Tk)</th>
             <th class="right">Gross Margin (Tk)</th><th class="right">GM %</th>
-            <th class="right">Txns (All)</th><th class="right" title="Standard Transactions: excl. Void/Return/Exchange">STD Txns</th>
-            <th class="right" title="Net Sales ÷ STD Transactions">Avg Basket (STD)</th>
+            <th class="right">Txns (All)</th><th class="right" title="Valid Transactions: excl. Void/Return/Exchange">Valid Txns</th>
+            <th class="right" title="Jumlah hari yang ada transaksi">Hari</th>
+            <th class="right" title="SPD = Total Net Sales ÷ Jumlah Hari Kerja">SPD (Tk)</th>
+            <th class="right" title="STD = Total Qty Struk ÷ Jumlah Hari Kerja">STD</th>
+            <th class="right" title="APC = Net Sales ÷ Valid Transactions (rata-rata belanja per struk)">APC (Tk)</th>
             <th class="right">Member Sales (Tk)</th><th class="right">Member %</th>
           </tr>
         </thead>
@@ -2567,7 +2573,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     <div class="stat-card blue"><div class="stat-label">Member Net Sales</div><div class="stat-value" id="mc-msales">Tk 422K</div><div class="stat-sub" id="mc-msales-sub">20.3% of total revenue</div></div>
     <div class="stat-card green"><div class="stat-label">Non-Member Sales</div><div class="stat-value" id="mc-nmsales">Tk 1.66M</div><div class="stat-sub" id="mc-nmsales-sub">79.7% of total revenue</div></div>
     <div class="stat-card amber"><div class="stat-label">Active Members</div><div class="stat-value" id="mc-active">227</div><div class="stat-sub" id="mc-active-sub">13% of registered</div></div>
-    <div class="stat-card purple"><div class="stat-label">Member Avg Basket</div><div class="stat-value" id="mc-basket">Tk 5,324</div><div class="stat-sub" id="mc-basket-sub">vs non-member basket</div></div>
+    <div class="stat-card purple"><div class="stat-label">Member APC</div><div class="stat-value" id="mc-basket">Tk 5,324</div><div class="stat-sub" id="mc-basket-sub">vs non-member basket</div></div>
     <div class="stat-card teal"><div class="stat-label">Member Transactions</div><div class="stat-value" id="mc-txns">458</div><div class="stat-sub">across all months</div></div>
   </div>
   <div class="charts-grid cols-2">
@@ -2610,7 +2616,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
   <div class="chart-card">
     <div class="table-wrap">
       <table class="data-table">
-        <thead><tr><th>Month</th><th class="right">Member Net Sales (Tk)</th><th class="right">Member Transactions</th><th class="right">STD Txns</th><th class="right">Avg Basket (STD)</th><th class="right">Items Sold</th><th class="right">% of Month Total</th></tr></thead>
+        <thead><tr><th>Month</th><th class="right">Member Net Sales (Tk)</th><th class="right">Member Transactions</th><th class="right">STD Txns</th><th class="right">APC (Tk)</th><th class="right">Items Sold</th><th class="right">% of Month Total</th></tr></thead>
         <tbody id="memTrendTableBody"></tbody>
         <tfoot id="memTrendTableFoot"></tfoot>
       </table>
@@ -2749,7 +2755,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
   <div class="chart-card">
     <div class="table-wrap scroll-table">
       <table class="data-table">
-        <thead><tr><th>#</th><th>Card / Member</th><th class="right">Net Sales (Tk)</th><th class="right">Transactions</th><th class="right">Months Active</th><th class="right">Avg Basket (Tk)</th></tr></thead>
+        <thead><tr><th>#</th><th>Card / Member</th><th class="right">Net Sales (Tk)</th><th class="right">Transactions</th><th class="right">Months Active</th><th class="right">APC (Tk)</th></tr></thead>
         <tbody id="memberTransTable"></tbody>
       </table>
     </div>
@@ -3668,7 +3674,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 <div id="panel-basket" class="panel">
   <div class="page-header"><div><div class="page-title">Basket Size Analysis</div><div class="page-subtitle">Average transaction value: All vs Promo vs Member</div></div></div>
   <div class="basket-compare">
-    <div class="basket-item all"><div class="basket-label">All Customers</div><div class="basket-value" id="b-all">Tk 4,497</div><div class="basket-diff" id="b-all-sub">Avg basket</div></div>
+    <div class="basket-item all"><div class="basket-label">All Customers</div><div class="basket-value" id="b-all">Tk 4,497</div><div class="basket-diff" id="b-all-sub">APC</div></div>
     <div class="basket-item member"><div class="basket-label">Members</div><div class="basket-value" id="b-mem">Tk 5,324</div><div class="basket-diff" id="b-mem-sub">vs all avg</div></div>
     <div class="basket-item promo"><div class="basket-label">Promo Buyers</div><div class="basket-value" id="b-promo">Tk 5,180</div><div class="basket-diff" id="b-promo-sub">vs all avg</div></div>
   </div>
@@ -3685,7 +3691,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       <div class="chart-wrap" style="height:260px"><canvas id="basketCompChart"></canvas></div>
     </div>
     <div class="chart-card">
-      <div class="chart-header"><div><div class="chart-title">Monthly Avg Basket Trend</div><div class="chart-subtitle">All customers — by month</div></div></div>
+      <div class="chart-header"><div><div class="chart-title">Monthly APC Trend</div><div class="chart-subtitle">All customers — by month</div></div></div>
       <div class="chart-wrap" style="height:260px"><canvas id="basketTrendChart"></canvas></div>
     </div>
   </div>
@@ -3732,7 +3738,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       <div class="chart-title" style="font-size:14px;margin-bottom:4px">Rincian per Hari</div>
       <div class="chart-subtitle" style="margin-bottom:10px">Semua struk pada rentang tanggal yang dipilih — dikelompokkan per hari</div>
       <div class="table-wrap"><table class="data-table" id="rtDailyTable"><thead><tr>
-        <th>Tanggal</th><th>Hari</th><th class="right"># Struk</th><th class="right">Net Sales</th><th class="right">Avg Basket</th><th class="right">Struk ≥ Nilai</th><th class="right">% Struk ≥ Nilai</th>
+        <th>Tanggal</th><th>Hari</th><th class="right"># Struk</th><th class="right">Net Sales</th><th class="right">APC</th><th class="right">Struk ≥ Nilai</th><th class="right">% Struk ≥ Nilai</th>
       </tr></thead><tbody id="rtDailyBody"></tbody><tfoot id="rtDailyFoot"></tfoot></table></div>
     </div>
     <div style="margin-top:20px">
@@ -3740,7 +3746,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       <div class="chart-subtitle" style="margin-bottom:10px">Tiap struk masuk ke SATU rentang saja (batas atas inklusif). KPI di atas bersifat <b>kumulatif</b> (semua struk ≥ nilai minimum) = jumlah baris bertanda <span style="color:var(--accent)">● ikut KPI</span>, ditambah sebagian dari baris <span style="color:var(--amber)">◐</span> bila nilai minimum jatuh di tengah rentang.</div>
       <div class="table-wrap"><table class="data-table" id="rtBandTable"><thead><tr>
         <th>Rentang Nilai (Tk)</th><th class="right"># Struk</th><th class="right">% Struk</th>
-        <th class="right">Net Sales</th><th class="right">% Net Sales</th><th class="right">Avg Basket</th>
+        <th class="right">Net Sales</th><th class="right">% Net Sales</th><th class="right">APC</th>
         <th class="right">Kumulatif ke Atas (# Struk)</th><th class="right">% Kumulatif</th>
       </tr></thead><tbody id="rtBandBody"></tbody><tfoot id="rtBandFoot"></tfoot></table></div>
     </div>
@@ -3795,7 +3801,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       <div class="stat-card blue"><div class="stat-label">Receipts</div><div class="stat-value" id="rc-count">—</div><div class="stat-sub" id="rc-count-sub">Type a keyword above</div></div>
       <div class="stat-card green"><div class="stat-label">% of Total Receipts</div><div class="stat-value" id="rc-pct">—</div><div class="stat-sub" id="rc-pct-sub">—</div></div>
       <div class="stat-card amber"><div class="stat-label">Sales Value</div><div class="stat-value" id="rc-rev">—</div><div class="stat-sub" id="rc-rev-sub">—</div></div>
-      <div class="stat-card purple"><div class="stat-label">Avg Basket</div><div class="stat-value" id="rc-avg">—</div><div class="stat-sub">Value ÷ receipts</div></div>
+      <div class="stat-card purple"><div class="stat-label">APC</div><div class="stat-value" id="rc-avg">—</div><div class="stat-sub">Value ÷ receipts</div></div>
     </div>
   </div>
 
@@ -4076,9 +4082,9 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
         <div class="rvd-sparkline" id="rvd-sp-discount"></div>
       </div>
       <div class="rvd-kpi">
-        <div class="rvd-kpi-label"><span class="rvd-kpi-icon">🛒</span>AVG BASKET (APC)</div>
+        <div class="rvd-kpi-label"><span class="rvd-kpi-icon">🛒</span>APC — AVG PER CUSTOMER</div>
         <div class="rvd-kpi-value" id="rvd-apc">—</div>
-        <div class="rvd-kpi-sub" id="rvd-apc-sub">Per STD transaction</div>
+        <div class="rvd-kpi-sub" id="rvd-apc-sub">Per valid transaction</div>
         <div class="rvd-sparkline" id="rvd-sp-apc"></div>
       </div>
     </div>
@@ -4130,7 +4136,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
           <thead>
             <tr>
               <th>Location</th>
-              <th class="r">Avg Basket</th>
+              <th class="r">APC</th>
               <th class="r">Members</th>
               <th class="r">Revenue</th>
               <th class="r">Promo%</th>
@@ -4147,7 +4153,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 
       <!-- Discount Usage chart (Promo vs Normal basket by month) -->
       <div class="rvd-decomp" style="margin-bottom:14px">
-        <div class="chart-title" style="margin-bottom:4px">Avg Basket: Promo vs Normal</div>
+        <div class="chart-title" style="margin-bottom:4px">APC: Promo vs Normal</div>
         <div class="chart-subtitle" style="margin-bottom:14px">Comparison of spend per transaction</div>
         <div style="height:200px"><canvas id="rvdBasketChart"></canvas></div>
       </div>
@@ -6542,7 +6548,7 @@ function applySalesFilter() {
   document.getElementById('kpi-txns-sub').textContent = 'incl. voids & returns';
   document.getElementById('kpi-std').textContent = totStd.toLocaleString();
   const _spd=pfStdPerDay(totStd);
-  document.getElementById('kpi-std-sub').textContent = _spd?('≈'+Math.round(_spd.perDay).toLocaleString()+' struk/hari · '+_spd.days+' hari'):'excl. Void/Return/Exchange';
+  document.getElementById('kpi-std-sub').textContent = _spd?('STD ≈'+Math.round(_spd.perDay).toLocaleString()+' struk/hari · '+_spd.days+' hari'):'excl. Void/Return/Exchange';
   // v4: Cost of Sales & APC
   const elCost = document.getElementById('kpi-cost'); if(elCost) elCost.textContent = fmt(totCogs);
   const elCostSub = document.getElementById('kpi-cost-sub'); if(elCostSub) elCostSub.textContent = 'Tk '+fmtFull(totCogs);
@@ -6568,6 +6574,7 @@ function applySalesFilter() {
   // Store table
   const tbody = document.getElementById('storeTable');
   tbody.innerHTML = '';
+  const _wd=pfWorkDays();
   filtered.sort((a,b) => {
     if (a.store_code < b.store_code) return -1;
     if (a.store_code > b.store_code) return 1;
@@ -6576,6 +6583,9 @@ function applySalesFilter() {
     const memPct2 = m.net_sales > 0 ? ((m.member_sales/m.net_sales)*100).toFixed(1) : '0.0';
     const mStd = m.std !== undefined ? m.std : m.txns;
     const mAvgStd = mStd > 0 ? m.net_sales / mStd : 0;
+    const _days = pfDaysFor(_wd, m.store_code||'A001', m.month);
+    const _spdM = _days>0 ? m.net_sales/_days : null;
+    const _stdM = _days>0 ? mStd/_days : null;
     const _newStore = _i>0 && (_arr[_i-1].store_code||'A001')!==(m.store_code||'A001');
     const _firstOfStore = _i===0 || _newStore;
     tbody.innerHTML += `<tr${_newStore?' style="border-top:2px solid var(--border2)"':''}>
@@ -6587,6 +6597,9 @@ function applySalesFilter() {
       <td class="right">${m.gm_pct}%</td>
       <td class="right">${m.txns}</td>
       <td class="right" style="color:var(--red);font-weight:600">${mStd}</td>
+      <td class="right" style="color:var(--text3)">${_days||'—'}</td>
+      <td class="right" style="color:var(--accent);font-weight:600">${_spdM===null?'—':fmtFull(_spdM)}</td>
+      <td class="right" style="color:#d29922;font-weight:600">${_stdM===null?'—':Math.round(_stdM).toLocaleString()}</td>
       <td class="right" style="color:var(--amber2)">${fmtFull(mAvgStd)}</td>
       <td class="right" style="color:var(--amber2)">${fmtFull(m.member_sales)}</td>
       <td class="right">${memPct2}%</td>
@@ -6605,6 +6618,9 @@ function applySalesFilter() {
     <td class="right" style="font-weight:700;font-family:var(--mono);padding:10px 12px;">${totGmPctF}%</td>
     <td class="right" style="font-weight:700;font-family:var(--mono);padding:10px 12px;">${fmtFull(totTxns)}</td>
     <td class="right" style="font-weight:700;color:var(--red);font-family:var(--mono);padding:10px 12px;">${fmtFull(totStd)}</td>
+    <td class="right" style="font-weight:700;color:var(--text3);font-family:var(--mono);padding:10px 12px;">${(function(){const d=Object.values(_wd.byMonth).reduce((a,b)=>a+b,0);return d||'—';})()}</td>
+    <td class="right" style="font-weight:700;color:var(--accent);font-family:var(--mono);padding:10px 12px;">${(function(){const d=Object.values(_wd.byMonth).reduce((a,b)=>a+b,0);return d>0?fmtFull(totNetSales/d):'—';})()}</td>
+    <td class="right" style="font-weight:700;color:#d29922;font-family:var(--mono);padding:10px 12px;">${(function(){const d=Object.values(_wd.byMonth).reduce((a,b)=>a+b,0);return d>0?Math.round(totStd/d).toLocaleString():'—';})()}</td>
     <td class="right" style="font-weight:700;color:var(--amber2);font-family:var(--mono);padding:10px 12px;">${fmtFull(totAvgStd)}</td>
     <td class="right" style="font-weight:700;color:var(--amber2);font-family:var(--mono);padding:10px 12px;">${fmtFull(totMemSales)}</td>
     <td class="right" style="font-weight:700;font-family:var(--mono);padding:10px 12px;">${totMemPct}%</td>
@@ -6638,7 +6654,7 @@ function applySalesFilter() {
     const worstMonth = filtered.reduce((a,b) => a.net_sales<b.net_sales?a:b);
     const stdVsTxnDiff = totTxns > totStd ? totTxns - totStd : 0;
     const voidPct2 = totTxns > 0 ? ((stdVsTxnDiff/totTxns)*100).toFixed(1) : 0;
-    document.getElementById('salesInsight').innerHTML = `<strong>Key Insight:</strong> <strong>${bestMonth.month_name}${storeVal!=='ALL'?' ('+bestMonth.store_code+')':''}</strong> was the strongest at <strong>${fmt(bestMonth.net_sales)}</strong>. <strong>${worstMonth.month_name}</strong> was lowest at <strong>${fmt(worstMonth.net_sales)}</strong>. GM% ranged from <strong>${Math.min(...filtered.map(m=>m.gm_pct)).toFixed(1)}%</strong> to <strong>${Math.max(...filtered.map(m=>m.gm_pct)).toFixed(1)}%</strong> across the period.${stdVsTxnDiff>0?' <strong>'+stdVsTxnDiff.toLocaleString()+' txns ('+voidPct2+'%)</strong> were Void/Return/Exchange — excluded from STD count. Accurate Avg Basket (STD): <strong>'+fmt(avgBasketStd)+'</strong>.':''}`;
+    document.getElementById('salesInsight').innerHTML = `<strong>Key Insight:</strong> <strong>${bestMonth.month_name}${storeVal!=='ALL'?' ('+bestMonth.store_code+')':''}</strong> was the strongest at <strong>${fmt(bestMonth.net_sales)}</strong>. <strong>${worstMonth.month_name}</strong> was lowest at <strong>${fmt(worstMonth.net_sales)}</strong>. GM% ranged from <strong>${Math.min(...filtered.map(m=>m.gm_pct)).toFixed(1)}%</strong> to <strong>${Math.max(...filtered.map(m=>m.gm_pct)).toFixed(1)}%</strong> across the period.${stdVsTxnDiff>0?' <strong>'+stdVsTxnDiff.toLocaleString()+' txns ('+voidPct2+'%)</strong> were Void/Return/Exchange — excluded from STD count. Accurate APC: <strong>'+fmt(avgBasketStd)+'</strong>.':''}`;
   }
 }
 
@@ -6727,10 +6743,12 @@ function applyStoreFilter() {
   // Store detail table
   const tbody2 = document.getElementById('storeDetailTable');
   tbody2.innerHTML = '';
+  const _wd2=pfWorkDays();
   filtered.sort((a,b)=>b.net_sales-a.net_sales).forEach((m,i) => {
     const mp = m.net_sales > 0 ? (m.member_sales/m.net_sales*100).toFixed(1) : '0.0';
     const mStd2 = m.std !== undefined ? m.std : m.txns;
     const mAvgStd2 = mStd2 > 0 ? m.net_sales / mStd2 : 0;
+    const _d2 = pfDaysFor(_wd2, m.store_code||'A001', m.month);
     const rc = i===0?'gold':i===1?'silver':i===2?'bronze':'';
     tbody2.innerHTML += `<tr>
       <td><span class="rank-num ${rc}">${i+1}</span></td>
@@ -6742,6 +6760,9 @@ function applyStoreFilter() {
       <td class="right">${m.gm_pct}%</td>
       <td class="right">${m.txns}</td>
       <td class="right" style="color:var(--red);font-weight:600">${mStd2}</td>
+      <td class="right" style="color:var(--text3)">${_d2||'—'}</td>
+      <td class="right" style="color:var(--accent);font-weight:600">${_d2>0?fmtFull(m.net_sales/_d2):'—'}</td>
+      <td class="right" style="color:#d29922;font-weight:600">${_d2>0?Math.round(mStd2/_d2).toLocaleString():'—'}</td>
       <td class="right" style="color:var(--amber2)">${fmtFull(mAvgStd2)}</td>
       <td class="right" style="color:var(--amber2)">${fmtFull(m.member_sales)}</td>
       <td class="right">${mp}%</td>
@@ -8649,7 +8670,7 @@ function renderBasket() {
   const promoDiff = S.avg_basket_all > 0 ? ((S.avg_basket_promo-S.avg_basket_all)/S.avg_basket_all*100).toFixed(1) : 0;
 
   document.getElementById('b-all').textContent = fmt(S.avg_basket_all);
-  document.getElementById('b-all-sub').textContent = 'Avg basket · '+S.total_transactions+' transactions';
+  document.getElementById('b-all-sub').textContent = 'APC · '+S.total_transactions+' transactions';
   document.getElementById('b-mem').textContent = fmt(S.avg_basket_member);
   document.getElementById('b-mem-sub').textContent = (parseFloat(memDiff)>=0?'+':'')+memDiff+'% vs all avg';
   document.getElementById('b-promo').textContent = fmt(S.avg_basket_promo);
@@ -8670,10 +8691,10 @@ function renderBasket() {
   document.getElementById('b-worst').textContent = fmt(monthlyBaskets[worstIdx]);
   document.getElementById('b-worst-sub').textContent = bkAgg[worstIdx]?.month_name+' — lowest monthly avg';
 
-  makeChart('basketCompChart',{type:'bar',data:{labels:['All Customers','Members','Promo Buyers','Non-Members'],datasets:[{label:'Avg Basket (Tk)',data:[S.avg_basket_all,S.avg_basket_member,S.avg_basket_promo,nonMem],backgroundColor:[ACCENT+'99',GREEN+'99',AMBER+'99',RED+'55'],borderColor:[ACCENT,GREEN,AMBER,RED],borderWidth:1,borderRadius:8}]},options:{...chartDefaults,scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,beginAtZero:true,ticks:{...chartDefaults.scales.y.ticks,callback:v=>'Tk '+v.toLocaleString()}}}}});
+  makeChart('basketCompChart',{type:'bar',data:{labels:['All Customers','Members','Promo Buyers','Non-Members'],datasets:[{label:'APC (Tk)',data:[S.avg_basket_all,S.avg_basket_member,S.avg_basket_promo,nonMem],backgroundColor:[ACCENT+'99',GREEN+'99',AMBER+'99',RED+'55'],borderColor:[ACCENT,GREEN,AMBER,RED],borderWidth:1,borderRadius:8}]},options:{...chartDefaults,scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,beginAtZero:true,ticks:{...chartDefaults.scales.y.ticks,callback:v=>'Tk '+v.toLocaleString()}}}}});
   makeChart('basketTrendChart',{type:'line',data:{labels:bkAgg.map(m=>m.month_name),datasets:[
-    {label:'Avg Basket All',data:monthlyBaskets,borderColor:ACCENT,backgroundColor:ACCENT+'20',fill:true,tension:0.4,pointBackgroundColor:ACCENT,pointRadius:5},
-    {label:'Avg Basket Member',data:D.mem_monthly.map(m=>m.avg_basket),borderColor:GREEN,backgroundColor:'transparent',fill:false,tension:0.4,pointBackgroundColor:GREEN,pointRadius:5,borderDash:[4,4]}
+    {label:'APC All',data:monthlyBaskets,borderColor:ACCENT,backgroundColor:ACCENT+'20',fill:true,tension:0.4,pointBackgroundColor:ACCENT,pointRadius:5},
+    {label:'APC Member',data:D.mem_monthly.map(m=>m.avg_basket),borderColor:GREEN,backgroundColor:'transparent',fill:false,tension:0.4,pointBackgroundColor:GREEN,pointRadius:5,borderDash:[4,4]}
   ]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:true,position:'top',labels:{color:'#8b949e',usePointStyle:true,font:{family:FONT,size:11}}}},scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>'Tk '+v.toLocaleString()}}}}});
   renderReceiptThreshold();
   renderBasketAffinity();
@@ -11304,6 +11325,29 @@ function xlsDownload(wsData, sheetName, fileName) {
   XLSX.writeFile(wb, fileName);
 }
 
+// Hari kerja per store×bulan & per bulan (dari tanggal unik yang ada transaksi di data sales)
+function pfWorkDays(){
+  const out={byStoreMonth:{},byMonth:{},total:0};
+  try{
+    if(typeof uploads==='undefined'||!Array.isArray(uploads.sales)||!uploads.sales.length)return out;
+    const sc=sColDetect(uploads.sales);if(!sc||!sc.date)return out;
+    const sm={},mo={},all=new Set();
+    uploads.sales.forEach(r=>{
+      const v=String(r[sc.date]||'').slice(0,10);if(!v)return;
+      const d=new Date(v);if(isNaN(d))return;
+      const m=d.getMonth()+1,st=sc.store?String(r[sc.store]||'').trim():'';
+      (mo[m]=mo[m]||new Set()).add(v);
+      if(st)(sm[st+'|'+m]=sm[st+'|'+m]||new Set()).add(v);
+      all.add(v);
+    });
+    Object.keys(sm).forEach(k=>out.byStoreMonth[k]=sm[k].size);
+    Object.keys(mo).forEach(k=>out.byMonth[k]=mo[k].size);
+    out.total=all.size;
+  }catch(e){}
+  return out;
+}
+function pfDaysFor(wd,store,month){return wd.byStoreMonth[store+'|'+month]||wd.byMonth[month]||0;}
+
 // Hitung rata-rata struk per hari dari tanggal unik di data sales. null bila tanggal tak terbaca.
 function pfStdPerDay(totStd){
   try{
@@ -11318,28 +11362,33 @@ function pfStdPerDay(totStd){
 }
 
 function downloadExcelSales() {
-  const rows = [['Store','Month','Net Sales','COGS','Gross Margin','GM%','Txns All','STD Txns','Avg Basket (STD)','Member Sales','Member%']];
+  const rows = [['Store','Month','Net Sales','COGS','Gross Margin','GM%','Txns All','Valid Txns','Hari Kerja','SPD (Net Sales/Hari)','STD (Struk/Hari)','APC','Member Sales','Member%']];
+  const _wdX=pfWorkDays();
   D.monthly.forEach(m => {
     const std = m.std !== undefined ? m.std : m.txns;
     const avgStd = std > 0 ? Math.round(m.net_sales/std) : 0;
-    rows.push([m.store_code, m.month_name, Math.round(m.net_sales*100)/100, Math.round(m.cogs*100)/100, Math.round(m.gm*100)/100, m.gm_pct, m.txns, std, avgStd, Math.round(m.member_sales*100)/100, m.net_sales>0?parseFloat((m.member_sales/m.net_sales*100).toFixed(1)):0]);
+    const dys = pfDaysFor(_wdX, m.store_code||'A001', m.month);
+    rows.push([m.store_code, m.month_name, Math.round(m.net_sales*100)/100, Math.round(m.cogs*100)/100, Math.round(m.gm*100)/100, m.gm_pct, m.txns, std, dys||'', dys>0?Math.round(m.net_sales/dys):'', dys>0?Math.round(std/dys):'', avgStd, Math.round(m.member_sales*100)/100, m.net_sales>0?parseFloat((m.member_sales/m.net_sales*100).toFixed(1)):0]);
   });
   const tot = D.monthly; const tn=tot.reduce((a,m)=>a+m.net_sales,0), tc=tot.reduce((a,m)=>a+m.cogs,0), tg=tot.reduce((a,m)=>a+m.gm,0), tx=tot.reduce((a,m)=>a+m.txns,0), ts=tot.reduce((a,m)=>a+(m.std||m.txns),0), tm=tot.reduce((a,m)=>a+m.member_sales,0);
-  rows.push(['TOTAL','ALL',Math.round(tn*100)/100,Math.round(tc*100)/100,Math.round(tg*100)/100,tn>0?parseFloat((tg/tn*100).toFixed(1)):0,tx,ts,ts>0?Math.round(tn/ts):0,Math.round(tm*100)/100,tn>0?parseFloat((tm/tn*100).toFixed(1)):0]);
+  const tdy=Object.values(_wdX.byMonth).reduce((a,b)=>a+b,0);
+  rows.push(['TOTAL','ALL',Math.round(tn*100)/100,Math.round(tc*100)/100,Math.round(tg*100)/100,tn>0?parseFloat((tg/tn*100).toFixed(1)):0,tx,ts,tdy||'',tdy>0?Math.round(tn/tdy):'',tdy>0?Math.round(ts/tdy):'',ts>0?Math.round(tn/ts):0,Math.round(tm*100)/100,tn>0?parseFloat((tm/tn*100).toFixed(1)):0]);
   xlsDownload(rows,'Sales Report','sales_report.xlsx');
 }
 
 function downloadExcelStoreSales() {
-  const rows = [['Store','Month','Net Sales','COGS','GM','GM%','Txns','STD','APC','Member Sales','Member%']];
+  const rows = [['Store','Month','Net Sales','COGS','GM','GM%','Txns','Valid Txns','Hari Kerja','SPD (Net Sales/Hari)','STD (Struk/Hari)','APC','Member Sales','Member%']];
+  const _wdY=pfWorkDays();
   D.monthly.forEach(m => {
     const std=m.std||m.txns, apc=std>0?Math.round(m.net_sales/std):0;
-    rows.push([m.store_code,m.month_name,Math.round(m.net_sales*100)/100,Math.round(m.cogs*100)/100,Math.round(m.gm*100)/100,m.gm_pct,m.txns,std,apc,Math.round(m.member_sales*100)/100,m.net_sales>0?parseFloat((m.member_sales/m.net_sales*100).toFixed(1)):0]);
+    const dy=pfDaysFor(_wdY, m.store_code||'A001', m.month);
+    rows.push([m.store_code,m.month_name,Math.round(m.net_sales*100)/100,Math.round(m.cogs*100)/100,Math.round(m.gm*100)/100,m.gm_pct,m.txns,std,dy||'',dy>0?Math.round(m.net_sales/dy):'',dy>0?Math.round(std/dy):'',apc,Math.round(m.member_sales*100)/100,m.net_sales>0?parseFloat((m.member_sales/m.net_sales*100).toFixed(1)):0]);
   });
   xlsDownload(rows,'Sales by Store','sales_by_store.xlsx');
 }
 
 function downloadExcelMemTrend() {
-  const rows = [['Month','Member Net Sales','Transactions','STD Txns','Avg Basket','Items','% of Month Total']];
+  const rows = [['Month','Member Net Sales','Transactions','Valid Txns','APC','Items','% of Month Total']];
   D.mem_monthly.forEach(m => {
     let tot=0;(D.monthly||[]).forEach(x=>{if(x.month===m.month)tot+=x.net_sales;});
     const pct = tot>0 ? parseFloat((m.net_sales/tot*100).toFixed(1)) : 0;
@@ -12116,11 +12165,11 @@ function renderRevenueDrivers() {
     </tr>`).join('');
   }
 
-  // ── Avg Basket Promo vs Normal per Month ──
+  // ── APC Promo vs Normal per Month ──
   makeChart('rvdBasketChart',{type:'bar',data:{labels:mLabels,datasets:[
-    {label:'Avg Basket Normal (N)', data:months.map(m=>m.avgBasketNormal), backgroundColor:'#484f58', borderRadius:5},
-    {label:'Avg Basket Promo (L)',  data:months.map(m=>m.avgBasketPromo),  backgroundColor:'#f0a73399', borderRadius:5},
-    {type:'line',label:'Avg Basket All',data:months.map(m=>m.bons>0?m.net/m.bons:0),borderColor:'#a371f7',backgroundColor:'transparent',pointBackgroundColor:'#a371f7',pointRadius:4,tension:0.3,yAxisID:'y'}
+    {label:'APC Normal (N)', data:months.map(m=>m.avgBasketNormal), backgroundColor:'#484f58', borderRadius:5},
+    {label:'APC Promo (L)',  data:months.map(m=>m.avgBasketPromo),  backgroundColor:'#f0a73399', borderRadius:5},
+    {type:'line',label:'APC All',data:months.map(m=>m.bons>0?m.net/m.bons:0),borderColor:'#a371f7',backgroundColor:'transparent',pointBackgroundColor:'#a371f7',pointRadius:4,tension:0.3,yAxisID:'y'}
   ]},options:{...chartDefaults,
     plugins:{...chartDefaults.plugins,legend:{display:true,position:'top',labels:{color:'#8b949e',font:{family:FONT,size:10},usePointStyle:true}}},
     scales:{x:chartDefaults.scales.x,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>'Tk '+v.toFixed(0)}}}}
@@ -12130,7 +12179,7 @@ function renderRevenueDrivers() {
   const impactEl = document.getElementById('rvdImpactList');
   if (impactEl && stores.length) {
     const maxBasket = Math.max(...stores.map(s=>Math.max(s.avgBasket,1)), 1)*1.1;
-    impactEl.innerHTML = '<div style="font-size:11px;color:var(--text3);margin-bottom:12px">Avg Basket per store — Promo vs Non-Promo bills</div>' +
+    impactEl.innerHTML = '<div style="font-size:11px;color:var(--text3);margin-bottom:12px">APC per store — Promo vs Non-Promo bills</div>' +
       stores.map(s => {
         const wP = (s.avgBasket / maxBasket * 100).toFixed(0);
         const wM = s.net > 0 ? (s.memNet / s.net * 100).toFixed(0) : 0;
@@ -12175,7 +12224,7 @@ function renderRevenueDrivers() {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div><div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;margin-bottom:3px">Net Sales</div><div style="font-size:16px;font-weight:700;color:var(--accent);font-family:var(--mono)">${fmt(s.net)}</div></div>
           <div><div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;margin-bottom:3px">Members</div><div style="font-size:16px;font-weight:700;color:var(--green);font-family:var(--mono)">${s.members.toLocaleString()}</div></div>
-          <div><div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;margin-bottom:3px">Avg Basket</div><div style="font-size:16px;font-weight:700;color:var(--text);font-family:var(--mono)">Tk ${Math.round(s.avgBasket).toLocaleString()}</div></div>
+          <div><div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;margin-bottom:3px">APC</div><div style="font-size:16px;font-weight:700;color:var(--text);font-family:var(--mono)">Tk ${Math.round(s.avgBasket).toLocaleString()}</div></div>
           <div><div style="font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;margin-bottom:3px">Promo %</div><div style="font-size:16px;font-weight:700;color:var(--amber2);font-family:var(--mono)">${s.promoPct.toFixed(1)}%</div></div>
         </div>
       </div>`).join('');
@@ -13251,7 +13300,7 @@ function renderDailySales() {
   set('ds-worst-val',   fmt(worstD.net));
   set('ds-anomaly-count', anomalies.length.toString());
 
-  const metricLabel = metric==='net'?'Net Sales':metric==='gm'?'GM%':metric==='txns'?'Transactions':'Avg Basket';
+  const metricLabel = metric==='net'?'Net Sales':metric==='gm'?'GM%':metric==='txns'?'Transactions':'APC';
   set('dsChartTitle', metricLabel+' Harian');
   set('dsPeriodSub', `${filtered[0]?.date} – ${filtered[filtered.length-1]?.date} · ${filtered.length} hari`);
 
@@ -13319,7 +13368,7 @@ function downloadExcelExecSummary() {
 
 function downloadExcelDailySales() {
   if(!_dailyData){alert('Rebuild dulu');return;}
-  const rows=[['Date','Hari','Net Sales','GM%','Transactions','Member Sales','Promo Sales','Avg Basket']];
+  const rows=[['Date','Hari','Net Sales','GM%','Transactions','Member Sales','Promo Sales','APC']];
   _dailyData.allDays.forEach(d=>{ rows.push([d.date,_dailyData.dayNames[d.dow],Math.round(d.net*100)/100,parseFloat((d.net>0?d.gp/d.net*100:0).toFixed(1)),d.txns,Math.round(d.memNet*100)/100,Math.round(d.promoNet*100)/100,Math.round(d.txns>0?d.net/d.txns:0)]); });
   xlsDownload(rows,'Daily Sales','daily_sales_trend.xlsx');
 }
@@ -14841,7 +14890,7 @@ async function generatePdfReport() {
         ${kpiBox('Active Members',S.active_members.toLocaleString(),'#3fb950')}
         ${kpiBox('Dormant',(S.total_members_db-S.active_members).toLocaleString(),'#f85149')}
         ${kpiBox('Member Sales %',S.member_pct.toFixed(1)+'%','#58a6ff')}
-        ${kpiBox('Avg Basket (Mem)',fmt(S.avg_basket_member),'#d29922')}
+        ${kpiBox('Member APC',fmt(S.avg_basket_member),'#d29922')}
         ${kpiBox('Retention Rate',S.retention_rate?.toFixed(1)+'%' || '—','#39d353')}
       </div>
       ${chartImages['memContribDonut']?`<div style="display:flex;gap:14px;margin-bottom:18px">
@@ -14903,7 +14952,7 @@ async function generatePdfReport() {
       <div style="display:flex;gap:12px;margin-bottom:18px">
         ${kpiBox('Promo Sales',fmt(S.promo_sales),'#f0a733')}
         ${kpiBox('Promo %',S.promo_pct?.toFixed(1)+'%' || '—','#d29922')}
-        ${kpiBox('Avg Basket (Promo)',fmt(S.avg_basket_promo||0),'#58a6ff')}
+        ${kpiBox('Promo APC',fmt(S.avg_basket_promo||0),'#58a6ff')}
         ${kpiBox('Promo Txns',S.promo_txns?.toLocaleString()||'—','#a371f7')}
       </div>
       <div style="overflow:hidden;border:1px solid #21262d;border-radius:8px;margin-bottom:16px">
@@ -17677,7 +17726,7 @@ async function downloadMcKinseyPPTX(){
       const memKpis = [
         {l:'ACTIVE MEMBERS', v:_mckNum(s.active_members||0), sub:`of ${_mckNum(s.total_members_db||0)} in database`, color:C.navy},
         {l:'MEMBER SALES', v:_mckFmt(s.member_sales||0), sub:memberPct.toFixed(1)+'% of total revenue', color:C.red},
-        {l:'AVG BASKET', v:_mckFmt(memBasket), sub:basketLift!=='—'?'+'+basketLift+'% vs non-member':'member basket', color:C.green},
+        {l:'APC', v:_mckFmt(memBasket), sub:basketLift!=='—'?'+'+basketLift+'% vs non-member':'member basket', color:C.green},
       ];
       memKpis.forEach((k,i)=>{
         const x=0.5+i*4.15;
