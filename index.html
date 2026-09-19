@@ -13030,6 +13030,7 @@ function renderExecSummary() {
     { color:'blue',   icon:'💰', label:'Total Net Sales',    val: fmt(totNet),              sub: `Tk ${fmtFull(Math.round(totNet))}` },
     { color:'green',  icon:'📈', label:'Gross Margin',       val: gm_pct.toFixed(1)+'%',    sub: `GM: ${fmt(totGm)}` },
     { color:'amber',  icon:'🧾', label:'STD — Struk per Day', val: stdPerDay===null?totStd.toLocaleString():Math.round(stdPerDay).toLocaleString(), sub: stdPerDay===null?'rata-rata struk per hari — butuh kolom tanggal':`${totStd.toLocaleString()} struk ÷ ${dayCount.toLocaleString()} hari` },
+    { color:'blue',   icon:'📊', label:'SPD — Sales per Day', val: dayCount>0?fmt(totNet/dayCount):'—', sub: dayCount>0?`Net Sales ÷ ${dayCount.toLocaleString()} hari`:'butuh kolom tanggal' },
     { color:'teal',   icon:'💳', label:'APC — Avg per Customer', val: 'Tk '+Math.round(apc).toLocaleString(), sub: `Net Sales ÷ ${totStd.toLocaleString()} struk` },
     { color:'purple', icon:'👥', label:'Member Sales',        val: fmt(memNet),              sub: `${mem_pct.toFixed(1)}% dari Net Sales` },
     { color:'red',    icon:'🏷️', label:'Promo Sales',         val: fmt(promoNet),            sub: `${promo_pct.toFixed(1)}% dari Net Sales` },
@@ -14855,6 +14856,7 @@ async function generatePdfReport() {
         ${kpiBox('Member Sales %',S.member_pct.toFixed(1)+'%','#a371f7')}
         ${kpiBox('STD Transactions',S.total_std.toLocaleString(),'#f85149')}
         ${kpiBox('STD — Struk per Day',(function(){const d=pfStdPerDay(S.total_std);return d?Math.round(d.perDay).toLocaleString()+' /hari':'—';})(),'#ff7b72')}
+        ${kpiBox('SPD — Sales per Day',(function(){const d=pfStdPerDay(S.total_std);return d&&d.days>0?fmt(S.total_net_sales/d.days):'—';})(),'#58a6ff')}
         ${kpiBox('APC — Avg per Customer',fmt(S.avg_basket_std),'#e3b341')}
       </div>
       ${chartImages['esRevenueChart']?`<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:600;color:#8b949e;text-transform:uppercase;margin-bottom:8px">Revenue & Gross Margin — Monthly Trend</div><img src="${chartImages['esRevenueChart']}" style="width:100%;border-radius:6px;border:1px solid #21262d"></div>`:''}
