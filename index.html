@@ -2426,6 +2426,18 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       <div class="kpi-formula">excl. V / R / X types</div>
     </div>
     <div class="stat-card" style="border-color:var(--border)">
+      <div class="stat-label" style="color:var(--accent)">SPD — Sales per Day</div>
+      <div class="stat-value" id="kpi-spd" style="color:var(--accent)">—</div>
+      <div class="stat-sub" id="kpi-spd-sub">—</div>
+      <div class="kpi-formula">NET_SALES / store-days</div>
+    </div>
+    <div class="stat-card" style="border-color:var(--border)">
+      <div class="stat-label" style="color:#d29922">STD — Struk per Day</div>
+      <div class="stat-value" id="kpi-stdday" style="color:#d29922">—</div>
+      <div class="stat-sub" id="kpi-stdday-sub">—</div>
+      <div class="kpi-formula">VALID_TXNS / store-days</div>
+    </div>
+    <div class="stat-card" style="border-color:var(--border)">
       <div class="stat-label" style="color:var(--orange)">APC (Avg/Bill)</div>
       <div class="stat-value" id="kpi-apc" style="color:var(--orange)">—</div>
       <div class="stat-sub" id="kpi-apc-sub">—</div>
@@ -6549,6 +6561,20 @@ function applySalesFilter() {
   document.getElementById('kpi-std').textContent = totStd.toLocaleString();
   const _spd=pfStdPerDay(totStd);
   document.getElementById('kpi-std-sub').textContent = _spd?('STD ≈'+Math.round(_spd.perDay).toLocaleString()+' struk/hari · '+_spd.days+' hari'):'excl. Void/Return/Exchange';
+  (function(){
+    const wd=pfWorkDays();
+    const sd=Object.values(wd.byStoreMonth).reduce((a,b)=>a+b,0);
+    const ns=new Set(Object.keys(wd.byStoreMonth).map(k=>k.split('|')[0])).size;
+    const dy=Object.values(wd.byMonth).reduce((a,b)=>a+b,0);
+    const div=sd>0?sd:dy;
+    const note=sd>0?`${ns} toko × ${dy} hari = ${sd.toLocaleString()} store-days`:(dy>0?`${dy} hari (semua toko)`:'butuh kolom tanggal');
+    const eS=document.getElementById('kpi-spd'),eSs=document.getElementById('kpi-spd-sub');
+    if(eS)eS.textContent=div>0?fmt(totNetSales/div):'—';
+    if(eSs)eSs.textContent=note;
+    const eT=document.getElementById('kpi-stdday'),eTs=document.getElementById('kpi-stdday-sub');
+    if(eT)eT.textContent=div>0?Math.round(totStd/div).toLocaleString():'—';
+    if(eTs)eTs.textContent=note;
+  })();
   // v4: Cost of Sales & APC
   const elCost = document.getElementById('kpi-cost'); if(elCost) elCost.textContent = fmt(totCogs);
   const elCostSub = document.getElementById('kpi-cost-sub'); if(elCostSub) elCostSub.textContent = 'Tk '+fmtFull(totCogs);
