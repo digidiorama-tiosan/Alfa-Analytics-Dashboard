@@ -7405,6 +7405,8 @@ function buildMasterAttrMap(){
   }
   if(!cPlu)return null;
   const cBrand=mkFind(pc,['nama merek','nama_merek','brand_name','namamerek','brand','merek','merk']);
+  const _cBrandCode=mkFind(pc,['merek','merk','kode merek','kode_merek','brand_code','brandcode']);
+  const cBrandCode=_cBrandCode&&_cBrandCode!==cBrand?_cBrandCode:null;
   const cPrin=mkFind(pc,['nama prinsipal','prinsipal','principal','nama_prinsipal','principle']);
   const cSupp=mkFind(pc,['nama supplier','supplier','nama_supplier','vendor','pemasok']);
   const cSection=mkFind(pc,['section','seksi','nama section','nama_section','section name','sectionname','nama seksi','dept','department','departemen','nama dept','nama departemen','dept name','deptname','divisi','division','div','grup','group','kelompok']);
@@ -7428,7 +7430,7 @@ function buildMasterAttrMap(){
   prod.forEach(p=>{
     const k=mkPlu(p[cPlu]);if(!k)return;
     map.set(k,{
-      brand:cBrand?mkCleanName(p[cBrand]):'',
+      brand:(cBrand?mkCleanName(p[cBrand]):'')||(cBrandCode?mkCleanName(p[cBrandCode]):''),
       principal:cPrin?mkCleanName(p[cPrin]):'',
       supplier:cSupp?mkCleanName(p[cSupp]):'',
       section:cSectionName?mkCleanName(p[cSectionName]):'',
@@ -11982,21 +11984,34 @@ function handleReceiptFile(ev){
     _merCache=null;renderMerchReceipt();renderMerchSellThrough();
   });
 }
+// Serialisasi PO/Receipt untuk sinkron server (publish) & sebaliknya
+function merApplyRows(key,rows,fallbackName){
+  const meta=rows[0]&&rows[0].__meta?rows[0]:null;const data=meta?rows.slice(1):rows;
+  if(key==='po')uploads.po={lines:data.map(o=>({...o,po:o.po?new Date(o.po):null,arr:o.arr?new Date(o.arr):null})),file:(meta&&meta.file)||fallbackName||'server'};
+  else uploads.receipt={rows:data,file:(meta&&meta.file)||fallbackName||'server'};
+  _merCache=null;
+}
+function pfKindRows(k){
+  if(k==='po'||k==='receipt'){
+    const src=k==='po'?poLines():recRows();if(!src.length)return null;
+    return [{__meta:1,file:(uploads[k]&&uploads[k].file)||''}].concat(src.map(o=>{const c={...o};for(const x in c)if(c[x] instanceof Date)c[x]=c[x].toISOString();return c;}));
+  }
+  return Array.isArray(uploads[k])?uploads[k]:null;
+}
+function pfKindSet(k,rows){if(k==='po'||k==='receipt')merApplyRows(k,rows,'server');else uploads[k]=rows;}
 async function merRestore(){
   const ok=(id,html)=>{const e=document.getElementById(id);if(e)e.innerHTML=`<div class="upload-status success" style="margin-top:10px;font-size:12.5px">${html}</div>`;};
   try{const r=await dbLoadUpload('po');
     if(r&&r.rows&&r.rows.length){const meta=r.rows[0]&&r.rows[0].__meta?r.rows[0]:null;
-      const lines=(meta?r.rows.slice(1):r.rows).map(o=>({...o,po:o.po?new Date(o.po):null,arr:o.arr?new Date(o.arr):null}));
-      uploads.po={lines,file:(meta&&meta.file)||r.filename||'tersimpan'};
-      ok('status-po',`✅ <strong>${lines.length.toLocaleString('en-US')}</strong> baris PO di-restore · ${merEsc(uploads.po.file)}`);
+      merApplyRows('po',r.rows,r.filename||'tersimpan');
+      ok('status-po',`✅ <strong>${poLines().length.toLocaleString('en-US')}</strong> baris PO di-restore · ${merEsc(uploads.po.file)}`);
       renderLeadTime();}
   }catch(e){console.warn('[MERCH] restore PO gagal',e);}
   try{const r=await dbLoadUpload('receipt');
     if(r&&r.rows&&r.rows.length){const meta=r.rows[0]&&r.rows[0].__meta?r.rows[0]:null;
-      const rows=meta?r.rows.slice(1):r.rows;
-      uploads.receipt={rows,file:(meta&&meta.file)||r.filename||'tersimpan'};
-      ok('status-receipt',`✅ <strong>${rows.length.toLocaleString('en-US')}</strong> baris receipt di-restore · ${merEsc(uploads.receipt.file)}`);
-      _merCache=null;renderMerchReceipt();}
+      merApplyRows('receipt',r.rows,r.filename||'tersimpan');
+      ok('status-receipt',`✅ <strong>${recRows().length.toLocaleString('en-US')}</strong> baris receipt di-restore · ${merEsc(uploads.receipt.file)}`);
+      renderMerchReceipt();renderMerchSellThrough();}
   }catch(e){console.warn('[MERCH] restore receipt gagal',e);}
 }
 
@@ -18175,7 +18190,6 @@ renderPanel('sales');
 rendered.add('sales');
 
 (async function autoRestoreFromDB(){
-  try { merRestore(); } catch(_) {}
   try {
     const records = await dbListAll();
     if (!records || records.length === 0) {
@@ -18201,11 +18215,13 @@ rendered.add('sales');
     // Restore semua uploads dari IndexedDB
     let restored = [];
     records.forEach(rec => {
+      if (rec.key==='po' || rec.key==='receipt' || rec.key==='oos') return; // dipulihkan oleh merRestore() (format khusus)
       if (rec.key && rec.rows && rec.rows.length > 0) {
         uploads[rec.key] = rec.rows;
         restored.push(rec.key + ' (' + rec.rowCount.toLocaleString() + ' baris)');
       }
     });
+    try { await merRestore(); } catch(_) {}
 
     if (restored.length > 0) {
       console.log('[Persistence] Auto-restored:', restored.join(', '));
@@ -19717,7 +19733,7 @@ async function downloadMcKinseyPPTX(){
   //  PHASE 2 — SHARED DATA via Supabase
   //  admin uploads → pushed to DB → all users pull + auto-refresh
   // ══════════════════════════════════════════════════════════════
-  const DATA_KINDS = ['sales','member','promo','product'];
+  const DATA_KINDS = ['sales','member','promo','product','po','receipt'];
   const SYNC_ROW_CAP = 1000000;     // safety ceiling
   let _dataChan=null, _syncT=null, _lastPushAt=0;
 
@@ -19817,12 +19833,12 @@ async function downloadMcKinseyPPTX(){
     if(!pfSession){ if(out) out.innerHTML='<span class="bad">✕ Not signed in. Please sign in as an Admin first.</span>'; return; }
     if(pfSession.role!=='admin'){ if(out) out.innerHTML='<span class="bad">✕ Your role is “'+pfSession.role+'”. Only Admin can publish. Ask an admin to change your role (Access Control), or sign in as admin.</span>'; return; }
     if(btn){ btn.disabled=true; btn.style.opacity='0.6'; }
-    const kinds = DATA_KINDS.filter(k=>Array.isArray(uploads[k]) && uploads[k].length);
+    const kinds = DATA_KINDS.filter(k=>{const r=pfKindRows(k);return r&&r.length;});
     if(!kinds.length){ if(out) out.innerHTML='<span class="bad">✕ No data loaded to publish. Upload a file first.</span>'; if(btn){btn.disabled=false;btn.style.opacity='1';} return; }
     const lines=[];
     const render=(extra)=>{ if(out) out.innerHTML = lines.concat(extra?[extra]:[]).join('<br>'); };
     for(const k of kinds){
-      const rows = uploads[k];
+      const rows = pfKindRows(k);
       if(rows.length > SYNC_ROW_CAP){ lines.push('<span class="bad">⚠ '+k+': '+rows.length.toLocaleString()+' rows exceeds the sync ceiling — kept local only.</span>'); render(); continue; }
       try{
         await sbPublishKind(k, rows, (rows._filename||''), (done,total)=>{
@@ -19895,12 +19911,13 @@ async function downloadMcKinseyPPTX(){
           if(!DATA_KINDS.includes(d.kind)) continue;
           if(d.chunk_count && d.chunk_count>0){
             const all = await sbPullChunks(d.kind, d.chunk_count);
-            if(all && all.length){ uploads[d.kind]=all; got=true; }
+            if(all && all.length){ pfKindSet(d.kind,all); got=true; }
           } else if(Array.isArray(d.rows) && d.rows.length){
             // legacy single-blob format
-            uploads[d.kind]=d.rows; got=true;
+            pfKindSet(d.kind,d.rows); got=true;
           }
         }
+        if(meta.some(d=>d.kind==='po'||d.kind==='receipt')){ try{ renderLeadTime(); renderMerchReceipt(); renderMerchSellThrough(); }catch(_){} }
         const sales=meta.find(d=>d.kind==='sales');
         if(sales){ try{ localStorage.setItem('pf_data_updated', String(new Date(sales.updated_at).getTime())); localStorage.removeItem('pf_demo'); }catch(_){ } }
       }
