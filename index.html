@@ -1787,10 +1787,6 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 4v4l3 2"/></svg>
           PO Service Level &amp; Lead Time
         </button>
-        <button class="nav-item" onclick="showPanel('oos-promo',this)">
-          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l2 4 5 .7-3.5 3.4.8 5L8 11.8 3.7 14l.8-5L1 5.7 6 5z"/></svg>
-          OOS × Promo Impact
-        </button>
       </div>
     </div>
 
@@ -5367,29 +5363,6 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
   </div>
 </div>
 
-<div id="panel-oos-promo" class="panel">
-  <div class="page-header">
-    <div><div class="page-title">OOS × Promo Impact</div><div class="page-subtitle">PLU yang sedang promo tetapi stoknya kosong — budget promo terbakar</div></div>
-    <button class="btn-dl" onclick="oosExport('promo')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button>
-  </div>
-  <div id="opNoData" class="insight-box" style="display:none"><span class="insight-icon">📦</span><div class="insight-text" id="opNoDataText">Butuh data OOS dan data Juklak.</div></div>
-  <div id="opMain" style="display:none">
-    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
-      <div class="stat-card red"><div class="stat-label">PLU Promo Sedang OOS</div><div class="stat-value" id="op-count">—</div><div class="stat-sub" id="op-count-sub">—</div></div>
-      <div class="stat-card amber"><div class="stat-label">% dari PLU Juklak</div><div class="stat-value" id="op-pct">—</div><div class="stat-sub">tingkat kegagalan promo</div></div>
-      <div class="stat-card purple"><div class="stat-label">Estimasi Omzet Promo Hilang</div><div class="stat-value" id="op-lost" style="font-size:17px">—</div><div class="stat-sub">avg sales × cost</div></div>
-      <div class="stat-card blue"><div class="stat-label">Supplier Terlibat</div><div class="stat-value" id="op-sup">—</div><div class="stat-sub">perlu eskalasi</div></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-header"><div><div class="chart-title">⚠️ PLU Promo yang Kosong — Perlu Tindakan Segera</div><div class="chart-subtitle" id="opSub">—</div></div></div>
-      <div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px">
-        <thead><tr><th>PLU</th><th>Deskripsi</th><th>TAG</th><th>Supplier</th><th class="right">Qty PO Outs.</th><th class="right">Est. Lost (Tk)</th><th>Reason</th><th>Catatan Supplier</th></tr></thead>
-        <tbody id="opBody"></tbody>
-      </table></div>
-    </div>
-  </div>
-</div>
-
 <div id="panel-oos-leadtime" class="panel">
   <div class="page-header">
     <div><div class="page-title">PO Service Level &amp; Lead Time</div><div class="page-subtitle">SL Principal = Receipt ÷ PO · sumber: file PO Checking &amp; Realization</div></div>
@@ -5792,22 +5765,6 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       </div>
       <div id="status-product"></div>
       <div id="preview-product"></div>
-    </div>
-
-    <!-- OOS / Service Level -->
-    <div class="upload-card" style="grid-column:1/-1">
-      <div class="upload-card-title">📦 OOS &amp; Service Level (Monitoring Stock)</div>
-      <div class="upload-card-sub">File <strong>OOS WAREHOUSE</strong> mingguan. Sistem membaca sheet <strong>Monitoring Stock</strong>. Dipakai untuk menu <strong>OOS × Promo Impact</strong>.</div>
-      <div class="upload-col-tags">
-        <span class="col-tag">PLU</span><span class="col-tag">TAG A/B/C</span><span class="col-tag">Company Name</span><span class="col-tag">LT</span><span class="col-tag">Qty PO / LPB</span><span class="col-tag">Internal Remark</span><span class="col-tag">% SL Principal</span><span class="col-tag">% SL Warehouse</span>
-      </div>
-      <div class="upload-zone" id="zone-oos" onclick="document.getElementById('file-oos').click()">
-        <input type="file" accept=".xlsx,.xls" id="file-oos" onchange="handleOosFile(event)">
-        <div class="upload-icon">🚦</div>
-        <div style="font-size:13px;font-weight:600;color:var(--text)">Drop file OOS di sini atau klik untuk pilih</div>
-        <div class="upload-hint">✅ .xlsx · Sheet "Monitoring Stock" · Upload mingguan</div>
-      </div>
-      <div id="status-oos"></div>
     </div>
     <div class="upload-card">
       <div class="upload-card-title">📑 PO Checking &amp; Realization</div>
@@ -6768,7 +6725,6 @@ function renderPanel(id) {
     case 'merch-share-prin': renderMerchSharePrin(); break;
     case 'merch-receipt': renderMerchReceipt(); break;
     case 'merch-sellthrough': renderMerchSellThrough(); break;
-    case 'oos-promo': renderOosPromo(); break;
     case 'oos-leadtime': renderLeadTime(); break;
     case 'peak-hours': renderPeakHours(); break;
     case 'price-elasticity': renderPriceElasticity(); break;
@@ -11800,68 +11756,6 @@ const _oosN=v=>{const n=parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,'')
 const _oosS=v=>String(v==null?'':v).replace(/[\u200B-\u200F\u2060\uFEFF\u00A0]/g,' ').replace(/\s+/g,' ').trim();
 function _oosDate(v){if(v==null||v==='')return null;if(v instanceof Date)return isNaN(v)?null:v;const s=String(v).trim();let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return new Date(+m[1],+m[2]-1,+m[3]);const n=parseFloat(s);if(!isNaN(n)&&n>20000&&n<80000)return new Date(Math.round((n-25569)*86400000));const d=new Date(s);return isNaN(d)?null:d;}
 
-function handleOosFile(ev){
-  const f=ev.target.files&&ev.target.files[0];if(!f)return;
-  const st=document.getElementById('status-oos');
-  const setS=(html,cls)=>{if(st)st.innerHTML=`<div class="upload-status ${cls||''}" style="margin-top:10px;font-size:12.5px">${html}</div>`;};
-  setS('⏳ Memproses file…');
-  if(typeof XLSX==='undefined'){setS('⏳ Memuat pustaka Excel…');ensureLib('xlsx').then(()=>handleOosFile(ev)).catch(()=>setS('❌ Gagal memuat pustaka Excel.','error'));return;}
-  const rd=new FileReader();
-  rd.onload=e=>{
-    try{
-      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});
-      let shName=wb.SheetNames.find(n=>/monitor/i.test(n))||wb.SheetNames.find(n=>/stock/i.test(n))||wb.SheetNames[wb.SheetNames.length-1];
-      const aoa=XLSX.utils.sheet_to_json(wb.Sheets[shName],{header:1,defval:'',blankrows:false,raw:true});
-      // cari baris header: baris yang kolom A-nya 'PLU' dan ada 'Company Name' di sekitarnya
-      let hdrIdx=-1;
-      for(let i=0;i<Math.min(20,aoa.length);i++){const r=aoa[i]||[];if(/^plu$/i.test(_oosS(r[0]))&&/company/i.test(_oosS(r[11])||'')){hdrIdx=i;}}
-      if(hdrIdx<0)for(let i=0;i<Math.min(20,aoa.length);i++){if(/^plu$/i.test(_oosS((aoa[i]||[])[0]))){hdrIdx=i;break;}}
-      if(hdrIdx<0)throw new Error('Baris header (PLU) tidak ditemukan di sheet "'+shName+'"');
-      const items=[];
-      for(let i=hdrIdx+1;i<aoa.length;i++){
-        const r=aoa[i]||[];const plu=_oosS(r[OOS_COL.plu]);
-        if(!plu||!/\d/.test(plu))continue;
-        const prin=[],wh=[];
-        for(let k=0;k<9;k++){
-          const b=OOS_COL.prinBase+k*5;
-          prin.push({m:OOS_MONTHS[k],poP:_oosN(r[b]),rcP:_oosN(r[b+1]),poV:_oosN(r[b+2]),rcV:_oosN(r[b+3])});
-          const w=OOS_COL.whBase+k*5;
-          wh.push({m:OOS_MONTHS[k],pbP:_oosN(r[w]),pbV:_oosN(r[w+1]),shP:_oosN(r[w+2]),shV:_oosN(r[w+3])});
-        }
-        const reason=_oosS(r[OOS_COL.reason])||'(tanpa reason)';
-        items.push({plu,desc:_oosS(r[OOS_COL.desc]),tag:_oosS(r[OOS_COL.tag])||'-',cost:_oosN(r[OOS_COL.cost]),
-          div:_oosS(r[OOS_COL.div])||'(tanpa division)',subdept:_oosS(r[OOS_COL.subdept])||'(tanpa subdept)',loc:_oosS(r[OOS_COL.loc]),
-          vcode:_oosS(r[OOS_COL.vcode]),company:_oosS(r[OOS_COL.company])||'(tanpa supplier)',lt:_oosN(r[OOS_COL.lt]),
-          outVal:_oosN(r[OOS_COL.outVal]),poCount:_oosN(r[OOS_COL.poCount]),
-          lastOrder:_oosDate(r[OOS_COL.lastOrder]),lastArrExp:_oosDate(r[OOS_COL.lastArrExp]),lastPO:_oosS(r[OOS_COL.lastPO]),
-          qtyPO:_oosN(r[OOS_COL.qtyPO]),qtyLPB:_oosN(r[OOS_COL.qtyLPB]),
-          reason,owner:OOS_OWNER[reason.toLowerCase()]||'Lainnya',reasonSup:_oosS(r[OOS_COL.reasonSup]),
-          avgPcs:_oosN(r[OOS_COL.avgPcs]),avgTk:_oosN(r[OOS_COL.avgTk]),prin,wh});
-      }
-      if(!items.length)throw new Error('Tidak ada baris item terbaca');
-      uploads.oos={items,file:f.name,loadedAt:new Date().toISOString(),sheet:shName};
-      try{persistUpload('oos',[{__meta:1,file:f.name,loadedAt:uploads.oos.loadedAt}].concat(items.map(it=>({...it,prin:JSON.stringify(it.prin),wh:JSON.stringify(it.wh),lastOrder:it.lastOrder?it.lastOrder.toISOString():'',lastArrExp:it.lastArrExp?it.lastArrExp.toISOString():''}))),f.name);}catch(_){}
-      setS(`✅ <strong>${items.length}</strong> item OOS dimuat dari sheet "<strong>${shName}</strong>" · ${f.name}`,'success');
-      renderOosPromo();
-      if(typeof renderPrincipalPerf==='function')try{renderPrincipalPerf();}catch(_){}
-    }catch(err){setS('❌ Error: '+err.message,'error');console.error('[OOS]',err);}
-  };
-  rd.readAsArrayBuffer(f);
-}
-// Restore dari IndexedDB saat load
-async function oosRestore(){
-  try{
-    const rec=await dbLoadUpload('oos');
-    if(!rec||!rec.rows||!rec.rows.length)return;
-    const meta=rec.rows[0]&&rec.rows[0].__meta?rec.rows[0]:null;
-    const raw=meta?rec.rows.slice(1):rec.rows;
-    const items=raw.map(r=>({...r,prin:typeof r.prin==='string'?JSON.parse(r.prin):r.prin,wh:typeof r.wh==='string'?JSON.parse(r.wh):r.wh,lastOrder:r.lastOrder?new Date(r.lastOrder):null,lastArrExp:r.lastArrExp?new Date(r.lastArrExp):null}));
-    uploads.oos={items,file:(meta&&meta.file)||rec.filename||'tersimpan',loadedAt:(meta&&meta.loadedAt)||'',sheet:''};
-    const st=document.getElementById('status-oos');
-    if(st)st.innerHTML=`<div class="upload-status success" style="margin-top:10px;font-size:12.5px">✅ <strong>${items.length}</strong> item OOS di-restore dari penyimpanan · ${uploads.oos.file}</div>`;
-    renderOosPromo();
-  }catch(e){console.warn('[OOS] restore gagal',e);}
-}
 // ── Helper filter & agregasi ──
 function oosItems(){return (uploads.oos&&Array.isArray(uploads.oos.items))?uploads.oos.items:[];}
 function oosReady(showIds,hideIds){
@@ -11883,49 +11777,6 @@ function oosMonthSel(id){
 }
 const _fmtTk=n=>'Tk '+Math.round(n).toLocaleString('en-US');
 const _fmtN=n=>Math.round(n).toLocaleString('en-US');
-
-// ── 3. OOS × Promo Impact ──
-function renderOosPromo(){
-  const items=oosItems();
-  const juk=(typeof uploads!=='undefined'&&Array.isArray(uploads.promo))?uploads.promo:[];
-  const no=document.getElementById('opNoData'),main=document.getElementById('opMain'),noT=document.getElementById('opNoDataText');
-  if(!items.length||!juk.length){
-    if(no){no.style.display='flex';if(noT)noT.innerHTML=!items.length&&!juk.length?'Butuh <strong>data OOS</strong> dan <strong>data Juklak</strong>. Upload keduanya di Data Management.':(!items.length?'Butuh <strong>data OOS</strong>. Upload file OOS di Data Management.':'Butuh <strong>data Juklak</strong>. Aktifkan periode juklak di Data Management.');}
-    if(main)main.style.display='none';return;
-  }
-  if(no)no.style.display='none';if(main)main.style.display='block';
-  const jset=typeof juklakPluSet==='function'?juklakPluSet():null;
-  const hit=jset?items.filter(i=>jset.has(mkPlu(i.plu))):[];
-  const lost=hit.reduce((s,i)=>s+(i.avgTk>0?i.avgTk:i.avgPcs*i.cost),0);
-  const sups=new Set(hit.map(i=>i.company));
-  const set=(id,v,c)=>{const e=document.getElementById(id);if(e){e.textContent=v;if(c)e.style.color=c;}};
-  set('op-count',_fmtN(hit.length));set('op-count-sub',`dari ${items.length} item OOS`);
-  set('op-pct',jset&&jset.size?(hit.length/jset.size*100).toFixed(1)+'%':'—');
-  set('op-lost',_fmtTk(lost));set('op-sup',_fmtN(sups.size));
-  const body=document.getElementById('opBody');
-  const sorted=[...hit].sort((a,b)=>(b.avgTk||b.avgPcs*b.cost)-(a.avgTk||a.avgPcs*a.cost));
-  if(body)body.innerHTML=sorted.map(i=>`<tr>
-    <td style="font-family:var(--mono)">${i.plu}</td><td>${(i.desc||'—').replace(/</g,'&lt;')}</td>
-    <td><span style="background:var(--surface2);padding:1px 6px;border-radius:3px;font-weight:600;font-size:11px">${i.tag}</span></td>
-    <td style="font-size:11.5px">${i.company.length>24?i.company.slice(0,22)+'…':i.company}</td>
-    <td class="right">${_fmtN(i.qtyPO)}</td>
-    <td class="right" style="color:#f85149;font-weight:600">${_fmtTk(i.avgTk>0?i.avgTk:i.avgPcs*i.cost)}</td>
-    <td style="font-size:11.5px;color:var(--text2)">${i.reason}</td>
-    <td style="font-size:11px;color:var(--text3)">${(i.reasonSup||'—').slice(0,44)}</td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:#3fb950;padding:18px;font-weight:600">✅ Tidak ada PLU juklak yang sedang OOS — semua item promo tersedia.</td></tr>';
-  const sub=document.getElementById('opSub');if(sub)sub.textContent=`${hit.length} PLU juklak aktif sedang kosong di warehouse · ${sups.size} supplier`;
-}
-
-// ── OOS × Promo export ──
-function oosExport(which){
-  const items=oosItems();
-  if(!items.length){alert('Belum ada data OOS.');return;}
-  const R=Math.round;
-  const jset=typeof juklakPluSet==='function'?juklakPluSet():null;
-  const hit=jset?items.filter(i=>jset.has(mkPlu(i.plu))):[];
-  const rows=[['PLU','Deskripsi','TAG','Supplier','Qty PO Outstanding','Est. Lost (Tk)','Reason','Catatan Supplier']];
-  hit.forEach(i=>rows.push([i.plu,i.desc,i.tag,i.company,R(i.qtyPO),R(i.avgTk>0?i.avgTk:i.avgPcs*i.cost),i.reason,i.reasonSup]));
-  xlsDownload(rows,'OOS_Promo_Impact','OOS_Promo_Impact.xlsx');
-}
 
 // ══════════════════════════════════════════════
 //  MERCHANDISING
@@ -15168,7 +15019,7 @@ const PANEL_GROUP_MAP = {
   'mem-category':'grp-members',
   'promo-effectiveness':'grp-marketing','juklak-lookup':'grp-marketing','juklak-recap':'grp-marketing','promo-contribution':'grp-marketing','promo-member':'grp-marketing','promo-items':'grp-marketing',
   'promo-categories':'grp-marketing','basket':'grp-marketing','brand-perf':'grp-marketing','principal-perf':'grp-sales','section-contribution':'grp-marketing','promo-discount':'grp-marketing','promo-mechanic':'grp-marketing',
-  'merch-sales':'grp-merch','merch-share-cat':'grp-merch','merch-share-prin':'grp-merch','merch-receipt':'grp-merch','merch-sellthrough':'grp-merch','oos-leadtime':'grp-merch','oos-promo':'grp-merch',
+  'merch-sales':'grp-merch','merch-share-cat':'grp-merch','merch-share-prin':'grp-merch','merch-receipt':'grp-merch','merch-sellthrough':'grp-merch','oos-leadtime':'grp-merch',
   'sku-pareto':'grp-catmgmt','cat-overview':'grp-catmgmt','cat-promo-potential':'grp-catmgmt',
   'cat-member':'grp-catmgmt','cat-trend':'grp-catmgmt','cat-time':'grp-catmgmt','cat-detail':'grp-catmgmt',
   'revenue-drivers':'grp-analytics','peak-hours':'grp-analytics','void-return':'grp-analytics','ai-strategy':'grp-analytics','ai-chat':'grp-analytics',
@@ -18222,7 +18073,6 @@ renderPanel('sales');
 rendered.add('sales');
 
 (async function autoRestoreFromDB(){
-  try { oosRestore(); } catch(_) {}
   try { merRestore(); } catch(_) {}
   try {
     const records = await dbListAll();
@@ -19653,7 +19503,7 @@ async function downloadMcKinseyPPTX(){
     { id:'grp-sales', label:'Sales Reports', items:[['exec-summary','Executive Summary'],['sales','Sales Report'],['store-sales','Sales by Store'],['daily-sales','Daily Sales Trend'],['principal-perf','Principal & Supplier'],['target-actuals','Target vs Actuals'],['report-all','Export PDF Report']] },
     { id:'grp-members', label:'Members', items:[['lapse-member','Summary Lapse Member'],['churn-risk','Member Churn Risk'],['mem-detail','Member Detail'],['mem-contribution','Contribution'],['mem-vs-promo','Member vs Promo'],['mem-trend','Sales Trend'],['mem-database','Database'],['mem-homestore','Member by Store'],['mem-demo','Demographics'],['mem-transactions','Transactions'],['mem-retention','Retention'],['mem-category','Sales by Category']] },
     { id:'grp-marketing', label:'Marketing', items:[['promo-effectiveness','Promo Effectiveness'],['promo-contribution','Promo vs Sales'],['promo-member','Member × Promo'],['promo-items','Top Promo Items'],['promo-categories','Top Categories'],['basket','Basket Size'],['brand-perf','Brand Performance'],['promo-mechanic','Promo Mechanic'],['thema-juklak','Report Thema Juklak']] },
-    { id:'grp-merch', label:'Merchandising', items:[['merch-sales','Sales Overview'],['merch-share-cat','Market Share Kategori'],['merch-share-prin','Market Share Prinsipal'],['merch-receipt','Store Receipt'],['merch-sellthrough','Receipt vs Sales'],['oos-leadtime','PO Service Level & Lead Time'],['oos-promo','OOS × Promo Impact']] },
+    { id:'grp-merch', label:'Merchandising', items:[['merch-sales','Sales Overview'],['merch-share-cat','Market Share Kategori'],['merch-share-prin','Market Share Prinsipal'],['merch-receipt','Store Receipt'],['merch-sellthrough','Receipt vs Sales'],['oos-leadtime','PO Service Level & Lead Time']] },
     { id:'grp-catmgmt', label:'Category Management', items:[['sku-pareto','SKU Rationalization'],['cat-overview','Overview'],['cat-promo-potential','Promo Potential'],['cat-member','Member Category'],['cat-trend','Monthly Trend'],['cat-time','Time & Day'],['cat-detail','Category Detail']] },
     { id:'grp-analytics', label:'Analytics', items:[['revenue-drivers','Revenue & Value Drivers'],['peak-hours','Peak Hours & Days'],['void-return','Void & Return'],['cohort-analysis','Cohort Analysis'],['sales-forecast','Sales Forecasting'],['price-elasticity','Price Elasticity & ROI'],['data-quality','Data Quality'],['rokok-report','Category Basket Report']] },
     { id:'grp-data', label:'Data', items:[['data-mgmt','Data Management'],['store-map','Store Map']] }
