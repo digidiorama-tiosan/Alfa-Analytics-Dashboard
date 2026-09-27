@@ -2198,6 +2198,14 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     <!-- card template - filled by JS -->
   </div>
 
+  <div class="chart-card" style="margin-bottom:16px">
+    <div class="chart-header"><div><div class="chart-title">Growth Net Sales per Bulan</div><div class="chart-subtitle">Pertumbuhan dibanding bulan sebelumnya · Growth SPD lebih adil untuk bulan yang belum penuh</div></div></div>
+    <div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px">
+      <thead><tr><th>Bulan</th><th class="right">Net Sales</th><th class="right">Growth (Tk)</th><th class="right">Growth MoM</th><th class="right">Store-days</th><th class="right">SPD</th><th class="right">Growth SPD</th></tr></thead>
+      <tbody id="esGrowthBody"></tbody><tfoot id="esGrowthFoot"></tfoot>
+    </table></div>
+  </div>
+
   <!-- MoM TREND CHARTS -->
   <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:16px">
     <div class="chart-card">
@@ -2479,6 +2487,12 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       <div class="kpi-formula">VALID_TXNS / store-days</div>
     </div>
     <div class="stat-card" style="border-color:var(--border)">
+      <div class="stat-label" style="color:#3fb950">Growth Net Sales</div>
+      <div class="stat-value" id="kpi-growth">—</div>
+      <div class="stat-sub" id="kpi-growth-sub">—</div>
+      <div class="kpi-formula">(bln ini − bln lalu) / bln lalu</div>
+    </div>
+    <div class="stat-card" style="border-color:var(--border)">
       <div class="stat-label" style="color:var(--orange)">APC (Avg/Bill)</div>
       <div class="stat-value" id="kpi-apc" style="color:var(--orange)">—</div>
       <div class="stat-sub" id="kpi-apc-sub">—</div>
@@ -2518,6 +2532,14 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
         <tfoot id="storeTableFoot"></tfoot>
       </table>
     </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:16px">
+    <div class="chart-header"><div><div class="chart-title">Growth Net Sales per Bulan</div><div class="chart-subtitle" id="salesGrowthSub">Pertumbuhan dibanding bulan sebelumnya · mengikuti filter toko</div></div></div>
+    <div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px">
+      <thead><tr><th>Bulan</th><th class="right">Net Sales</th><th class="right">Growth (Tk)</th><th class="right">Growth MoM</th><th class="right">Store-days</th><th class="right">SPD</th><th class="right">Growth SPD</th></tr></thead>
+      <tbody id="salesGrowthBody"></tbody><tfoot id="salesGrowthFoot"></tfoot>
+    </table></div>
   </div>
 
   <div class="insight-box">
@@ -6894,6 +6916,15 @@ function applySalesFilter() {
     const dy=Object.values(wd.byMonth).reduce((a,b)=>a+b,0);
     const div=sd>0?sd:dy;
     const note=sd>0?`${ns} toko × ${dy} hari = ${sd.toLocaleString()} store-days`:(dy>0?`${dy} hari (semua toko)`:'butuh kolom tanggal');
+    try{
+      const gArr=pfGrowthRows(D.monthly.filter(m=>storeVal==='ALL'||(m.store_code||'A001')===storeVal));
+      const tgt=monthVal!=='ALL'?gArr.find(o=>String(o.month)===String(monthVal)):gArr[gArr.length-1];
+      const eG=document.getElementById('kpi-growth'),eGs=document.getElementById('kpi-growth-sub');
+      if(eG){eG.textContent=tgt&&tgt.gPct!=null?(tgt.gPct>=0?'+':'')+tgt.gPct.toFixed(1)+'%':'—';eG.style.color=tgt&&tgt.gPct!=null?(tgt.gPct>=0?'#3fb950':'#f85149'):'';}
+      if(eGs)eGs.textContent=tgt&&tgt.prev?`${MONTH_NAMES[tgt.month-1]} vs ${MONTH_NAMES[tgt.prev.month-1]} · SPD ${tgt.gSpd==null?'—':(tgt.gSpd>=0?'+':'')+tgt.gSpd.toFixed(1)+'%'}`:'belum ada bulan pembanding';
+      pfGrowthRender('salesGrowthBody','salesGrowthFoot',gArr,monthVal!=='ALL'?+monthVal:null);
+      const gs=document.getElementById('salesGrowthSub');if(gs)gs.textContent='Pertumbuhan dibanding bulan sebelumnya · '+(storeVal==='ALL'?'semua toko':'toko '+storeVal)+' · Growth SPD lebih adil untuk bulan yang belum penuh';
+    }catch(e){console.warn('[growth]',e);}
     const eS=document.getElementById('kpi-spd'),eSs=document.getElementById('kpi-spd-sub');
     if(eS)eS.textContent=div>0?fmt(totNetSales/div):'—';
     if(eSs)eSs.textContent=note;
@@ -11732,6 +11763,25 @@ function pfDaysTitle(wd,store,month){
   return t;
 }
 function pfDaysFor(wd,store,month){return wd.byStoreMonth[store+'|'+month]||wd.byMonth[month]||0;}
+// Growth Net Sales per bulan (dari baris D.monthly toko×bulan)
+function pfGrowthRows(rows){
+  const wd=pfWorkDays(),mm={};
+  (rows||[]).forEach(m=>{const o=mm[m.month]||(mm[m.month]={month:+m.month,net:0,days:0});o.net+=m.net_sales||0;o.days+=pfDaysFor(wd,m.store_code||'A001',m.month);});
+  const arr=Object.values(mm).sort((a,b)=>a.month-b.month);
+  arr.forEach((o,i)=>{const p=arr[i-1]||null;o.prev=p;o.spd=o.days>0?o.net/o.days:null;o.gTk=p?o.net-p.net:null;o.gPct=p&&p.net>0?(o.net-p.net)/p.net*100:null;o.gSpd=p&&p.spd&&o.spd!=null?(o.spd-p.spd)/p.spd*100:null;});
+  return arr;
+}
+function pfGrowthRender(bodyId,footId,arr,hiMonth){
+  const body=document.getElementById(bodyId),foot=document.getElementById(footId);if(!body)return;
+  const tk=n=>'Tk '+Math.round(n).toLocaleString('en-US');
+  const pc=v=>v==null?'<span style="color:var(--text3)">—</span>':`<span style="color:${v>=0?'#3fb950':'#f85149'};font-weight:600">${v>=0?'▲ +':'▼ '}${v.toFixed(1)}%</span>`;
+  body.innerHTML=arr.map(o=>`<tr${hiMonth===o.month?' style="background:rgba(88,166,255,0.08)"':''}><td style="font-weight:600">${MONTH_NAMES[o.month-1]||o.month}</td><td class="right">${tk(o.net)}</td><td class="right" style="color:${o.gTk==null?'var(--text3)':o.gTk>=0?'#3fb950':'#f85149'}">${o.gTk==null?'—':(o.gTk>=0?'+':'−')+tk(Math.abs(o.gTk)).replace('Tk ','Tk ')}</td><td class="right">${pc(o.gPct)}</td><td class="right" style="color:var(--text3)">${o.days||'—'}</td><td class="right">${o.spd==null?'—':tk(o.spd)}</td><td class="right">${pc(o.gSpd)}</td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:14px">Belum ada data</td></tr>';
+  if(foot){
+    if(arr.length>1){const f=arr[0],l=arr[arr.length-1];const tot=arr.reduce((s,o)=>s+o.net,0);const gs=arr.filter(o=>o.gPct!=null);const avg=gs.length?gs.reduce((s,o)=>s+o.gPct,0)/gs.length:null;const td=arr.reduce((s,o)=>s+o.days,0);
+      foot.innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border);background:var(--surface2)"><td>TOTAL · ${MONTH_NAMES[f.month-1]}–${MONTH_NAMES[l.month-1]}</td><td class="right">${tk(tot)}</td><td class="right" style="font-size:11px;color:var(--text3)">rata-rata MoM →</td><td class="right">${pc(avg)}</td><td class="right">${td||'—'}</td><td class="right">${td?tk(tot/td):'—'}</td><td class="right" style="font-size:11px;color:var(--text3)">${f.net>0?'total '+(l.net>=f.net?'+':'')+((l.net-f.net)/f.net*100).toFixed(1)+'%':''}</td></tr>`;}
+    else foot.innerHTML='';
+  }
+}
 
 // Hitung rata-rata struk per hari dari tanggal unik di data sales. null bila tanggal tak terbaca.
 // ══════════════════════════════════════════════
@@ -13983,6 +14033,7 @@ function renderExecSummary() {
     { color:'green',  icon:'📈', label:'Gross Margin',       val: gm_pct.toFixed(1)+'%',    sub: `GM: ${fmt(totGm)}` },
     { color:'amber',  icon:'🧾', label:'STD — Struk per Day', val: (function(){const wd=pfWorkDays();const sd=Object.values(wd.byStoreMonth).reduce((a,b)=>a+b,0);return sd>0?Math.round(totStd/sd).toLocaleString():(stdPerDay===null?totStd.toLocaleString():Math.round(stdPerDay).toLocaleString());})(), sub: (function(){const wd=pfWorkDays();const sd=Object.values(wd.byStoreMonth).reduce((a,b)=>a+b,0);const ns=new Set(Object.keys(wd.byStoreMonth).map(k=>k.split('|')[0])).size;return sd>0?`per toko · ${ns} toko × ${dayCount} hari`:(stdPerDay===null?'butuh kolom tanggal':`${totStd.toLocaleString()} struk ÷ ${dayCount} hari`);})() },
     { color:'blue',   icon:'📊', label:'SPD — Sales per Day', val: (function(){const wd=pfWorkDays();const sd=Object.values(wd.byStoreMonth).reduce((a,b)=>a+b,0);return sd>0?fmt(totNet/sd):(dayCount>0?fmt(totNet/dayCount):'—');})(), sub: (function(){const wd=pfWorkDays();const sd=Object.values(wd.byStoreMonth).reduce((a,b)=>a+b,0);const ns=new Set(Object.keys(wd.byStoreMonth).map(k=>k.split('|')[0])).size;return sd>0?`per toko · ${sd.toLocaleString()} store-days (${ns} toko × ${dayCount} hari)`:(dayCount>0?`Net Sales ÷ ${dayCount} hari (semua toko)`:'butuh kolom tanggal');})() },
+    (function(){const g=pfGrowthRows(mo);const t=g[g.length-1];const v=t&&t.gPct!=null?(t.gPct>=0?'+':'')+t.gPct.toFixed(1)+'%':'—';return { color:t&&t.gPct!=null&&t.gPct<0?'red':'green', icon:'🚀', label:'Growth Net Sales (MoM)', val:v, sub: t&&t.prev?`${MONTH_NAMES[t.month-1]} vs ${MONTH_NAMES[t.prev.month-1]} · ${fmt(t.net)} vs ${fmt(t.prev.net)}`:'belum ada bulan pembanding' };})(),
     { color:'teal',   icon:'💳', label:'APC — Avg per Customer', val: 'Tk '+Math.round(apc).toLocaleString(), sub: `Net Sales ÷ ${totStd.toLocaleString()} struk` },
     { color:'purple', icon:'👥', label:'Member Sales',        val: fmt(memNet),              sub: `${mem_pct.toFixed(1)}% dari Net Sales` },
     { color:'red',    icon:'🏷️', label:'Promo Sales',         val: fmt(promoNet),            sub: `${promo_pct.toFixed(1)}% dari Net Sales` },
@@ -14023,6 +14074,7 @@ function renderExecSummary() {
     datasets:[{data:[memPromoNet,memOnly,nonMemPromo,nonMemNonPromo],backgroundColor:['#a371f7','#3fb950','#f0a733','#21262d'],borderColor:'#161b22',borderWidth:2,hoverOffset:8}]
   },options:{...chartDefaults,cutout:'68%',scales:{},plugins:{...chartDefaults.plugins,legend:{display:true,position:'bottom',labels:{color:'#8b949e',font:{family:FONT,size:9},padding:8,usePointStyle:true}}}}});
 
+  try{pfGrowthRender('esGrowthBody','esGrowthFoot',pfGrowthRows(mo),null);}catch(e){console.warn('[growth]',e);}
   // ── MoM Change Chart ──────────────────────────────────────────
   const momChange = months.map((m,i)=>i===0?0:((m.net-months[i-1].net)/months[i-1].net*100));
   makeChart('esMomChart',{type:'bar',data:{labels:mnLabels,datasets:[{label:'MoM%',data:momChange,backgroundColor:momChange.map(v=>v>=0?'#3fb95099':'#f8514999'),borderColor:momChange.map(v=>v>=0?'#3fb950':'#f85149'),borderWidth:1,borderRadius:4}]},
