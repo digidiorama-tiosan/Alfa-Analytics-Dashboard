@@ -1787,6 +1787,10 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5h9l-2-2M13 11H4l2 2"/></svg>
           Receipt vs Sales
         </button>
+        <button class="nav-item" onclick="showPanel('merch-zero',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M3.5 12.5l9-9"/></svg>
+          Item Zero Sales
+        </button>
         <button class="nav-item" onclick="showPanel('oos-leadtime',this)">
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 4v4l3 2"/></svg>
           PO Service Level &amp; Lead Time
@@ -5403,6 +5407,44 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
   </div>
 </div>
 
+<div id="panel-merch-zero" class="panel">
+  <div class="page-header">
+    <div><div class="page-title">Item Zero Sales</div><div class="page-subtitle">Item yang sama sekali belum terjual — dibandingkan dengan Product Master, Store Receipt &amp; PO</div></div>
+    <button class="btn-dl" onclick="merExport('zero')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button>
+  </div>
+  <div id="mzNoData" class="insight-box" style="display:none"><span class="insight-icon">🚫</span><div class="insight-text">Butuh data sales dan minimal salah satu: Product Master, Store Receipt, atau PO Checking.</div></div>
+  <div id="mzMain" style="display:none">
+    <div class="insight-box" style="margin-bottom:14px"><span class="insight-icon">💡</span><div class="insight-text" style="font-size:12px"><strong>Status:</strong> <span style="color:#f85149;font-weight:600">Ada di Toko</span> sudah diterima toko tapi belum terjual (prioritas — barang di rak) · <span style="color:#d29922;font-weight:600">Sudah PO</span> sudah di-PO / diterima DC, belum sampai toko · <span style="color:#8b949e;font-weight:600">Hanya di Master</span> terdaftar di Product Master, belum pernah dipesan.</div></div>
+    <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap">
+      <span class="filter-label">Periode</span><select class="filter-select" id="mzPeriod" onchange="_merPg.mz=1;renderMerchZero()" style="min-width:170px"><option value="ALL">Seluruh data sales</option><option value="6">6 bulan terakhir</option><option value="3">3 bulan terakhir</option><option value="1">Bulan terakhir</option></select>
+      <span class="filter-label" style="margin-left:8px">Status</span><select class="filter-select" id="mzStatus" onchange="_merPg.mz=1;renderMerchZero()" style="min-width:140px"><option value="ALL">Semua Status</option><option value="toko">Ada di Toko</option><option value="po">Sudah PO</option><option value="master">Hanya di Master</option></select>
+      <span class="filter-label" style="margin-left:8px">Kategori</span><select class="filter-select" id="mzCat" onchange="_merPg.mz=1;renderMerchZero()" style="min-width:160px"></select>
+      <span class="filter-label" style="margin-left:8px">Prinsipal</span><select class="filter-select" id="mzPrin" onchange="_merPg.mz=1;renderMerchZero()" style="min-width:160px"></select>
+      <span class="filter-label" style="margin-left:8px">Brand</span><select class="filter-select" id="mzBrand" onchange="_merPg.mz=1;renderMerchZero()" style="min-width:140px"></select>
+      <span class="filter-label" style="margin-left:8px">Cari</span><input type="text" class="filter-select" id="mzSearch" oninput="_merPg.mz=1;renderMerchZero()" placeholder="PLU / deskripsi…" style="min-width:150px">
+    </div>
+    <div id="mzWarn" class="alert-box amber" style="display:none;margin-bottom:14px"><span style="font-size:16px">⚠️</span><div id="mzWarnText"></div></div>
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
+      <div class="stat-card red"><div class="stat-label">SKU Zero Sales</div><div class="stat-value" id="mz-count">—</div><div class="stat-sub" id="mz-count-sub">—</div></div>
+      <div class="stat-card amber"><div class="stat-label">Ada di Toko</div><div class="stat-value" id="mz-toko">—</div><div class="stat-sub" id="mz-toko-sub">—</div></div>
+      <div class="stat-card purple"><div class="stat-label">Sudah PO</div><div class="stat-value" id="mz-po">—</div><div class="stat-sub" id="mz-po-sub">—</div></div>
+      <div class="stat-card blue"><div class="stat-label">Hanya di Master</div><div class="stat-value" id="mz-master">—</div><div class="stat-sub" id="mz-master-sub">belum pernah dipesan</div></div>
+    </div>
+    <div class="charts-grid cols-2" style="margin-bottom:16px">
+      <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Zero Sales per Kategori</div><div class="chart-subtitle">10 kategori dengan SKU zero sales terbanyak</div></div></div><div style="height:300px"><canvas id="mzCatChart"></canvas></div></div>
+      <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Nilai Receipt Tidak Terjual per Prinsipal</div><div class="chart-subtitle">Barang sudah di toko tapi belum laku</div></div></div><div style="height:300px"><canvas id="mzPrinChart"></canvas></div></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header"><div><div class="chart-title">Daftar Item Zero Sales</div><div class="chart-subtitle" id="mzSub">—</div></div></div>
+      <div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px">
+        <thead><tr><th>PLU</th><th>Deskripsi</th><th>Kategori</th><th>Prinsipal</th><th>Brand</th><th>Pertama Diterima</th><th class="right">Qty Receipt</th><th class="right">Nilai Receipt</th><th class="right">Toko</th><th class="right">Qty PO</th><th>Status</th></tr></thead>
+        <tbody id="mzBody"></tbody>
+      </table></div>
+      <div id="mzPager" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:12.5px"></div>
+    </div>
+  </div>
+</div>
+
 <div id="panel-oos-leadtime" class="panel">
   <div class="page-header">
     <div><div class="page-title">PO Service Level &amp; Lead Time</div><div class="page-subtitle">SL Principal = Receipt ÷ PO · sumber: file PO Checking &amp; Realization</div></div>
@@ -6766,6 +6808,7 @@ function renderPanel(id) {
     case 'merch-share-brand': renderMerchShareBrand(); break;
     case 'merch-receipt': renderMerchReceipt(); break;
     case 'merch-sellthrough': renderMerchSellThrough(); break;
+    case 'merch-zero': renderMerchZero(); break;
     case 'oos-leadtime': renderLeadTime(); break;
     case 'peak-hours': renderPeakHours(); break;
     case 'price-elasticity': renderPriceElasticity(); break;
@@ -12011,7 +12054,7 @@ async function merRestore(){
     if(r&&r.rows&&r.rows.length){const meta=r.rows[0]&&r.rows[0].__meta?r.rows[0]:null;
       merApplyRows('receipt',r.rows,r.filename||'tersimpan');
       ok('status-receipt',`✅ <strong>${recRows().length.toLocaleString('en-US')}</strong> baris receipt di-restore · ${merEsc(uploads.receipt.file)}`);
-      renderMerchReceipt();renderMerchSellThrough();}
+      renderMerchReceipt();renderMerchSellThrough();try{renderMerchZero();}catch(_){}}
   }catch(e){console.warn('[MERCH] restore receipt gagal',e);}
 }
 
@@ -12284,6 +12327,81 @@ function renderMerchSellThrough(){
   merPager('stPager','st',rows.length,PS,'renderMerchSellThrough');
   const sub=document.getElementById('stSub');if(sub)sub.textContent=`${rows.length.toLocaleString('en-US')} baris${fst!=='ALL'?' · status '+ST_DEF[fst].l:''} · ${fm==='ALL'?'bulan overlap':merYmLabel(fm)} · 30/halaman`;
   _merLast.st={name:'Sell_Through_'+(fm==='ALL'?'All':fm),rows:[['Toko','PLU','Deskripsi','Kategori','Qty Diterima','Qty Terjual','Sell-Through %','Nilai Receipt','Net Sales','Status']].concat(rows.map(x=>[x.st,x.plu,x.desc,x.cat,Math.round(x.rq),Math.round(x.sq),x.stp===null?'':+x.stp.toFixed(1),Math.round(x.rv),Math.round(x.sn),ST_DEF[x.s].l]))};
+}
+
+// ── 5b. Item Zero Sales ──
+const MZ_DEF={toko:{l:'Ada di Toko',c:'#f85149',o:0},po:{l:'Sudah PO',c:'#d29922',o:1},master:{l:'Hanya di Master',c:'#8b949e',o:2}};
+function merMasterList(){
+  const prod=(typeof uploads!=='undefined'&&Array.isArray(uploads.product))?uploads.product:[];
+  if(!prod.length)return [];
+  const pc=Object.keys(prod[0]||{});
+  const cPlu=mkFind(pc,['plu','prdcd','item_code','itemcode','kode_barang','kode barang','sku','barcode']);
+  const cDesc=mkFind(pc,['nama barang','nama_barang','item_name','itemname','descp','desc','deskripsi','description','product_name','nama produk']);
+  if(!cPlu)return [];
+  const out=[],seen=new Set();
+  prod.forEach(r=>{const p=mkPlu(r[cPlu]);if(!p||seen.has(p))return;seen.add(p);out.push({plu:p,desc:cDesc?String(r[cDesc]||'').trim():''});});
+  return out;
+}
+function renderMerchZero(){
+  const D=merSales();
+  const master=merMasterList(),R=recRows(),PO=poLines();
+  const ok=!!D&&(master.length||R.length||PO.length);
+  if(!merGate('mzMain','mzNoData',ok,!D?'Butuh <strong>data sales</strong>. Upload di Data Management.':'Butuh minimal salah satu: <strong>Product Master</strong>, <strong>Store Receipt</strong>, atau <strong>PO Checking</strong>.'))return;
+  const per=(document.getElementById('mzPeriod')||{}).value||'ALL';
+  const win=per==='ALL'?D.months:D.months.slice(-(+per));
+  const winSet=new Set(win);
+  const sold=new Set();D.list.forEach(a=>{if(winSet.has(a.ym)&&(a.qty>0||a.net>0))sold.add(a.plu);});
+  // Universe: master ∪ receipt ∪ PO
+  const U=new Map();
+  const g=(plu,desc)=>{let x=U.get(plu);if(!x){x={plu,desc:desc||'',rq:0,rv:0,stores:new Set(),first:null,poQ:0,poRc:0,lastPO:null,inMaster:false};U.set(plu,x);}if(!x.desc&&desc)x.desc=desc;return x;};
+  master.forEach(m=>{g(m.plu,m.desc).inMaster=true;});
+  R.forEach(r=>{const x=g(r.plu,r.desc);x.rq+=r.qty;x.rv+=r.val;x.stores.add(r.st);if(!x.first||r.ym<x.first)x.first=r.ym;});
+  PO.forEach(l=>{const x=g(l.plu,l.desc);x.poQ+=l.qPO;x.poRc+=l.qRc;if(l.po&&(!x.lastPO||l.po>x.lastPO))x.lastPO=l.po;});
+  let rows=[];
+  U.forEach(x=>{
+    if(sold.has(x.plu))return;
+    const t=D.attr(x.plu);
+    x.cat=t.cat;x.prin=t.prin;x.brand=t.brand;
+    if(!x.desc)x.desc=D.desc.get(x.plu)||'';
+    x.s=x.rq>0?'toko':(x.poQ>0?'po':'master');
+    rows.push(x);
+  });
+  const wEl=document.getElementById('mzWarn'),wT=document.getElementById('mzWarnText');
+  const notes=[];
+  if(!master.length)notes.push('Product Master belum diupload — daftar hanya dari item yang ada di Store Receipt / PO.');
+  if(!R.length)notes.push('Store Receipt belum diupload — status "Ada di Toko" tidak bisa dihitung.');
+  if(wEl){wEl.style.display=notes.length?'flex':'none';if(wT)wT.innerHTML=notes.join('<br>');}
+  const totalUniverse=U.size;
+  const cnt={toko:0,po:0,master:0},val={toko:0,po:0};
+  rows.forEach(x=>{cnt[x.s]++;if(x.s==='toko')val.toko+=x.rv;if(x.s==='po')val.po+=x.poRc;});
+  merSet('mz-count',_fmtN(rows.length));merSet('mz-count-sub',`${totalUniverse?(rows.length/totalUniverse*100).toFixed(1):0}% dari ${_fmtN(totalUniverse)} SKU · ${per==='ALL'?'seluruh periode':per+' bln terakhir'}`);
+  merSet('mz-toko',_fmtN(cnt.toko));merSet('mz-toko-sub',_fmtTk(val.toko)+' nilai receipt');
+  merSet('mz-po',_fmtN(cnt.po));merSet('mz-po-sub',_fmtN(val.po)+' pcs sudah diterima DC');
+  merSet('mz-master',_fmtN(cnt.master));
+  // filter dropdowns (dari hasil zero sales)
+  const fc=merFillSel('mzCat',[...new Set(rows.map(x=>x.cat))].sort(),null,'Semua Kategori');
+  const fp=merFillSel('mzPrin',[...new Set(rows.filter(x=>fc==='ALL'||x.cat===fc).map(x=>x.prin))].sort(),null,'Semua Prinsipal');
+  const fb=merFillSel('mzBrand',[...new Set(rows.filter(x=>(fc==='ALL'||x.cat===fc)&&(fp==='ALL'||x.prin===fp)).map(x=>x.brand))].sort(),null,'Semua Brand');
+  const fs=(document.getElementById('mzStatus')||{}).value||'ALL';
+  const q=merQ('mzSearch');
+  // Charts (berdasarkan filter kategori/prinsipal/brand, semua status)
+  const base=rows.filter(x=>(fc==='ALL'||x.cat===fc)&&(fp==='ALL'||x.prin===fp)&&(fb==='ALL'||x.brand===fb));
+  const cc={};base.forEach(x=>{const o=cc[x.cat]||(cc[x.cat]={toko:0,po:0,master:0,n:0});o[x.s]++;o.n++;});
+  const cArr=Object.entries(cc).sort((a,b)=>b[1].n-a[1].n).slice(0,10);
+  makeChart('mzCatChart',{type:'bar',data:{labels:cArr.map(c=>merCut(c[0],20)),datasets:['toko','po','master'].map(k=>({label:MZ_DEF[k].l,data:cArr.map(c=>c[1][k]),backgroundColor:MZ_DEF[k].c+'cc',borderRadius:3}))},options:{...chartDefaults,indexAxis:'y',plugins:{...chartDefaults.plugins,legend:{display:true,labels:{color:'#8b949e',boxWidth:10,font:{size:10}}}},scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,stacked:true},y:{...chartDefaults.scales.y,stacked:true}}}});
+  const pv={};base.forEach(x=>{if(x.s==='toko')pv[x.prin]=(pv[x.prin]||0)+x.rv;});
+  const pArr=Object.entries(pv).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  merBarH('mzPrinChart',pArr.map(p=>merCut(p[0],22)),pArr.map(p=>Math.round(p[1])),'rgba(248,81,73,0.75)',c=>{const p=pArr[c.dataIndex];const n=base.filter(x=>x.s==='toko'&&x.prin===p[0]).length;return [_fmtTk(p[1]),n+' SKU belum terjual'];});
+  let list=base.filter(x=>fs==='ALL'||x.s===fs);
+  if(q)list=list.filter(x=>(x.plu+' '+x.desc).toLowerCase().includes(q));
+  list.sort((a,b)=>MZ_DEF[a.s].o-MZ_DEF[b.s].o||b.rv-a.rv||b.poQ-a.poQ||a.plu.localeCompare(b.plu));
+  const PS=30,pg=merPage('mz',list.length,PS);
+  const body=document.getElementById('mzBody');
+  if(body)body.innerHTML=list.slice((pg-1)*PS,pg*PS).map(x=>{const d=MZ_DEF[x.s];return `<tr><td style="font-family:var(--mono)">${x.plu}</td><td>${merEsc(merCut(x.desc,32))||'—'}</td><td style="font-size:11.5px;color:var(--text2)">${merEsc(merCut(x.cat,20))}</td><td style="font-size:11.5px">${merEsc(merCut(x.prin,22))}</td><td style="font-size:11.5px">${merEsc(merCut(x.brand,18))}</td><td style="font-size:11.5px;color:var(--text3)">${x.first?merYmLabel(x.first):'—'}</td><td class="right">${x.rq?_fmtN(x.rq):'—'}</td><td class="right" style="font-weight:${x.rv?600:400}">${x.rv?_fmtTk(x.rv):'—'}</td><td class="right" style="color:var(--text3)">${x.stores.size||'—'}</td><td class="right" style="color:var(--text3)">${x.poQ?_fmtN(x.poQ):'—'}</td><td><span style="font-size:11px;padding:2px 8px;border-radius:10px;background:${d.c}22;color:${d.c};font-weight:600;white-space:nowrap">${d.l}</span></td></tr>`;}).join('')||merEmpty(11,'✅ Tidak ada item zero sales untuk filter ini.');
+  merPager('mzPager','mz',list.length,PS,'renderMerchZero');
+  const sub=document.getElementById('mzSub');if(sub)sub.textContent=`${list.length.toLocaleString('en-US')} item · belum terjual ${per==='ALL'?'sepanjang data sales ('+win.map(merYmLabel).join(', ')+')':'dalam '+win.map(merYmLabel).join(', ')} · 30/halaman`;
+  const fd=d=>d?d.toISOString().slice(0,10):'';
+  _merLast.zero={name:'Item_Zero_Sales_'+(per==='ALL'?'All':per+'bln'),rows:[['PLU','Deskripsi','Kategori','Prinsipal','Brand','Pertama Diterima Toko','Qty Receipt','Nilai Receipt','Jumlah Toko','Qty PO','Qty Diterima DC','PO Terakhir','Status']].concat(list.map(x=>[x.plu,x.desc,x.cat,x.prin,x.brand,x.first?merYmLabel(x.first):'',Math.round(x.rq),Math.round(x.rv),x.stores.size,Math.round(x.poQ),Math.round(x.poRc),fd(x.lastPO),MZ_DEF[x.s].l]))};
 }
 
 // ── 6. PO Service Level & Lead Time ──
@@ -15136,7 +15254,7 @@ const PANEL_GROUP_MAP = {
   'mem-category':'grp-members',
   'promo-effectiveness':'grp-marketing','juklak-lookup':'grp-marketing','juklak-recap':'grp-marketing','promo-contribution':'grp-marketing','promo-member':'grp-marketing','promo-items':'grp-marketing',
   'promo-categories':'grp-marketing','basket':'grp-marketing','brand-perf':'grp-marketing','principal-perf':'grp-sales','section-contribution':'grp-marketing','promo-discount':'grp-marketing','promo-mechanic':'grp-marketing',
-  'merch-sales':'grp-merch','merch-share-cat':'grp-merch','merch-share-prin':'grp-merch','merch-share-brand':'grp-merch','merch-receipt':'grp-merch','merch-sellthrough':'grp-merch','oos-leadtime':'grp-merch',
+  'merch-sales':'grp-merch','merch-share-cat':'grp-merch','merch-share-prin':'grp-merch','merch-share-brand':'grp-merch','merch-receipt':'grp-merch','merch-sellthrough':'grp-merch','merch-zero':'grp-merch','oos-leadtime':'grp-merch',
   'sku-pareto':'grp-catmgmt','cat-overview':'grp-catmgmt','cat-promo-potential':'grp-catmgmt',
   'cat-member':'grp-catmgmt','cat-trend':'grp-catmgmt','cat-time':'grp-catmgmt','cat-detail':'grp-catmgmt',
   'revenue-drivers':'grp-analytics','peak-hours':'grp-analytics','void-return':'grp-analytics','ai-strategy':'grp-analytics','ai-chat':'grp-analytics',
@@ -19621,7 +19739,7 @@ async function downloadMcKinseyPPTX(){
     { id:'grp-sales', label:'Sales Reports', items:[['exec-summary','Executive Summary'],['sales','Sales Report'],['store-sales','Sales by Store'],['daily-sales','Daily Sales Trend'],['principal-perf','Principal & Supplier'],['target-actuals','Target vs Actuals'],['report-all','Export PDF Report']] },
     { id:'grp-members', label:'Members', items:[['lapse-member','Summary Lapse Member'],['churn-risk','Member Churn Risk'],['mem-detail','Member Detail'],['mem-contribution','Contribution'],['mem-vs-promo','Member vs Promo'],['mem-trend','Sales Trend'],['mem-database','Database'],['mem-homestore','Member by Store'],['mem-demo','Demographics'],['mem-transactions','Transactions'],['mem-retention','Retention'],['mem-category','Sales by Category']] },
     { id:'grp-marketing', label:'Marketing', items:[['promo-effectiveness','Promo Effectiveness'],['promo-contribution','Promo vs Sales'],['promo-member','Member × Promo'],['promo-items','Top Promo Items'],['promo-categories','Top Categories'],['basket','Basket Size'],['brand-perf','Brand Performance'],['promo-mechanic','Promo Mechanic'],['thema-juklak','Report Thema Juklak']] },
-    { id:'grp-merch', label:'Merchandising', items:[['merch-sales','Sales Overview'],['merch-share-cat','Market Share Kategori'],['merch-share-prin','Market Share Prinsipal'],['merch-share-brand','Market Share by Brand'],['merch-receipt','Store Receipt'],['merch-sellthrough','Receipt vs Sales'],['oos-leadtime','PO Service Level & Lead Time']] },
+    { id:'grp-merch', label:'Merchandising', items:[['merch-sales','Sales Overview'],['merch-share-cat','Market Share Kategori'],['merch-share-prin','Market Share Prinsipal'],['merch-share-brand','Market Share by Brand'],['merch-receipt','Store Receipt'],['merch-sellthrough','Receipt vs Sales'],['merch-zero','Item Zero Sales'],['oos-leadtime','PO Service Level & Lead Time']] },
     { id:'grp-catmgmt', label:'Category Management', items:[['sku-pareto','SKU Rationalization'],['cat-overview','Overview'],['cat-promo-potential','Promo Potential'],['cat-member','Member Category'],['cat-trend','Monthly Trend'],['cat-time','Time & Day'],['cat-detail','Category Detail']] },
     { id:'grp-analytics', label:'Analytics', items:[['revenue-drivers','Revenue & Value Drivers'],['peak-hours','Peak Hours & Days'],['void-return','Void & Return'],['cohort-analysis','Cohort Analysis'],['sales-forecast','Sales Forecasting'],['price-elasticity','Price Elasticity & ROI'],['data-quality','Data Quality'],['rokok-report','Category Basket Report']] },
     { id:'grp-data', label:'Data', items:[['data-mgmt','Data Management'],['store-map','Store Map']] }
