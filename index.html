@@ -1775,6 +1775,10 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14V6l4-3 4 3v8"/><path d="M10 14V8h4v6"/></svg>
           Market Share Prinsipal
         </button>
+        <button class="nav-item" onclick="showPanel('merch-share-brand',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 2h6l6 6-6 6-6-6z"/><circle cx="5.5" cy="5.5" r="1"/></svg>
+          Market Share Merek
+        </button>
         <button class="nav-item" onclick="showPanel('merch-receipt',this)">
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 4h9v7H1z"/><path d="M10 7h3l2 2v2h-5z"/><circle cx="4" cy="12.5" r="1.5"/><circle cx="12" cy="12.5" r="1.5"/></svg>
           Store Receipt
@@ -5289,6 +5293,42 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
   </div>
 </div>
 
+<div id="panel-merch-share-brand" class="panel">
+  <div class="page-header">
+    <div><div class="page-title">Market Share by Brand</div><div class="page-subtitle">Persaingan merek di dalam kategori yang sama — antar prinsipal / vendor · merek dari Product Master (Oramas)</div></div>
+    <button class="btn-dl" onclick="merExport('brand')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button>
+  </div>
+  <div id="mbNoData" class="insight-box" style="display:none"><span class="insight-icon">🏷️</span><div class="insight-text">Belum ada data sales. Upload data sales di Data Management.</div></div>
+  <div id="mbMain" style="display:none">
+    <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap">
+      <span class="filter-label">Kategori</span><select class="filter-select" id="mbCat" onchange="_merPg.mb=1;document.getElementById('mbPrin').value='ALL';renderMerchShareBrand()" style="min-width:190px"></select>
+      <span class="filter-label" style="margin-left:8px">Bulan</span><select class="filter-select" id="mbMonth" onchange="_merPg.mb=1;renderMerchShareBrand()" style="min-width:140px"></select>
+      <span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select" id="mbStore" onchange="_merPg.mb=1;renderMerchShareBrand()" style="min-width:130px"></select>
+      <span class="filter-label" style="margin-left:8px">Prinsipal</span><select class="filter-select" id="mbPrin" onchange="_merPg.mb=1;renderMerchShareBrand()" style="min-width:170px"></select>
+      <span class="filter-label" style="margin-left:8px">Cari</span><input type="text" class="filter-select" id="mbSearch" oninput="_merPg.mb=1;renderMerchShareBrand()" placeholder="Nama merek…" style="min-width:150px">
+    </div>
+    <div id="mbMasterWarn" class="alert-box amber" style="display:none;margin-bottom:14px"><span style="font-size:16px">⚠️</span><div id="mbMasterWarnText">Product Master belum diupload atau tidak punya kolom Brand — merek tampil sebagai "(Tanpa Merek)".</div></div>
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
+      <div class="stat-card blue"><div class="stat-label">Merek Bersaing</div><div class="stat-value" id="mb-count">—</div><div class="stat-sub" id="mb-count-sub">—</div></div>
+      <div class="stat-card purple"><div class="stat-label">Merek #1</div><div class="stat-value" id="mb-top" style="font-size:16px">—</div><div class="stat-sub" id="mb-top-sub">—</div></div>
+      <div class="stat-card amber"><div class="stat-label">Konsentrasi Top 3</div><div class="stat-value" id="mb-conc">—</div><div class="stat-sub">share 3 merek terbesar</div></div>
+      <div class="stat-card green"><div class="stat-label">Naik Ranking Terbanyak</div><div class="stat-value" id="mb-rise" style="font-size:16px">—</div><div class="stat-sub" id="mb-rise-sub">pilih bulan untuk membandingkan</div></div>
+    </div>
+    <div class="charts-grid cols-2" style="margin-bottom:16px">
+      <div class="chart-card"><div class="chart-header"><div><div class="chart-title" id="mbChartTitle">Top 10 Merek — Share</div><div class="chart-subtitle">Warna = prinsipal pemilik merek</div></div></div><div style="height:320px"><canvas id="mbTopChart"></canvas></div></div>
+      <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Share per Prinsipal di Kategori Ini</div><div class="chart-subtitle">Gabungan semua merek milik prinsipal</div></div></div><div style="height:320px"><canvas id="mbPrinChart"></canvas></div></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header"><div><div class="chart-title">Share per Merek</div><div class="chart-subtitle" id="mbSub">—</div></div></div>
+      <div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px">
+        <thead><tr><th>Rank</th><th class="right">Δ Rank</th><th>Merek</th><th>Prinsipal</th><th id="mbCatHead">Kategori</th><th class="right">Net Sales</th><th class="right">Qty</th><th class="right">Share</th><th class="right">Share Bln Lalu</th><th class="right">Δ pp</th><th class="right">SKU</th></tr></thead>
+        <tbody id="mbBody"></tbody>
+      </table></div>
+      <div id="mbPager" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:12.5px"></div>
+    </div>
+  </div>
+</div>
+
 <div id="panel-merch-receipt" class="panel">
   <div class="page-header">
     <div><div class="page-title">Store Receipt</div><div class="page-subtitle">Barang yang diterima toko dari DC — nilai &amp; qty per toko, bulan, PLU</div></div>
@@ -6723,6 +6763,7 @@ function renderPanel(id) {
     case 'merch-sales': renderMerchSales(); break;
     case 'merch-share-cat': renderMerchShareCat(); break;
     case 'merch-share-prin': renderMerchSharePrin(); break;
+    case 'merch-share-brand': renderMerchShareBrand(); break;
     case 'merch-receipt': renderMerchReceipt(); break;
     case 'merch-sellthrough': renderMerchSellThrough(); break;
     case 'oos-leadtime': renderLeadTime(); break;
@@ -11860,9 +11901,9 @@ function merSales(){
   });
   recRows().forEach(r=>{if(!desc.has(r.plu)&&r.desc)desc.set(r.plu,r.desc);});
   poLines().forEach(l=>{if(!desc.has(l.plu)&&l.desc)desc.set(l.plu,l.desc);});
-  const attr=plu=>{const i=master&&master.map.get(plu);const c=i&&i.category,p=i&&i.principal;return {cat:merBad(c)?'(Tanpa Kategori)':c,prin:merBad(p)?'(Tanpa Prinsipal)':p};};
+  const attr=plu=>{const i=master&&master.map.get(plu);const c=i&&i.category,p=i&&i.principal,b=i&&i.brand;return {cat:merBad(c)?'(Tanpa Kategori)':c,prin:merBad(p)?'(Tanpa Prinsipal)':p,brand:merBad(b)?'(Tanpa Merek)':b};};
   const list=[...agg.values()];
-  list.forEach(a=>{const t=attr(a.plu);a.cat=t.cat;a.prin=t.prin;});
+  list.forEach(a=>{const t=attr(a.plu);a.cat=t.cat;a.prin=t.prin;a.brand=t.brand;});
   _merCache={src:rows,sig,list,months:[...months].sort(),stores:[...stores].sort(),desc,attr,hasCogs:!!sc.cogs,hasMaster:!!master};
   return _merCache;
 }
@@ -12070,6 +12111,67 @@ function renderMerchSharePrin(){
   merPager('mpPager','mp',rows.length,PS,'renderMerchSharePrin');
   const sub=document.getElementById('mpSub');if(sub)sub.textContent=`${rows.length} prinsipal · ${fm==='ALL'?'semua bulan':merYmLabel(fm)}${prev?' dibanding '+merYmLabel(prev):''} · 30/halaman`;
   _merLast.prin={name:'Market_Share_Prinsipal_'+(fm==='ALL'?'All':fm),rows:[['Rank','Delta Rank','Prinsipal','Kategori Utama','Net Sales','Share %','Share Bln Lalu %','Delta pp','SKU']].concat(rows.map(r=>[r.rank,r.dr===null?'':r.dr,r.prin,r.topCat,Math.round(r.net),+r.sh.toFixed(2),r.ps===null?'':+r.ps.toFixed(2),r.d===null?'':+r.d.toFixed(2),r.skus]))};
+}
+
+// ── 3b. Market Share by Brand ──
+function renderMerchShareBrand(){
+  const D=merSales();
+  if(!merGate('mbMain','mbNoData',!!D))return;
+  const hasBrand=D.list.some(a=>a.brand!=='(Tanpa Merek)');
+  const w=document.getElementById('mbMasterWarn');if(w)w.style.display=hasBrand?'none':'flex';
+  // Kategori: default ke kategori dengan net sales terbesar
+  const catNet={};D.list.forEach(a=>{catNet[a.cat]=(catNet[a.cat]||0)+a.net;});
+  const cats=Object.keys(catNet).sort((a,b)=>a.localeCompare(b));
+  const cs=document.getElementById('mbCat');
+  if(cs&&!cs.dataset.init){cs.dataset.init='1';merFillSel('mbCat',cats,null,'Semua Kategori');const big=Object.entries(catNet).sort((a,b)=>b[1]-a[1])[0];if(big)cs.value=big[0];}
+  const fc=merFillSel('mbCat',cats,null,'Semua Kategori');
+  const fm=merFillSel('mbMonth',D.months,merYmLabel,'Semua Bulan');
+  const fs=merFillSel('mbStore',D.stores,null,'Semua Toko');
+  const inCat=D.list.filter(a=>(fc==='ALL'||a.cat===fc)&&(fs==='ALL'||a.st===fs));
+  const fp=merFillSel('mbPrin',[...new Set(inCat.map(a=>a.prin))].sort(),null,'Semua Prinsipal');
+  const q=merQ('mbSearch');
+  const cur=inCat.filter(a=>fm==='ALL'||a.ym===fm);
+  const tot=merSum(cur).net;
+  const prev=fm==='ALL'?null:merPrevYm(D.months,fm);
+  const pm={};let ptot=0;
+  if(prev)inCat.forEach(a=>{if(a.ym===prev){pm[a.brand]=(pm[a.brand]||0)+a.net;ptot+=a.net;}});
+  const prevRank={};Object.entries(pm).sort((a,b)=>b[1]-a[1]).forEach((e,i)=>{prevRank[e[0]]=i+1;});
+  // Merek → prinsipal dominan & kategori dominan
+  const bp={},bc={};
+  cur.forEach(a=>{(bp[a.brand]=bp[a.brand]||{})[a.prin]=(bp[a.brand][a.prin]||0)+a.net;(bc[a.brand]=bc[a.brand]||{})[a.cat]=(bc[a.brand][a.cat]||0)+a.net;});
+  const top1=o=>{const e=Object.entries(o||{}).sort((a,b)=>b[1]-a[1]);return e.length?e[0][0]:'—';};
+  let rows=merGroup(cur,a=>a.brand).sort((a,b)=>b.net-a.net).map((x,i)=>{
+    const sh=tot?x.net/tot*100:0,ps=prev&&ptot?(pm[x.key]||0)/ptot*100:null,pr=prevRank[x.key];
+    const nPrin=Object.keys(bp[x.key]||{}).length;
+    return {rank:i+1,brand:x.key,prin:top1(bp[x.key]),nPrin,cat:top1(bc[x.key]),net:x.net,qty:x.qty,sh,ps,d:ps===null?null:sh-ps,dr:prev?(pr?pr-(i+1):'new'):null,skus:x.skus.size};
+  });
+  const prinCount=new Set(cur.map(a=>a.prin)).size;
+  merSet('mb-count',_fmtN(rows.length));merSet('mb-count-sub',`dari ${prinCount} prinsipal · ${fc==='ALL'?'semua kategori':merCut(fc,22)}`);
+  merSet('mb-top',rows[0]?merCut(rows[0].brand,20):'—');merSet('mb-top-sub',rows[0]?`share ${rows[0].sh.toFixed(1)}% · ${merCut(rows[0].prin,20)}`:'—');
+  merSet('mb-conc',rows.slice(0,3).reduce((s,r)=>s+r.sh,0).toFixed(1)+'%');
+  const riser=prev?rows.filter(r=>typeof r.dr==='number'&&r.dr>0).sort((a,b)=>b.dr-a.dr)[0]:null;
+  merSet('mb-rise',riser?merCut(riser.brand,20):'—');
+  merSet('mb-rise-sub',prev?(riser?`▲ ${riser.dr} peringkat → #${riser.rank} vs ${merYmLabel(prev)}`:'tidak ada kenaikan'):'pilih bulan untuk membandingkan',riser?'#3fb950':'');
+  // Warna per prinsipal (konsisten di kedua chart)
+  const prinTot={};cur.forEach(a=>{prinTot[a.prin]=(prinTot[a.prin]||0)+a.net;});
+  const prinOrder=Object.entries(prinTot).sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
+  const pCol=p=>{const i=prinOrder.indexOf(p);return i>=0&&i<MER_PAL.length-1?MER_PAL[i]:'#6e7681';};
+  const topB=(fp==='ALL'?rows:rows.filter(r=>r.prin===fp)).slice(0,10);
+  const ct=document.getElementById('mbChartTitle');if(ct)ct.textContent=(fc==='ALL'?'Top 10 Merek':'Top 10 Merek di '+merCut(fc,26))+' — Share';
+  merBarH('mbTopChart',topB.map(r=>merCut(r.brand,22)),topB.map(r=>+r.sh.toFixed(2)),topB.map(r=>pCol(r.prin)+'cc'),c=>{const r=topB[c.dataIndex];return ['Share '+r.sh.toFixed(2)+'%',_fmtTk(r.net),'Prinsipal: '+merCut(r.prin,28)];},v=>v+'%');
+  const pie=prinOrder.slice(0,9).map(p=>({k:p,v:tot?prinTot[p]/tot*100:0}));const rest=prinOrder.slice(9).reduce((s,p)=>s+(tot?prinTot[p]/tot*100:0),0);if(rest>0)pie.push({k:'Lainnya',v:rest});
+  makeChart('mbPrinChart',{type:'doughnut',data:{labels:pie.map(p=>merCut(p.k,24)),datasets:[{data:pie.map(p=>+p.v.toFixed(2)),backgroundColor:pie.map(p=>p.k==='Lainnya'?'#6e7681':pCol(p.k)),borderColor:'transparent'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{color:'#8b949e',boxWidth:10,font:{size:11}}},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>' '+c.label+': '+c.raw+'%'}}}}});
+  if(fp!=='ALL')rows=rows.filter(r=>r.prin===fp);
+  if(q)rows=rows.filter(r=>r.brand.toLowerCase().includes(q));
+  const ch=document.getElementById('mbCatHead');if(ch)ch.style.display=fc==='ALL'?'':'none';
+  const PS=30,pg=merPage('mb',rows.length,PS);
+  const drCell=d=>d===null?'<span style="color:var(--text3)">—</span>':d==='new'?'<span style="color:#58a6ff;font-weight:600;font-size:11px">BARU</span>':d===0?'<span style="color:var(--text3)">=</span>':`<span style="color:${d>0?'#3fb950':'#f85149'};font-weight:600">${d>0?'▲':'▼'} ${Math.abs(d)}</span>`;
+  const dCell=d=>d===null?'<span style="color:var(--text3)">—</span>':`<span style="color:${d>0?'#3fb950':d<0?'#f85149':'var(--text3)'};font-weight:600">${d>0?'+':''}${d.toFixed(2)}</span>`;
+  const body=document.getElementById('mbBody');
+  if(body)body.innerHTML=rows.slice((pg-1)*PS,pg*PS).map(r=>`<tr><td style="font-family:var(--mono);color:var(--text3)">${r.rank}</td><td class="right">${drCell(r.dr)}</td><td style="font-weight:600">${merEsc(merCut(r.brand,30))}</td><td style="font-size:11.5px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${pCol(r.prin)};margin-right:6px"></span>${merEsc(merCut(r.prin,26))}${r.nPrin>1?` <span style="color:var(--text3)">+${r.nPrin-1}</span>`:''}</td>${fc==='ALL'?`<td style="font-size:11.5px;color:var(--text2)">${merEsc(merCut(r.cat,20))}</td>`:''}<td class="right">${_fmtTk(r.net)}</td><td class="right" style="color:var(--text3)">${_fmtN(r.qty)}</td><td class="right" style="color:#58a6ff;font-weight:600">${r.sh.toFixed(2)}%</td><td class="right" style="color:var(--text3)">${r.ps===null?'—':r.ps.toFixed(2)+'%'}</td><td class="right">${dCell(r.d)}</td><td class="right" style="color:var(--text3)">${r.skus}</td></tr>`).join('')||merEmpty(fc==='ALL'?11:10);
+  merPager('mbPager','mb',rows.length,PS,'renderMerchShareBrand');
+  const sub=document.getElementById('mbSub');if(sub)sub.textContent=`${rows.length} merek · share dihitung terhadap total ${fc==='ALL'?'semua kategori':'kategori '+fc} · ${fm==='ALL'?'semua bulan':merYmLabel(fm)}${prev?' vs '+merYmLabel(prev):''}`;
+  _merLast.brand={name:'Market_Share_Merek_'+(fc==='ALL'?'All':fc.replace(/[^A-Za-z0-9]+/g,'_').slice(0,20))+'_'+(fm==='ALL'?'All':fm),rows:[['Rank','Delta Rank','Merek','Prinsipal','Kategori','Net Sales','Qty','Share %','Share Bln Lalu %','Delta pp','SKU']].concat(rows.map(r=>[r.rank,r.dr===null?'':r.dr,r.brand,r.prin,r.cat,Math.round(r.net),Math.round(r.qty),+r.sh.toFixed(2),r.ps===null?'':+r.ps.toFixed(2),r.d===null?'':+r.d.toFixed(2),r.skus]))};
 }
 
 // ── 4. Store Receipt ──
@@ -15019,7 +15121,7 @@ const PANEL_GROUP_MAP = {
   'mem-category':'grp-members',
   'promo-effectiveness':'grp-marketing','juklak-lookup':'grp-marketing','juklak-recap':'grp-marketing','promo-contribution':'grp-marketing','promo-member':'grp-marketing','promo-items':'grp-marketing',
   'promo-categories':'grp-marketing','basket':'grp-marketing','brand-perf':'grp-marketing','principal-perf':'grp-sales','section-contribution':'grp-marketing','promo-discount':'grp-marketing','promo-mechanic':'grp-marketing',
-  'merch-sales':'grp-merch','merch-share-cat':'grp-merch','merch-share-prin':'grp-merch','merch-receipt':'grp-merch','merch-sellthrough':'grp-merch','oos-leadtime':'grp-merch',
+  'merch-sales':'grp-merch','merch-share-cat':'grp-merch','merch-share-prin':'grp-merch','merch-share-brand':'grp-merch','merch-receipt':'grp-merch','merch-sellthrough':'grp-merch','oos-leadtime':'grp-merch',
   'sku-pareto':'grp-catmgmt','cat-overview':'grp-catmgmt','cat-promo-potential':'grp-catmgmt',
   'cat-member':'grp-catmgmt','cat-trend':'grp-catmgmt','cat-time':'grp-catmgmt','cat-detail':'grp-catmgmt',
   'revenue-drivers':'grp-analytics','peak-hours':'grp-analytics','void-return':'grp-analytics','ai-strategy':'grp-analytics','ai-chat':'grp-analytics',
@@ -19503,7 +19605,7 @@ async function downloadMcKinseyPPTX(){
     { id:'grp-sales', label:'Sales Reports', items:[['exec-summary','Executive Summary'],['sales','Sales Report'],['store-sales','Sales by Store'],['daily-sales','Daily Sales Trend'],['principal-perf','Principal & Supplier'],['target-actuals','Target vs Actuals'],['report-all','Export PDF Report']] },
     { id:'grp-members', label:'Members', items:[['lapse-member','Summary Lapse Member'],['churn-risk','Member Churn Risk'],['mem-detail','Member Detail'],['mem-contribution','Contribution'],['mem-vs-promo','Member vs Promo'],['mem-trend','Sales Trend'],['mem-database','Database'],['mem-homestore','Member by Store'],['mem-demo','Demographics'],['mem-transactions','Transactions'],['mem-retention','Retention'],['mem-category','Sales by Category']] },
     { id:'grp-marketing', label:'Marketing', items:[['promo-effectiveness','Promo Effectiveness'],['promo-contribution','Promo vs Sales'],['promo-member','Member × Promo'],['promo-items','Top Promo Items'],['promo-categories','Top Categories'],['basket','Basket Size'],['brand-perf','Brand Performance'],['promo-mechanic','Promo Mechanic'],['thema-juklak','Report Thema Juklak']] },
-    { id:'grp-merch', label:'Merchandising', items:[['merch-sales','Sales Overview'],['merch-share-cat','Market Share Kategori'],['merch-share-prin','Market Share Prinsipal'],['merch-receipt','Store Receipt'],['merch-sellthrough','Receipt vs Sales'],['oos-leadtime','PO Service Level & Lead Time']] },
+    { id:'grp-merch', label:'Merchandising', items:[['merch-sales','Sales Overview'],['merch-share-cat','Market Share Kategori'],['merch-share-prin','Market Share Prinsipal'],['merch-share-brand','Market Share Merek'],['merch-receipt','Store Receipt'],['merch-sellthrough','Receipt vs Sales'],['oos-leadtime','PO Service Level & Lead Time']] },
     { id:'grp-catmgmt', label:'Category Management', items:[['sku-pareto','SKU Rationalization'],['cat-overview','Overview'],['cat-promo-potential','Promo Potential'],['cat-member','Member Category'],['cat-trend','Monthly Trend'],['cat-time','Time & Day'],['cat-detail','Category Detail']] },
     { id:'grp-analytics', label:'Analytics', items:[['revenue-drivers','Revenue & Value Drivers'],['peak-hours','Peak Hours & Days'],['void-return','Void & Return'],['cohort-analysis','Cohort Analysis'],['sales-forecast','Sales Forecasting'],['price-elasticity','Price Elasticity & ROI'],['data-quality','Data Quality'],['rokok-report','Category Basket Report']] },
     { id:'grp-data', label:'Data', items:[['data-mgmt','Data Management'],['store-map','Store Map']] }
