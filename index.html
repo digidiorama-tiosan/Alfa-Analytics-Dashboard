@@ -19223,7 +19223,14 @@ async function downloadMcKinseyPPTX(){
     if(SUPA_ON){
       errEl.style.color=''; errEl.textContent='Signing in…';
       const { error } = await sbc.auth.signInWithPassword({ email, password: pass });
-      if(error){ errEl.textContent='✕  Invalid email or password.'; return false; }
+      if(error){
+        const m=String(error.message||'').toLowerCase();
+        errEl.textContent = /not confirmed|confirm/.test(m) ? '✕  Email belum dikonfirmasi. Cek inbox/spam untuk link konfirmasi, atau minta admin mengaktifkan akun.'
+          : /invalid login|invalid credentials/.test(m) ? '✕  Email atau password salah — atau akun belum terdaftar. Jika belum pernah berhasil Request Access, daftar ulang lewat "Request access".'
+          : /rate|too many/.test(m) ? '✕  Terlalu banyak percobaan. Tunggu beberapa menit lalu coba lagi.'
+          : '✕  Gagal login: '+error.message;
+        return false;
+      }
       let prof = await sbProfile();
       // Self-healing: akun ada di auth.users tapi belum punya baris di `profiles`
       // (mis. dibuat langsung dari Supabase, atau invite lewat email).
