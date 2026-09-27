@@ -1753,39 +1753,43 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       </div>
     </div>
 
-    <!-- ── SUPPLY CHAIN ── -->
+    <!-- ── MERCHANDISING ── -->
     <div class="nav-group">
-      <button class="nav-group-header" onclick="toggleGroup('grp-supply',this)">
+      <button class="nav-group-header" onclick="toggleGroup('grp-merch',this)">
         <span class="nav-group-icon">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 4h9v7H1z"/><path d="M10 7h3l2 2v2h-5z"/><circle cx="4" cy="12.5" r="1.5"/><circle cx="12" cy="12.5" r="1.5"/></svg>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 5h12l-1 9H3z"/><path d="M5.5 5V3.5a2.5 2.5 0 015 0V5"/></svg>
         </span>
-        Supply Chain
+        Merchandising
         <svg class="nav-group-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg>
       </button>
-      <div class="nav-group-items" id="grp-supply">
-        <button class="nav-item" onclick="showPanel('oos-dashboard',this)">
+      <div class="nav-group-items" id="grp-merch">
+        <button class="nav-item" onclick="showPanel('merch-sales',this)">
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 13V7M6 13V3M10 13V9M14 13V5"/></svg>
-          OOS &amp; Service Level
+          Sales Overview
         </button>
-        <button class="nav-item" onclick="showPanel('oos-lost-sales',this)">
-          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4l5 5 3-3 4 4"/><path d="M14 10v-4h-4"/></svg>
-          Lost Sales Opportunity
+        <button class="nav-item" onclick="showPanel('merch-share-cat',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 2v6h6"/></svg>
+          Market Share Kategori
+        </button>
+        <button class="nav-item" onclick="showPanel('merch-share-prin',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14V6l4-3 4 3v8"/><path d="M10 14V8h4v6"/></svg>
+          Market Share Prinsipal
+        </button>
+        <button class="nav-item" onclick="showPanel('merch-receipt',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 4h9v7H1z"/><path d="M10 7h3l2 2v2h-5z"/><circle cx="4" cy="12.5" r="1.5"/><circle cx="12" cy="12.5" r="1.5"/></svg>
+          Store Receipt
+        </button>
+        <button class="nav-item" onclick="showPanel('merch-sellthrough',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5h9l-2-2M13 11H4l2 2"/></svg>
+          Receipt vs Sales
+        </button>
+        <button class="nav-item" onclick="showPanel('oos-leadtime',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 4v4l3 2"/></svg>
+          PO Service Level &amp; Lead Time
         </button>
         <button class="nav-item" onclick="showPanel('oos-promo',this)">
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l2 4 5 .7-3.5 3.4.8 5L8 11.8 3.7 14l.8-5L1 5.7 6 5z"/></svg>
           OOS × Promo Impact
-        </button>
-        <button class="nav-item" onclick="showPanel('oos-leadtime',this)">
-          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 4v4l3 2"/></svg>
-          Lead Time &amp; PO Aging
-        </button>
-        <button class="nav-item" onclick="showPanel('oos-class',this)">
-          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z"/></svg>
-          OOS by Class (TAG)
-        </button>
-        <button class="nav-item" onclick="showPanel('oos-fillrate',this)">
-          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 10h12"/></svg>
-          Fill Rate Warehouse
         </button>
       </div>
     </div>
@@ -4911,7 +4915,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     </div>
     <div style="overflow-x:auto;max-height:520px">
       <table class="data-table" style="width:100%;font-size:12.5px">
-        <thead><tr><th style="text-align:left">#</th><th style="text-align:left" id="ppNameHead">Prinsipal</th><th style="text-align:right">Omzet</th><th style="text-align:right">Share</th><th style="text-align:right">Net Promo</th><th style="text-align:right">Net Non-Promo</th><th style="text-align:right">Margin</th><th style="text-align:right">GM%</th><th style="text-align:right">SKU</th><th style="text-align:right">SKU Promo</th><th style="text-align:right">Uplift</th><th style="text-align:right" title="Service Level Principal — LPB ÷ PO (dari file OOS)">SL Prin.</th><th style="text-align:right" title="Jumlah item sedang OOS (dari file OOS)">OOS</th></tr></thead>
+        <thead><tr><th style="text-align:left">#</th><th style="text-align:left" id="ppNameHead">Prinsipal</th><th style="text-align:right">Omzet</th><th style="text-align:right">Share</th><th style="text-align:right">Net Promo</th><th style="text-align:right">Net Non-Promo</th><th style="text-align:right">Margin</th><th style="text-align:right">GM%</th><th style="text-align:right">SKU</th><th style="text-align:right">SKU Promo</th><th style="text-align:right">Uplift</th><th style="text-align:right" title="Service Level Principal — Receipt ÷ PO (dari file PO Checking)">SL Prin.</th><th style="text-align:right" title="Jumlah item sedang OOS (dari file OOS)">OOS</th></tr></thead>
         <tbody id="ppBody"></tbody>
       </table>
     </div>
@@ -5166,79 +5170,177 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 </div>
 
 <!-- ══════════════════════════════════
-     SUPPLY CHAIN PANELS
+     MERCHANDISING PANELS
 ══════════════════════════════════ -->
-<div id="panel-oos-dashboard" class="panel">
+<div id="panel-merch-sales" class="panel">
   <div class="page-header">
-    <div><div class="page-title">OOS &amp; Service Level</div><div class="page-subtitle">Out-of-stock warehouse, SL Principal (LPB÷PO) &amp; SL Warehouse (Shipping÷PB)</div></div>
-    <button class="btn-dl" onclick="oosExport('dashboard')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button>
+    <div><div class="page-title">Sales Overview</div><div class="page-subtitle">Penjualan per kategori, prinsipal &amp; PLU — kategori dari Product Master</div></div>
+    <button class="btn-dl" onclick="merExport('sales')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button>
   </div>
-  <div id="oosNoData" class="insight-box" style="display:none"><span class="insight-icon">📦</span><div class="insight-text">Belum ada data OOS. Upload file <strong>OOS WAREHOUSE</strong> di <a href="#" onclick="showPanel('data-mgmt');return false">Data Management</a>.</div></div>
-  <div id="oosMain" style="display:none">
+  <div id="msNoData" class="insight-box" style="display:none"><span class="insight-icon">📊</span><div class="insight-text">Belum ada data sales. Upload data sales di Data Management.</div></div>
+  <div id="msMain" style="display:none">
     <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap">
-      <span class="filter-label">Bulan SL</span><select class="filter-select" id="oosMonthSel" onchange="renderOosAll()" style="min-width:120px"></select>
-      <span class="filter-label" style="margin-left:8px">Division</span><select class="filter-select" id="oosDivSel" onchange="renderOosAll()" style="min-width:150px"><option value="ALL">Semua</option></select>
-      <span class="filter-label" style="margin-left:8px">TAG</span><select class="filter-select" id="oosTagSel" onchange="renderOosAll()" style="min-width:90px"><option value="ALL">Semua</option></select>
-      <span class="filter-label" style="margin-left:8px">Supplier</span><input type="text" class="filter-select" id="oosSupSearch" oninput="renderOosAll()" placeholder="Cari supplier…" style="min-width:160px">
-      <span style="margin-left:auto;font-size:12px;color:var(--text3)" id="oosFileInfo">—</span>
+      <span class="filter-label">Bulan</span><select class="filter-select" id="msMonth" onchange="_merPg.ms=1;renderMerchSales()" style="min-width:140px"></select>
+      <span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select" id="msStore" onchange="_merPg.ms=1;renderMerchSales()" style="min-width:130px"></select>
+      <span class="filter-label" style="margin-left:8px">Cari</span><input type="text" class="filter-select" id="msSearch" oninput="_merPg.ms=1;renderMerchSales()" placeholder="PLU / deskripsi / kategori…" style="min-width:190px">
     </div>
-    <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:18px">
-      <div class="stat-card red"><div class="stat-label">Item OOS</div><div class="stat-value" id="oo-count">—</div><div class="stat-sub" id="oo-count-sub">—</div></div>
-      <div class="stat-card amber"><div class="stat-label">Nilai PO Outstanding</div><div class="stat-value" id="oo-val" style="font-size:17px">—</div><div class="stat-sub">Tk belum diterima</div></div>
-      <div class="stat-card blue"><div class="stat-label">SL Principal</div><div class="stat-value" id="oo-slp">—</div><div class="stat-sub" id="oo-slp-sub">LPB ÷ PO</div></div>
-      <div class="stat-card purple"><div class="stat-label">SL Warehouse</div><div class="stat-value" id="oo-slw">—</div><div class="stat-sub" id="oo-slw-sub">Shipping ÷ PB</div></div>
-      <div class="stat-card green"><div class="stat-label">Supplier Terlibat</div><div class="stat-value" id="oo-sup">—</div><div class="stat-sub" id="oo-sup-sub">—</div></div>
+    <div id="msMasterWarn" class="alert-box amber" style="display:none;margin-bottom:14px"><span style="font-size:16px">⚠️</span><div>Product Master belum diupload — kategori &amp; prinsipal tampil sebagai "(Tanpa …)".</div></div>
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
+      <div class="stat-card blue"><div class="stat-label">Net Sales</div><div class="stat-value" id="ms-net" style="font-size:18px">—</div><div class="stat-sub" id="ms-net-sub">—</div></div>
+      <div class="stat-card green"><div class="stat-label">Qty Terjual</div><div class="stat-value" id="ms-qty">—</div><div class="stat-sub" id="ms-qty-sub">pcs</div></div>
+      <div class="stat-card purple"><div class="stat-label">Gross Margin</div><div class="stat-value" id="ms-gm" style="font-size:18px">—</div><div class="stat-sub" id="ms-gm-sub">—</div></div>
+      <div class="stat-card amber"><div class="stat-label">SKU Aktif</div><div class="stat-value" id="ms-sku">—</div><div class="stat-sub" id="ms-sku-sub">—</div></div>
     </div>
     <div class="charts-grid cols-2" style="margin-bottom:16px">
-      <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Tren Service Level</div><div class="chart-subtitle">SL Principal vs SL Warehouse per bulan</div></div></div><div style="height:280px"><canvas id="oosTrendChart"></canvas></div></div>
-      <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Reason Code OOS</div><div class="chart-subtitle">Siapa yang harus bertindak</div></div></div><div style="height:280px"><canvas id="oosReasonChart"></canvas></div></div>
-    </div>
-    <div class="chart-card" style="margin-bottom:16px">
-      <div class="chart-header"><div><div class="chart-title">Ownership — Siapa Penanggung Jawab</div><div class="chart-subtitle">Reason code dikelompokkan ke pemilik masalah</div></div></div>
-      <div id="oosOwnerGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px"></div>
+      <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Tren Net Sales Bulanan</div><div class="chart-subtitle">Bulan terpilih disorot</div></div></div><div style="height:280px"><canvas id="msTrendChart"></canvas></div></div>
+      <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Top 10 Kategori</div><div class="chart-subtitle">Net sales periode terpilih</div></div></div><div style="height:280px"><canvas id="msCatChart"></canvas></div></div>
     </div>
     <div class="chart-card">
-      <div class="chart-header"><div><div class="chart-title">Supplier Scorecard — OOS Terbesar</div><div class="chart-subtitle" id="oosSupSub">—</div></div></div>
+      <div class="chart-header"><div><div class="chart-title">Rincian per PLU</div><div class="chart-subtitle" id="msSub">—</div></div></div>
       <div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px">
-        <thead><tr><th>#</th><th>Supplier</th><th class="right">Item OOS</th><th class="right">PO Outstanding (Tk)</th><th class="right">SL Principal</th><th class="right">Avg LT</th><th>Reason Dominan</th></tr></thead>
-        <tbody id="oosSupBody"></tbody>
+        <thead><tr><th>#</th><th>PLU</th><th>Deskripsi</th><th>Kategori</th><th>Prinsipal</th><th class="right">Qty</th><th class="right">Net Sales</th><th class="right">GM%</th><th class="right">Share</th></tr></thead>
+        <tbody id="msBody"></tbody>
       </table></div>
-      <div id="oosSupPager" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:12.5px"></div>
+      <div id="msPager" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:12.5px"></div>
     </div>
   </div>
 </div>
 
-<div id="panel-oos-lost-sales" class="panel">
+<div id="panel-merch-share-cat" class="panel">
   <div class="page-header">
-    <div><div class="page-title">Lost Sales Opportunity</div><div class="page-subtitle">Potensi omzet hilang akibat item OOS — rata-rata penjualan × harga</div></div>
-    <button class="btn-dl" onclick="oosExport('lost')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button>
+    <div><div class="page-title">Market Share by Category</div><div class="page-subtitle">Porsi tiap kategori terhadap total net sales toko kita</div></div>
+    <button class="btn-dl" onclick="merExport('cat')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button>
   </div>
-  <div id="lostNoData" class="insight-box" style="display:none"><span class="insight-icon">📦</span><div class="insight-text">Belum ada data OOS. Upload file OOS di Data Management.</div></div>
-  <div id="lostMain" style="display:none">
-    <div class="insight-box" style="margin-bottom:14px"><span class="insight-icon">💡</span><div class="insight-text" style="font-size:12px"><strong>Cara hitung:</strong> Rata-rata penjualan per periode (kolom PCS di file OOS) × AVG COST = nilai kehilangan per periode OOS. Angka ini <strong>berbasis harga pokok</strong>; nilai omzet riil lebih tinggi sebesar margin.</div></div>
+  <div id="mcNoData" class="insight-box" style="display:none"><span class="insight-icon">📊</span><div class="insight-text">Belum ada data sales. Upload data sales di Data Management.</div></div>
+  <div id="mcMain" style="display:none">
     <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap">
-      <span class="filter-label">Division</span><select class="filter-select" id="lostDivSel" onchange="renderLostSales()" style="min-width:150px"><option value="ALL">Semua</option></select>
-      <span class="filter-label" style="margin-left:8px">TAG</span><select class="filter-select" id="lostTagSel" onchange="renderLostSales()" style="min-width:90px"><option value="ALL">Semua</option></select>
-      <span class="filter-label" style="margin-left:8px">Estimasi Margin %</span><input type="number" class="filter-select" id="lostMargin" value="15" min="0" max="80" oninput="renderLostSales()" style="width:80px">
-      <span class="filter-label" style="margin-left:8px">Cari</span><input type="text" class="filter-select" id="lostSearch" oninput="renderLostSales()" placeholder="PLU / deskripsi / supplier…" style="min-width:180px">
+      <span class="filter-label">Bulan</span><select class="filter-select" id="mcMonth" onchange="_merPg.mc=1;renderMerchShareCat()" style="min-width:140px"></select>
+      <span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select" id="mcStore" onchange="_merPg.mc=1;renderMerchShareCat()" style="min-width:130px"></select>
     </div>
+    <div id="mcMasterWarn" class="alert-box amber" style="display:none;margin-bottom:14px"><span style="font-size:16px">⚠️</span><div>Product Master belum diupload — semua item masuk "(Tanpa Kategori)".</div></div>
     <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
-      <div class="stat-card red"><div class="stat-label">Lost Sales (at Cost)</div><div class="stat-value" id="ls-cost" style="font-size:17px">—</div><div class="stat-sub">per periode OOS</div></div>
-      <div class="stat-card amber"><div class="stat-label">Estimasi Lost Omzet</div><div class="stat-value" id="ls-rev" style="font-size:17px">—</div><div class="stat-sub" id="ls-rev-sub">+ margin</div></div>
-      <div class="stat-card purple"><div class="stat-label">Estimasi Lost Margin</div><div class="stat-value" id="ls-gm" style="font-size:17px">—</div><div class="stat-sub">margin yang tidak terealisasi</div></div>
-      <div class="stat-card blue"><div class="stat-label">Item Berdampak</div><div class="stat-value" id="ls-items">—</div><div class="stat-sub" id="ls-items-sub">—</div></div>
+      <div class="stat-card blue"><div class="stat-label">Jumlah Kategori</div><div class="stat-value" id="mc-count">—</div><div class="stat-sub" id="mc-count-sub">—</div></div>
+      <div class="stat-card purple"><div class="stat-label">Kategori #1</div><div class="stat-value" id="mc-top" style="font-size:16px">—</div><div class="stat-sub" id="mc-top-sub">—</div></div>
+      <div class="stat-card amber"><div class="stat-label">Konsentrasi Top 5</div><div class="stat-value" id="mc-conc">—</div><div class="stat-sub">share 5 kategori terbesar</div></div>
+      <div class="stat-card green"><div class="stat-label">Kenaikan Share Terbesar</div><div class="stat-value" id="mc-gain" style="font-size:16px">—</div><div class="stat-sub" id="mc-gain-sub">pilih bulan untuk membandingkan</div></div>
     </div>
     <div class="charts-grid cols-2" style="margin-bottom:16px">
-      <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Top 12 PLU — Lost Sales</div><div class="chart-subtitle">Prioritas pengadaan</div></div></div><div style="height:320px"><canvas id="lostPluChart"></canvas></div></div>
-      <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Lost Sales per Division</div><div class="chart-subtitle">Di mana kerugian terkonsentrasi</div></div></div><div style="height:320px"><canvas id="lostDivChart"></canvas></div></div>
+      <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Komposisi Share</div><div class="chart-subtitle">Top 9 kategori + lainnya</div></div></div><div style="height:300px"><canvas id="mcPieChart"></canvas></div></div>
+      <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Tren Share Bulanan</div><div class="chart-subtitle">6 kategori terbesar · % dari total bulan tsb</div></div></div><div style="height:300px"><canvas id="mcTrendChart"></canvas></div></div>
     </div>
     <div class="chart-card">
-      <div class="chart-header"><div><div class="chart-title">Rincian per PLU</div><div class="chart-subtitle" id="lostSub">—</div></div></div>
+      <div class="chart-header"><div><div class="chart-title">Share per Kategori</div><div class="chart-subtitle" id="mcSub">—</div></div></div>
       <div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px">
-        <thead><tr><th>PLU</th><th>Deskripsi</th><th>TAG</th><th>Supplier</th><th class="right">Avg Sales (Pcs)</th><th class="right">Lost @Cost</th><th class="right">Lost Omzet</th><th class="right">Lost Margin</th><th>Reason</th></tr></thead>
-        <tbody id="lostBody"></tbody><tfoot id="lostFoot"></tfoot>
+        <thead><tr><th>#</th><th>Kategori</th><th class="right">Net Sales</th><th class="right">Share</th><th class="right">Share Bln Lalu</th><th class="right">Δ pp</th><th class="right">Prinsipal</th><th class="right">SKU</th></tr></thead>
+        <tbody id="mcBody"></tbody>
       </table></div>
-      <div id="lostPager" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:12.5px"></div>
+      <div id="mcPager" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:12.5px"></div>
+    </div>
+  </div>
+</div>
+
+<div id="panel-merch-share-prin" class="panel">
+  <div class="page-header">
+    <div><div class="page-title">Market Share by Principal</div><div class="page-subtitle">Porsi tiap prinsipal terhadap total net sales — bisa difilter di dalam satu kategori</div></div>
+    <button class="btn-dl" onclick="merExport('prin')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button>
+  </div>
+  <div id="mpNoData" class="insight-box" style="display:none"><span class="insight-icon">📊</span><div class="insight-text">Belum ada data sales. Upload data sales di Data Management.</div></div>
+  <div id="mpMain" style="display:none">
+    <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap">
+      <span class="filter-label">Bulan</span><select class="filter-select" id="mpMonth" onchange="_merPg.mp=1;renderMerchSharePrin()" style="min-width:140px"></select>
+      <span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select" id="mpStore" onchange="_merPg.mp=1;renderMerchSharePrin()" style="min-width:130px"></select>
+      <span class="filter-label" style="margin-left:8px">Kategori</span><select class="filter-select" id="mpCat" onchange="_merPg.mp=1;renderMerchSharePrin()" style="min-width:170px"></select>
+      <span class="filter-label" style="margin-left:8px">Cari</span><input type="text" class="filter-select" id="mpSearch" oninput="_merPg.mp=1;renderMerchSharePrin()" placeholder="Nama prinsipal…" style="min-width:160px">
+    </div>
+    <div id="mpMasterWarn" class="alert-box amber" style="display:none;margin-bottom:14px"><span style="font-size:16px">⚠️</span><div>Product Master belum diupload — semua item masuk "(Tanpa Prinsipal)".</div></div>
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
+      <div class="stat-card blue"><div class="stat-label">Jumlah Prinsipal</div><div class="stat-value" id="mp-count">—</div><div class="stat-sub" id="mp-count-sub">—</div></div>
+      <div class="stat-card purple"><div class="stat-label">Prinsipal #1</div><div class="stat-value" id="mp-top" style="font-size:16px">—</div><div class="stat-sub" id="mp-top-sub">—</div></div>
+      <div class="stat-card amber"><div class="stat-label">Konsentrasi Top 5</div><div class="stat-value" id="mp-conc">—</div><div class="stat-sub">share 5 prinsipal terbesar</div></div>
+      <div class="stat-card green"><div class="stat-label">Naik Ranking Terbanyak</div><div class="stat-value" id="mp-rise" style="font-size:16px">—</div><div class="stat-sub" id="mp-rise-sub">pilih bulan untuk membandingkan</div></div>
+    </div>
+    <div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title" id="mpChartTitle">Top 10 Prinsipal — Share</div><div class="chart-subtitle">% dari total net sales sesuai filter</div></div></div><div style="height:300px"><canvas id="mpTopChart"></canvas></div></div>
+    <div class="chart-card">
+      <div class="chart-header"><div><div class="chart-title">Share per Prinsipal</div><div class="chart-subtitle" id="mpSub">—</div></div></div>
+      <div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px">
+        <thead><tr><th>Rank</th><th class="right">Δ Rank</th><th>Prinsipal</th><th id="mpCatHead">Kategori Utama</th><th class="right">Net Sales</th><th class="right">Share</th><th class="right">Share Bln Lalu</th><th class="right">Δ pp</th><th class="right">SKU</th></tr></thead>
+        <tbody id="mpBody"></tbody>
+      </table></div>
+      <div id="mpPager" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:12.5px"></div>
+    </div>
+  </div>
+</div>
+
+<div id="panel-merch-receipt" class="panel">
+  <div class="page-header">
+    <div><div class="page-title">Store Receipt</div><div class="page-subtitle">Barang yang diterima toko dari DC — nilai &amp; qty per toko, bulan, PLU</div></div>
+    <button class="btn-dl" onclick="merExport('receipt')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button>
+  </div>
+  <div id="mrNoData" class="insight-box" style="display:none"><span class="insight-icon">🚚</span><div class="insight-text">Belum ada data Store Receipt. Upload file <strong>MASTER STORE RECEIPT</strong> di Data Management.</div></div>
+  <div id="mrMain" style="display:none">
+    <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap">
+      <span class="filter-label">Bulan</span><select class="filter-select" id="mrMonth" onchange="_merPg.mr=1;renderMerchReceipt()" style="min-width:140px"></select>
+      <span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select" id="mrStore" onchange="_merPg.mr=1;renderMerchReceipt()" style="min-width:150px"></select>
+      <span class="filter-label" style="margin-left:8px">Cari</span><input type="text" class="filter-select" id="mrSearch" oninput="_merPg.mr=1;renderMerchReceipt()" placeholder="PLU / deskripsi…" style="min-width:170px">
+      <span style="margin-left:auto;font-size:12px;color:var(--text3)" id="mrFile">—</span>
+    </div>
+    <div id="mrWarn" class="alert-box amber" style="display:none;margin-bottom:14px"><span style="font-size:16px">⚠️</span><div id="mrWarnText"></div></div>
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
+      <div class="stat-card blue"><div class="stat-label">Nilai Receipt</div><div class="stat-value" id="mr-val" style="font-size:18px">—</div><div class="stat-sub" id="mr-val-sub">—</div></div>
+      <div class="stat-card green"><div class="stat-label">Qty Receipt</div><div class="stat-value" id="mr-qty">—</div><div class="stat-sub">pcs</div></div>
+      <div class="stat-card purple"><div class="stat-label">PLU Diterima</div><div class="stat-value" id="mr-plu">—</div><div class="stat-sub">SKU unik</div></div>
+      <div class="stat-card amber"><div class="stat-label">Rata-rata per Toko</div><div class="stat-value" id="mr-avg" style="font-size:18px">—</div><div class="stat-sub" id="mr-avg-sub">—</div></div>
+    </div>
+    <div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Nilai Receipt per Bulan</div><div class="chart-subtitle">Ditumpuk per toko</div></div></div><div style="height:290px"><canvas id="mrTrendChart"></canvas></div></div>
+    <div class="chart-card" style="margin-bottom:16px">
+      <div class="chart-header"><div><div class="chart-title">Receipt per Toko</div><div class="chart-subtitle" id="mrStoreSub">—</div></div></div>
+      <div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px">
+        <thead><tr><th>Kode Toko</th><th>Nama Toko</th><th class="right">Nilai (Tk)</th><th class="right">Qty</th><th class="right">PLU</th><th class="right">Share</th></tr></thead>
+        <tbody id="mrStoreBody"></tbody><tfoot id="mrStoreFoot"></tfoot>
+      </table></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header"><div><div class="chart-title">Receipt per PLU</div><div class="chart-subtitle" id="mrPluSub">—</div></div></div>
+      <div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px">
+        <thead><tr><th>#</th><th>PLU</th><th>Deskripsi</th><th class="right">Nilai (Tk)</th><th class="right">Qty</th><th class="right">Jumlah Toko</th></tr></thead>
+        <tbody id="mrPluBody"></tbody>
+      </table></div>
+      <div id="mrPager" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:12.5px"></div>
+    </div>
+  </div>
+</div>
+
+<div id="panel-merch-sellthrough" class="panel">
+  <div class="page-header">
+    <div><div class="page-title">Receipt vs Sales (Sell-Through)</div><div class="page-subtitle">Sell-through = qty terjual ÷ qty diterima toko, per toko × PLU</div></div>
+    <button class="btn-dl" onclick="merExport('st')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button>
+  </div>
+  <div id="stNoData" class="insight-box" style="display:none"><span class="insight-icon">🔁</span><div class="insight-text">Butuh data sales dan Store Receipt.</div></div>
+  <div id="stMain" style="display:none">
+    <div class="insight-box" style="margin-bottom:14px"><span class="insight-icon">💡</span><div class="insight-text" style="font-size:12px"><strong>Status:</strong> <span style="color:#d29922;font-weight:600">Overstock</span> sell-through &lt; 50% · <span style="color:#3fb950;font-weight:600">Normal</span> 50–100% · <span style="color:#a371f7;font-weight:600">Under-supply</span> &gt; 100% (terjual lebih banyak dari yang diterima, stok lama tergerus) · <span style="color:#f85149;font-weight:600">Dead Stock</span> diterima tapi tidak terjual · <span style="color:#8b949e;font-weight:600">Tanpa Receipt</span> terjual tanpa penerimaan di periode ini.</div></div>
+    <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap">
+      <span class="filter-label">Bulan</span><select class="filter-select" id="stMonth" onchange="_merPg.st=1;renderMerchSellThrough()" style="min-width:160px"></select>
+      <span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select" id="stStore" onchange="_merPg.st=1;renderMerchSellThrough()" style="min-width:130px"></select>
+      <span class="filter-label" style="margin-left:8px">Status</span><select class="filter-select" id="stStatus" onchange="_merPg.st=1;renderMerchSellThrough()" style="min-width:140px"><option value="ALL">Semua Status</option><option value="dead">Dead Stock</option><option value="over">Overstock</option><option value="under">Under-supply</option><option value="norc">Tanpa Receipt</option><option value="normal">Normal</option></select>
+      <span class="filter-label" style="margin-left:8px">Cari</span><input type="text" class="filter-select" id="stSearch" oninput="_merPg.st=1;renderMerchSellThrough()" placeholder="PLU / deskripsi / kategori…" style="min-width:170px">
+    </div>
+    <div id="stWarn" class="alert-box amber" style="display:none;margin-bottom:14px"><span style="font-size:16px">⚠️</span><div id="stWarnText"></div></div>
+    <div id="stBodyWrap">
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">
+        <div class="stat-card blue"><div class="stat-label">Qty Diterima</div><div class="stat-value" id="st-rq">—</div><div class="stat-sub" id="st-rq-sub">—</div></div>
+        <div class="stat-card green"><div class="stat-label">Qty Terjual</div><div class="stat-value" id="st-sq">—</div><div class="stat-sub" id="st-sq-sub">—</div></div>
+        <div class="stat-card purple"><div class="stat-label">Sell-Through</div><div class="stat-value" id="st-pct">—</div><div class="stat-sub">terjual ÷ diterima</div></div>
+      </div>
+      <div id="stCards" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:18px"></div>
+      <div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Sell-Through per Toko</div><div class="chart-subtitle">Garis hijau = rentang normal 50–100%</div></div></div><div style="height:260px"><canvas id="stStoreChart"></canvas></div></div>
+      <div class="chart-card">
+        <div class="chart-header"><div><div class="chart-title">Rincian Toko × PLU</div><div class="chart-subtitle" id="stSub">—</div></div></div>
+        <div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px">
+          <thead><tr><th>Toko</th><th>PLU</th><th>Deskripsi</th><th>Kategori</th><th class="right">Qty Diterima</th><th class="right">Qty Terjual</th><th class="right">Sell-Through</th><th class="right">Nilai Receipt</th><th class="right">Net Sales</th><th>Status</th></tr></thead>
+          <tbody id="stBody"></tbody>
+        </table></div>
+        <div id="stPager" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:12.5px"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -5268,79 +5370,39 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 
 <div id="panel-oos-leadtime" class="panel">
   <div class="page-header">
-    <div><div class="page-title">Lead Time &amp; PO Aging</div><div class="page-subtitle">PO outstanding yang melewati tanggal kedatangan — supplier mana yang selalu telat</div></div>
-    <button class="btn-dl" onclick="oosExport('leadtime')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button>
+    <div><div class="page-title">PO Service Level &amp; Lead Time</div><div class="page-subtitle">SL Principal = Receipt ÷ PO · sumber: file PO Checking &amp; Realization</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-dl" onclick="merExport('posup')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Scorecard Supplier</button>
+      <button class="btn-dl" onclick="merExport('poout')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> PO Outstanding</button>
+    </div>
   </div>
-  <div id="ltNoData" class="insight-box" style="display:none"><span class="insight-icon">📦</span><div class="insight-text">Belum ada data OOS. Upload file OOS di Data Management.</div></div>
+  <div id="ltNoData" class="insight-box" style="display:none"><span class="insight-icon">📦</span><div class="insight-text">Belum ada data PO. Upload file <strong>PO Checking &amp; Realization</strong> di Data Management.</div></div>
   <div id="ltMain" style="display:none">
-    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
-      <div class="stat-card red"><div class="stat-label">PO Overdue</div><div class="stat-value" id="lt-over">—</div><div class="stat-sub" id="lt-over-sub">lewat tanggal kedatangan</div></div>
-      <div class="stat-card amber"><div class="stat-label">Nilai PO Overdue</div><div class="stat-value" id="lt-overval" style="font-size:17px">—</div><div class="stat-sub">Tk tertahan</div></div>
-      <div class="stat-card blue"><div class="stat-label">Rata-rata Keterlambatan</div><div class="stat-value" id="lt-avgdelay">—</div><div class="stat-sub">hari dari tgl janji</div></div>
-      <div class="stat-card purple"><div class="stat-label">Avg Lead Time Kontrak</div><div class="stat-value" id="lt-avglt">—</div><div class="stat-sub">hari (kolom LT)</div></div>
+    <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap">
+      <span class="filter-label">Bulan PO</span><select class="filter-select" id="ltMonth" onchange="_merPg.lt=1;renderLeadTime()" style="min-width:140px"></select>
+      <span class="filter-label" style="margin-left:8px">Tipe PO</span><select class="filter-select" id="ltType" onchange="_merPg.lt=1;renderLeadTime()" style="min-width:120px"></select>
+      <span class="filter-label" style="margin-left:8px">Supplier</span><input type="text" class="filter-select" id="ltSup" oninput="_merPg.lt=1;renderLeadTime()" placeholder="Cari supplier…" style="min-width:170px">
+      <span style="margin-left:auto;font-size:12px;color:var(--text3)" id="ltFile">—</span>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:18px">
+      <div class="stat-card blue"><div class="stat-label">SL Value</div><div class="stat-value" id="lt-slv">—</div><div class="stat-sub" id="lt-slv-sub">—</div></div>
+      <div class="stat-card purple"><div class="stat-label">SL Qty</div><div class="stat-value" id="lt-slq">—</div><div class="stat-sub" id="lt-slq-sub">—</div></div>
+      <div class="stat-card red"><div class="stat-label">Baris PO Tanpa Receipt</div><div class="stat-value" id="lt-zero">—</div><div class="stat-sub" id="lt-zero-sub">—</div></div>
+      <div class="stat-card green"><div class="stat-label">Avg Lead Time</div><div class="stat-value" id="lt-avglt">—</div><div class="stat-sub">tgl PO → arrival date</div></div>
+      <div class="stat-card amber"><div class="stat-label">PO Overdue</div><div class="stat-value" id="lt-over">—</div><div class="stat-sub" id="lt-over-sub">—</div></div>
     </div>
     <div class="charts-grid cols-2" style="margin-bottom:16px">
-      <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Sebaran Umur PO</div><div class="chart-subtitle">Berapa lama PO menggantung</div></div></div><div style="height:280px"><canvas id="ltAgingChart"></canvas></div></div>
-      <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Top 10 Supplier Paling Telat</div><div class="chart-subtitle">Rata-rata hari keterlambatan</div></div></div><div style="height:280px"><canvas id="ltSupChart"></canvas></div></div>
+      <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Tren Service Level</div><div class="chart-subtitle">Per bulan PO · garis putus = target</div></div></div><div style="height:280px"><canvas id="ltTrendChart"></canvas></div></div>
+      <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Supplier dengan SL Terendah</div><div class="chart-subtitle">Dari 30 supplier dengan nilai PO terbesar</div></div></div><div style="height:280px"><canvas id="ltSupChart"></canvas></div></div>
     </div>
+    <div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Umur Keterlambatan PO Outstanding</div><div class="chart-subtitle">Hari sejak arrival date, untuk PO yang belum diterima penuh</div></div></div><div style="height:220px"><canvas id="ltAgingChart"></canvas></div></div>
     <div class="chart-card">
-      <div class="chart-header"><div><div class="chart-title">PO Outstanding — Detail</div><div class="chart-subtitle" id="ltSub">—</div></div></div>
+      <div class="chart-header"><div><div class="chart-title">Scorecard Supplier</div><div class="chart-subtitle" id="ltSub">—</div></div></div>
       <div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px">
-        <thead><tr><th>PLU</th><th>Deskripsi</th><th>Supplier</th><th>No. PO</th><th>Tgl Order</th><th>Tgl Janji Tiba</th><th class="right">Umur (hari)</th><th class="right">Telat (hari)</th><th class="right">LT Kontrak</th><th class="right">Nilai (Tk)</th></tr></thead>
+        <thead><tr><th>#</th><th>Supplier</th><th class="right">Baris PO</th><th class="right">Nilai PO</th><th class="right">Nilai Receipt</th><th class="right">Outstanding</th><th class="right">SL Value</th><th class="right">SL Qty</th><th class="right">% Tanpa Receipt</th><th class="right">Avg LT</th><th class="right">Overdue</th></tr></thead>
         <tbody id="ltBody"></tbody>
       </table></div>
       <div id="ltPager" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:12.5px"></div>
-    </div>
-  </div>
-</div>
-
-<div id="panel-oos-class" class="panel">
-  <div class="page-header">
-    <div><div class="page-title">OOS by Class (TAG)</div><div class="page-subtitle">Item fast-moving yang kosong jauh lebih mahal dampaknya — prioritas tindakan</div></div>
-    <button class="btn-dl" onclick="oosExport('class')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button>
-  </div>
-  <div id="ocNoData" class="insight-box" style="display:none"><span class="insight-icon">📦</span><div class="insight-text">Belum ada data OOS. Upload file OOS di Data Management.</div></div>
-  <div id="ocMain" style="display:none">
-    <div id="ocCards" class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px"></div>
-    <div class="charts-grid cols-2" style="margin-bottom:16px">
-      <div class="chart-card"><div class="chart-header"><div><div class="chart-title">OOS &amp; Lost Value per TAG</div><div class="chart-subtitle">Jumlah item vs nilai kehilangan</div></div></div><div style="height:280px"><canvas id="ocTagChart"></canvas></div></div>
-      <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Reason Code per TAG</div><div class="chart-subtitle">Pola penyebab berbeda per kelas</div></div></div><div style="height:280px"><canvas id="ocReasonChart"></canvas></div></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-header"><div><div class="chart-title">Matrix TAG × Division</div><div class="chart-subtitle">Konsentrasi masalah</div></div></div>
-      <div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px"><thead id="ocMatrixHead"></thead><tbody id="ocMatrixBody"></tbody></table></div>
-    </div>
-  </div>
-</div>
-
-<div id="panel-oos-fillrate" class="panel">
-  <div class="page-header">
-    <div><div class="page-title">Fill Rate Warehouse</div><div class="page-subtitle">SL Warehouse = barang dikirim ÷ permintaan toko (PB), per division &amp; kategori</div></div>
-    <button class="btn-dl" onclick="oosExport('fillrate')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button>
-  </div>
-  <div id="frNoData" class="insight-box" style="display:none"><span class="insight-icon">📦</span><div class="insight-text">Belum ada data OOS. Upload file OOS di Data Management.</div></div>
-  <div id="frMain" style="display:none">
-    <div class="insight-box" style="margin-bottom:14px"><span class="insight-icon">ℹ️</span><div class="insight-text" style="font-size:12px">File OOS berisi data <strong>level warehouse</strong>, jadi fill rate ditampilkan per Division/Subdept. Untuk fill rate <strong>per toko</strong>, dibutuhkan data PB &amp; shipping yang memuat kode toko — beri tahu saya jika file tersebut tersedia.</div></div>
-    <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap">
-      <span class="filter-label">Bulan</span><select class="filter-select" id="frMonthSel" onchange="renderFillRate()" style="min-width:130px"></select>
-      <span class="filter-label" style="margin-left:8px">Tampilkan per</span>
-      <div class="src-toggle" id="frModeTog"><button class="active" data-mode="div" onclick="frSetMode('div')">Division</button><button data-mode="sub" onclick="frSetMode('sub')">Subdept</button><button data-mode="sup" onclick="frSetMode('sup')">Supplier</button></div>
-    </div>
-    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
-      <div class="stat-card purple"><div class="stat-label">SL Warehouse</div><div class="stat-value" id="fr-sl">—</div><div class="stat-sub" id="fr-sl-sub">Shipping ÷ PB</div></div>
-      <div class="stat-card blue"><div class="stat-label">Permintaan Toko (PB)</div><div class="stat-value" id="fr-pb" style="font-size:17px">—</div><div class="stat-sub">Tk</div></div>
-      <div class="stat-card green"><div class="stat-label">Terkirim (Shipping)</div><div class="stat-value" id="fr-ship" style="font-size:17px">—</div><div class="stat-sub">Tk</div></div>
-      <div class="stat-card red"><div class="stat-label">Tidak Terpenuhi</div><div class="stat-value" id="fr-gap" style="font-size:17px">—</div><div class="stat-sub">Tk gap</div></div>
-    </div>
-    <div class="chart-card" style="margin-bottom:16px">
-      <div class="chart-header"><div><div class="chart-title">Tren Fill Rate Warehouse</div><div class="chart-subtitle">Per bulan — PB vs Shipping</div></div></div><div style="height:280px"><canvas id="frTrendChart"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-header"><div><div class="chart-title" id="frTblTitle">Fill Rate per Division</div><div class="chart-subtitle" id="frSub">—</div></div></div>
-      <div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px">
-        <thead><tr><th id="frNameHead">Division</th><th class="right">Item</th><th class="right">PB (Tk)</th><th class="right">Shipping (Tk)</th><th class="right">Gap (Tk)</th><th class="right">Fill Rate</th><th>Status</th></tr></thead>
-        <tbody id="frBody"></tbody><tfoot id="frFoot"></tfoot>
-      </table></div>
     </div>
   </div>
 </div>
@@ -5713,7 +5775,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     <!-- OOS / Service Level -->
     <div class="upload-card" style="grid-column:1/-1">
       <div class="upload-card-title">📦 OOS &amp; Service Level (Monitoring Stock)</div>
-      <div class="upload-card-sub">File <strong>OOS WAREHOUSE</strong> mingguan. Sistem membaca sheet <strong>Monitoring Stock</strong> (header di baris 8) — berisi daftar item OOS, reason code, PO outstanding, SL Principal &amp; SL Warehouse per bulan.</div>
+      <div class="upload-card-sub">File <strong>OOS WAREHOUSE</strong> mingguan. Sistem membaca sheet <strong>Monitoring Stock</strong>. Dipakai untuk menu <strong>OOS × Promo Impact</strong>.</div>
       <div class="upload-col-tags">
         <span class="col-tag">PLU</span><span class="col-tag">TAG A/B/C</span><span class="col-tag">Company Name</span><span class="col-tag">LT</span><span class="col-tag">Qty PO / LPB</span><span class="col-tag">Internal Remark</span><span class="col-tag">% SL Principal</span><span class="col-tag">% SL Warehouse</span>
       </div>
@@ -5724,6 +5786,30 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
         <div class="upload-hint">✅ .xlsx · Sheet "Monitoring Stock" · Upload mingguan</div>
       </div>
       <div id="status-oos"></div>
+    </div>
+    <div class="upload-card">
+      <div class="upload-card-title">📑 PO Checking &amp; Realization</div>
+      <div class="upload-card-sub">File <strong>Receipt Master</strong> (report PO checking). Sumber menu <strong>PO Service Level &amp; Lead Time</strong> dan kolom SL di Principal &amp; Supplier.</div>
+      <div class="upload-col-tags"><span class="col-tag">SUPPLIER NAME</span><span class="col-tag">PLU</span><span class="col-tag">PO</span><span class="col-tag">PO TYPE</span><span class="col-tag">QTY / VALUE PO</span><span class="col-tag">ARRIVAL DATE</span><span class="col-tag">QTY / VALUE RECEIPT</span></div>
+      <div class="upload-zone" id="zone-po" onclick="document.getElementById('file-po').click()">
+        <input type="file" accept=".xlsx,.xls" id="file-po" onchange="handlePoFile(event)">
+        <div class="upload-icon">📑</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text)">Drop file di sini atau klik untuk pilih</div>
+        <div class="upload-hint">✅ .xlsx · header 2 baris otomatis terbaca</div>
+      </div>
+      <div id="status-po"></div>
+    </div>
+    <div class="upload-card">
+      <div class="upload-card-title">🚚 Store Receipt</div>
+      <div class="upload-card-sub">File <strong>MASTER STORE RECEIPT</strong> — barang diterima toko dari DC. Sumber menu <strong>Store Receipt</strong> dan <strong>Receipt vs Sales</strong>.</div>
+      <div class="upload-col-tags"><span class="col-tag">STORE CODE</span><span class="col-tag">STORE NAME</span><span class="col-tag">PLU</span><span class="col-tag">RECEIPT VALUE</span><span class="col-tag">RECEIPT QTY</span><span class="col-tag">MONTH</span></div>
+      <div class="upload-zone" id="zone-receipt" onclick="document.getElementById('file-receipt').click()">
+        <input type="file" accept=".xlsx,.xls" id="file-receipt" onchange="handleReceiptFile(event)">
+        <div class="upload-icon">🚚</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text)">Drop file di sini atau klik untuk pilih</div>
+        <div class="upload-hint">✅ .xlsx · sheet data mentah (bukan pivot) otomatis dicari</div>
+      </div>
+      <div id="status-receipt"></div>
     </div>
 
   </div>
@@ -6655,12 +6741,13 @@ function renderPanel(id) {
     case 'promo-discount': renderPromoDiscount(); break;
     case 'promo-mechanic': renderPromoMechanic(); break;
     case 'thema-juklak': _tjInit(); break;
-    case 'oos-dashboard': renderOosAll(); break;
-    case 'oos-lost-sales': renderLostSales(); break;
+    case 'merch-sales': renderMerchSales(); break;
+    case 'merch-share-cat': renderMerchShareCat(); break;
+    case 'merch-share-prin': renderMerchSharePrin(); break;
+    case 'merch-receipt': renderMerchReceipt(); break;
+    case 'merch-sellthrough': renderMerchSellThrough(); break;
     case 'oos-promo': renderOosPromo(); break;
     case 'oos-leadtime': renderLeadTime(); break;
-    case 'oos-class': renderOosClass(); break;
-    case 'oos-fillrate': renderFillRate(); break;
     case 'peak-hours': renderPeakHours(); break;
     case 'price-elasticity': renderPriceElasticity(); break;
     case 'data-quality': renderDataQuality(); break;
@@ -11705,8 +11792,7 @@ function handleOosFile(ev){
       uploads.oos={items,file:f.name,loadedAt:new Date().toISOString(),sheet:shName};
       try{persistUpload('oos',[{__meta:1,file:f.name,loadedAt:uploads.oos.loadedAt}].concat(items.map(it=>({...it,prin:JSON.stringify(it.prin),wh:JSON.stringify(it.wh),lastOrder:it.lastOrder?it.lastOrder.toISOString():'',lastArrExp:it.lastArrExp?it.lastArrExp.toISOString():''}))),f.name);}catch(_){}
       setS(`✅ <strong>${items.length}</strong> item OOS dimuat dari sheet "<strong>${shName}</strong>" · ${f.name}`,'success');
-      ['oos-dashboard','oos-lost-sales','oos-promo','oos-leadtime','oos-class','oos-fillrate'].forEach(()=>{});
-      renderOosAll();renderLostSales();renderOosPromo();renderLeadTime();renderOosClass();renderFillRate();
+      renderOosPromo();
       if(typeof renderPrincipalPerf==='function')try{renderPrincipalPerf();}catch(_){}
     }catch(err){setS('❌ Error: '+err.message,'error');console.error('[OOS]',err);}
   };
@@ -11723,7 +11809,7 @@ async function oosRestore(){
     uploads.oos={items,file:(meta&&meta.file)||rec.filename||'tersimpan',loadedAt:(meta&&meta.loadedAt)||'',sheet:''};
     const st=document.getElementById('status-oos');
     if(st)st.innerHTML=`<div class="upload-status success" style="margin-top:10px;font-size:12.5px">✅ <strong>${items.length}</strong> item OOS di-restore dari penyimpanan · ${uploads.oos.file}</div>`;
-    renderOosAll();renderLostSales();renderOosPromo();renderLeadTime();renderOosClass();renderFillRate();
+    renderOosPromo();
   }catch(e){console.warn('[OOS] restore gagal',e);}
 }
 // ── Helper filter & agregasi ──
@@ -11747,122 +11833,6 @@ function oosMonthSel(id){
 }
 const _fmtTk=n=>'Tk '+Math.round(n).toLocaleString('en-US');
 const _fmtN=n=>Math.round(n).toLocaleString('en-US');
-
-// ── 1. OOS & Service Level Dashboard ──
-function renderOosAll(){
-  if(!oosReady(['oosMain'],['oosNoData']))return;
-  const all=oosItems();
-  const mi=oosMonthSel('oosMonthSel');
-  oosFillSelect('oosDivSel',[...new Set(all.map(i=>i.div))].sort());
-  oosFillSelect('oosTagSel',[...new Set(all.map(i=>i.tag))].sort());
-  const fd=(document.getElementById('oosDivSel')||{}).value||'ALL';
-  const ft=(document.getElementById('oosTagSel')||{}).value||'ALL';
-  const fs=((document.getElementById('oosSupSearch')||{}).value||'').trim().toLowerCase();
-  const items=all.filter(i=>(fd==='ALL'||i.div===fd)&&(ft==='ALL'||i.tag===ft)&&(!fs||i.company.toLowerCase().includes(fs)||i.plu.includes(fs)));
-  const fi=document.getElementById('oosFileInfo');
-  if(fi)fi.textContent=uploads.oos.file?`File: ${uploads.oos.file}`:'';
-  const totVal=items.reduce((s,i)=>s+i.outVal,0);
-  const sups=new Set(items.map(i=>i.company));
-  const poV=items.reduce((s,i)=>s+(i.prin[mi]?i.prin[mi].poV:0),0),rcV=items.reduce((s,i)=>s+(i.prin[mi]?i.prin[mi].rcV:0),0);
-  const pbV=items.reduce((s,i)=>s+(i.wh[mi]?i.wh[mi].pbV:0),0),shV=items.reduce((s,i)=>s+(i.wh[mi]?i.wh[mi].shV:0),0);
-  const slp=poV>0?rcV/poV*100:null,slw=pbV>0?shV/pbV*100:null;
-  const set=(id,v,c)=>{const e=document.getElementById(id);if(e){e.textContent=v;if(c)e.style.color=c;}};
-  set('oo-count',_fmtN(items.length));set('oo-count-sub',`dari ${all.length} total · ${OOS_MONTHS[mi]} 2026`);
-  set('oo-val',_fmtTk(totVal));
-  set('oo-slp',slp===null?'—':slp.toFixed(1)+'%',slp===null?'':slColor(slp));
-  set('oo-slp-sub',slp===null?'tidak ada PO bulan ini':`${_fmtTk(rcV)} dari ${_fmtTk(poV)}`);
-  set('oo-slw',slw===null?'—':slw.toFixed(1)+'%',slw===null?'':slColor(slw));
-  set('oo-slw-sub',slw===null?'tidak ada PB bulan ini':`${_fmtTk(shV)} dari ${_fmtTk(pbV)}`);
-  set('oo-sup',_fmtN(sups.size));
-  const topSupN=[...sups].length;set('oo-sup-sub',`${topSupN} supplier punya item kosong`);
-  // Tren SL
-  const trP=OOS_MONTHS.map((_,k)=>{const p=items.reduce((s,i)=>s+i.prin[k].poV,0),r=items.reduce((s,i)=>s+i.prin[k].rcV,0);return p>0?+(r/p*100).toFixed(1):null;});
-  const trW=OOS_MONTHS.map((_,k)=>{const p=items.reduce((s,i)=>s+i.wh[k].pbV,0),r=items.reduce((s,i)=>s+i.wh[k].shV,0);return p>0?+(r/p*100).toFixed(1):null;});
-  makeChart('oosTrendChart',{type:'line',data:{labels:OOS_MONTHS,datasets:[
-    {label:'SL Principal',data:trP,borderColor:'#58a6ff',backgroundColor:'#58a6ff22',tension:.3,pointRadius:4,spanGaps:true},
-    {label:'SL Warehouse',data:trW,borderColor:'#a371f7',backgroundColor:'#a371f722',tension:.3,pointRadius:4,spanGaps:true},
-    {label:`Target ${SL_GOOD}%`,data:OOS_MONTHS.map(()=>SL_GOOD),borderColor:'#3fb950',borderDash:[6,4],pointRadius:0,fill:false}
-  ]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>c.dataset.label+': '+(c.raw==null?'—':c.raw+'%')}}},scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>v+'%'}}}}});
-  // Reason
-  const rs={};items.forEach(i=>{rs[i.reason]=(rs[i.reason]||0)+1;});
-  const rArr=Object.entries(rs).sort((a,b)=>b[1]-a[1]);
-  makeChart('oosReasonChart',{type:'bar',data:{labels:rArr.map(r=>r[0].length>22?r[0].slice(0,20)+'…':r[0]),datasets:[{label:'Item',data:rArr.map(r=>r[1]),backgroundColor:rArr.map(r=>OOS_OWNER_COLOR[OOS_OWNER[r[0].toLowerCase()]||'Lainnya']),borderRadius:4}]},options:{...chartDefaults,indexAxis:'y',plugins:{...chartDefaults.plugins,legend:{display:false},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>{const n=rArr[c.dataIndex];return [n[1]+' item ('+(items.length?(n[1]/items.length*100).toFixed(1):0)+'%)','Owner: '+(OOS_OWNER[n[0].toLowerCase()]||'Lainnya')];}}}}}});
-  // Ownership
-  const ow={};items.forEach(i=>{if(!ow[i.owner])ow[i.owner]={n:0,val:0,reasons:{}};ow[i.owner].n++;ow[i.owner].val+=i.outVal;ow[i.owner].reasons[i.reason]=(ow[i.owner].reasons[i.reason]||0)+1;});
-  const og=document.getElementById('oosOwnerGrid');
-  if(og)og.innerHTML=['Supplier','Merchandising','Finance','Lainnya'].filter(k=>ow[k]).map(k=>{
-    const d=ow[k],c=OOS_OWNER_COLOR[k];
-    const top=Object.entries(d.reasons).sort((a,b)=>b[1]-a[1]).slice(0,3);
-    return `<div style="background:var(--surface2);border-left:3px solid ${c};border-radius:6px;padding:12px 14px">
-      <div style="font-size:11px;font-weight:700;color:${c};text-transform:uppercase;letter-spacing:.5px">${k}</div>
-      <div style="font-size:24px;font-weight:700;margin:4px 0">${d.n}<span style="font-size:12px;color:var(--text3);font-weight:400"> item · ${items.length?(d.n/items.length*100).toFixed(0):0}%</span></div>
-      <div style="font-size:11.5px;color:var(--text2);margin-bottom:6px">${_fmtTk(d.val)} tertahan</div>
-      ${top.map(t=>`<div style="font-size:11px;color:var(--text3)">• ${t[0]} <strong style="color:var(--text2)">${t[1]}</strong></div>`).join('')}
-    </div>`;
-  }).join('');
-  // Supplier scorecard
-  const sm={};items.forEach(i=>{if(!sm[i.company])sm[i.company]={name:i.company,n:0,val:0,poV:0,rcV:0,lt:[],reasons:{}};const s=sm[i.company];s.n++;s.val+=i.outVal;s.poV+=i.prin[mi].poV;s.rcV+=i.prin[mi].rcV;if(i.lt>0)s.lt.push(i.lt);s.reasons[i.reason]=(s.reasons[i.reason]||0)+1;});
-  const sArr=Object.values(sm).map(s=>({...s,sl:s.poV>0?s.rcV/s.poV*100:null,avgLt:s.lt.length?s.lt.reduce((a,b)=>a+b,0)/s.lt.length:null,topReason:Object.entries(s.reasons).sort((a,b)=>b[1]-a[1])[0]})).sort((a,b)=>b.n-a.n||b.val-a.val);
-  const PS=15,tp=Math.max(1,Math.ceil(sArr.length/PS));if(_oosSupPage>tp)_oosSupPage=1;
-  const body=document.getElementById('oosSupBody');
-  if(body)body.innerHTML=sArr.slice((_oosSupPage-1)*PS,_oosSupPage*PS).map((s,ix)=>{const i0=(_oosSupPage-1)*PS+ix+1;return `<tr>
-    <td style="color:var(--text3);font-family:var(--mono)">${i0}</td>
-    <td style="font-weight:600">${s.name.replace(/</g,'&lt;')}</td>
-    <td class="right" style="color:#f85149;font-weight:600">${s.n}</td>
-    <td class="right">${_fmtTk(s.val)}</td>
-    <td class="right" style="color:${s.sl===null?'var(--text3)':slColor(s.sl)};font-weight:600">${s.sl===null?'—':s.sl.toFixed(1)+'%'}</td>
-    <td class="right" style="color:var(--text3)">${s.avgLt===null?'—':Math.round(s.avgLt)+' hr'}</td>
-    <td style="font-size:11.5px;color:var(--text2)">${s.topReason?s.topReason[0]+' ('+s.topReason[1]+')':'—'}</td></tr>`;}).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:14px">Tidak ada data</td></tr>';
-  const pg=document.getElementById('oosSupPager');
-  if(pg)pg.innerHTML=tp<=1?'':`<button class="filter-btn" ${_oosSupPage<=1?'disabled style="opacity:.4"':''} onclick="_oosSupPage--;renderOosAll()">‹ Sebelumnya</button><span style="color:var(--text3)">Halaman ${_oosSupPage} / ${tp} (${sArr.length} supplier)</span><button class="filter-btn" ${_oosSupPage>=tp?'disabled style="opacity:.4"':''} onclick="_oosSupPage++;renderOosAll()">Berikutnya ›</button>`;
-  const ss=document.getElementById('oosSupSub');if(ss)ss.textContent=`${sArr.length} supplier · SL Principal bulan ${OOS_MONTHS[mi]} · target ${SL_GOOD}%`;
-  _oosData={items,sArr,mi};
-}
-
-// ── 2. Lost Sales Opportunity ──
-function lostRows(){
-  const all=oosItems();
-  const fd=(document.getElementById('lostDivSel')||{}).value||'ALL';
-  const ft=(document.getElementById('lostTagSel')||{}).value||'ALL';
-  const q=((document.getElementById('lostSearch')||{}).value||'').trim().toLowerCase();
-  const gm=Math.max(0,Math.min(80,_oosN((document.getElementById('lostMargin')||{}).value||15)));
-  const mul=gm<100?1/(1-gm/100):1;
-  return {gm,rows:all.filter(i=>(fd==='ALL'||i.div===fd)&&(ft==='ALL'||i.tag===ft)&&(!q||i.plu.includes(q)||i.desc.toLowerCase().includes(q)||i.company.toLowerCase().includes(q)))
-    .map(i=>{const cost=i.avgTk>0?i.avgTk:i.avgPcs*i.cost;const rev=cost*mul;return {...i,lostCost:cost,lostRev:rev,lostGm:rev-cost};})
-    .filter(i=>i.lostCost>0).sort((a,b)=>b.lostCost-a.lostCost)};
-}
-function renderLostSales(){
-  if(!oosReady(['lostMain'],['lostNoData']))return;
-  const all=oosItems();
-  oosFillSelect('lostDivSel',[...new Set(all.map(i=>i.div))].sort());
-  oosFillSelect('lostTagSel',[...new Set(all.map(i=>i.tag))].sort());
-  const {rows,gm}=lostRows();
-  const tC=rows.reduce((s,i)=>s+i.lostCost,0),tR=rows.reduce((s,i)=>s+i.lostRev,0),tG=rows.reduce((s,i)=>s+i.lostGm,0);
-  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  set('ls-cost',_fmtTk(tC));set('ls-rev',_fmtTk(tR));set('ls-rev-sub',`asumsi margin ${gm}%`);set('ls-gm',_fmtTk(tG));
-  set('ls-items',_fmtN(rows.length));set('ls-items-sub',`dari ${all.length} item OOS`);
-  const top=rows.slice(0,12),cut=s=>s.length>22?s.slice(0,20)+'…':s;
-  makeChart('lostPluChart',{type:'bar',data:{labels:top.map(i=>cut(i.desc||i.plu)),datasets:[{label:'Lost @Cost',data:top.map(i=>Math.round(i.lostCost)),backgroundColor:'rgba(248,81,73,0.75)',borderRadius:4}]},options:{...chartDefaults,indexAxis:'y',plugins:{...chartDefaults.plugins,legend:{display:false},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>{const i=top[c.dataIndex];return ['PLU '+i.plu,'Lost @Cost: '+_fmtTk(i.lostCost),'Est. Omzet: '+_fmtTk(i.lostRev),'Supplier: '+i.company.slice(0,26)];}}}},scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,ticks:{...chartDefaults.scales.x.ticks,callback:v=>'Tk '+(v/1000).toFixed(0)+'K'}}}}});
-  const dv={};rows.forEach(i=>{dv[i.div]=(dv[i.div]||0)+i.lostCost;});
-  const dArr=Object.entries(dv).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  makeChart('lostDivChart',{type:'bar',data:{labels:dArr.map(d=>cut(d[0])),datasets:[{label:'Lost @Cost',data:dArr.map(d=>Math.round(d[1])),backgroundColor:'rgba(210,153,34,0.75)',borderRadius:4}]},options:{...chartDefaults,indexAxis:'y',plugins:{...chartDefaults.plugins,legend:{display:false}},scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,ticks:{...chartDefaults.scales.x.ticks,callback:v=>'Tk '+(v/1000).toFixed(0)+'K'}}}}});
-  const PS=30,tp=Math.max(1,Math.ceil(rows.length/PS));if(_lostPage>tp)_lostPage=1;
-  const body=document.getElementById('lostBody');
-  if(body)body.innerHTML=rows.slice((_lostPage-1)*PS,_lostPage*PS).map(i=>`<tr>
-    <td style="font-family:var(--mono)">${i.plu}</td><td>${(i.desc||'—').replace(/</g,'&lt;')}</td>
-    <td><span style="background:var(--surface2);padding:1px 6px;border-radius:3px;font-weight:600;font-size:11px">${i.tag}</span></td>
-    <td style="font-size:11.5px">${i.company.length>26?i.company.slice(0,24)+'…':i.company}</td>
-    <td class="right">${_fmtN(i.avgPcs)}</td>
-    <td class="right" style="color:#f85149;font-weight:600">${_fmtTk(i.lostCost)}</td>
-    <td class="right" style="color:#d29922">${_fmtTk(i.lostRev)}</td>
-    <td class="right" style="color:#a371f7">${_fmtTk(i.lostGm)}</td>
-    <td style="font-size:11.5px;color:var(--text2)">${i.reason}</td></tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:14px">Tidak ada data</td></tr>';
-  const ft2=document.getElementById('lostFoot');
-  if(ft2)ft2.innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border);background:var(--surface2)"><td colspan="5">TOTAL (${rows.length} item)</td><td class="right">${_fmtTk(tC)}</td><td class="right">${_fmtTk(tR)}</td><td class="right">${_fmtTk(tG)}</td><td></td></tr>`;
-  const pg=document.getElementById('lostPager');
-  if(pg)pg.innerHTML=tp<=1?'':`<button class="filter-btn" ${_lostPage<=1?'disabled style="opacity:.4"':''} onclick="_lostPage--;renderLostSales()">‹ Sebelumnya</button><span style="color:var(--text3)">Halaman ${_lostPage} / ${tp}</span><button class="filter-btn" ${_lostPage>=tp?'disabled style="opacity:.4"':''} onclick="_lostPage++;renderLostSales()">Berikutnya ›</button>`;
-  const sub=document.getElementById('lostSub');if(sub)sub.textContent=`${rows.length} item · diurutkan dari kerugian terbesar · 30/halaman`;
-}
 
 // ── 3. OOS × Promo Impact ──
 function renderOosPromo(){
@@ -11895,174 +11865,467 @@ function renderOosPromo(){
   const sub=document.getElementById('opSub');if(sub)sub.textContent=`${hit.length} PLU juklak aktif sedang kosong di warehouse · ${sups.size} supplier`;
 }
 
-// ── 4. Lead Time & PO Aging ──
-function renderLeadTime(){
-  if(!oosReady(['ltMain'],['ltNoData']))return;
-  const now=new Date();now.setHours(0,0,0,0);
-  const rows=oosItems().filter(i=>i.lastOrder||i.lastArrExp).map(i=>{
-    const age=i.lastOrder?Math.floor((now-i.lastOrder)/86400000):null;
-    const late=i.lastArrExp?Math.floor((now-i.lastArrExp)/86400000):null;
-    return {...i,age,late,overdue:late!==null&&late>0};
-  }).sort((a,b)=>(b.late==null?-1e9:b.late)-(a.late==null?-1e9:a.late));
-  const over=rows.filter(r=>r.overdue);
-  const set=(id,v,c)=>{const e=document.getElementById(id);if(e){e.textContent=v;if(c)e.style.color=c;}};
-  set('lt-over',_fmtN(over.length),over.length?'#f85149':'');
-  set('lt-over-sub',`dari ${rows.length} PO outstanding`);
-  set('lt-overval',_fmtTk(over.reduce((s,r)=>s+r.outVal,0)));
-  set('lt-avgdelay',over.length?Math.round(over.reduce((s,r)=>s+r.late,0)/over.length)+' hr':'—');
-  const lts=oosItems().filter(i=>i.lt>0).map(i=>i.lt);
-  set('lt-avglt',lts.length?Math.round(lts.reduce((a,b)=>a+b,0)/lts.length)+' hr':'—');
-  const buckets=[{l:'Belum jatuh tempo',f:r=>r.late!==null&&r.late<=0,c:'#3fb950'},{l:'1–7 hari',f:r=>r.late>0&&r.late<=7,c:'#d29922'},{l:'8–14 hari',f:r=>r.late>7&&r.late<=14,c:'#f0883e'},{l:'15–30 hari',f:r=>r.late>14&&r.late<=30,c:'#f85149'},{l:'>30 hari',f:r=>r.late>30,c:'#b62324'}];
-  const bc=buckets.map(b=>rows.filter(r=>r.late!==null&&b.f(r)).length);
-  makeChart('ltAgingChart',{type:'bar',data:{labels:buckets.map(b=>b.l),datasets:[{label:'PO',data:bc,backgroundColor:buckets.map(b=>b.c),borderRadius:4}]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:false}}}});
-  const sm={};over.forEach(r=>{if(!sm[r.company])sm[r.company]={n:0,tot:0};sm[r.company].n++;sm[r.company].tot+=r.late;});
-  const sArr=Object.entries(sm).map(([k,v])=>({name:k,avg:v.tot/v.n,n:v.n})).sort((a,b)=>b.avg-a.avg).slice(0,10);
-  makeChart('ltSupChart',{type:'bar',data:{labels:sArr.map(s=>s.name.length>18?s.name.slice(0,16)+'…':s.name),datasets:[{label:'Avg telat (hari)',data:sArr.map(s=>Math.round(s.avg)),backgroundColor:'rgba(248,81,73,0.75)',borderRadius:4}]},options:{...chartDefaults,indexAxis:'y',plugins:{...chartDefaults.plugins,legend:{display:false},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>[Math.round(sArr[c.dataIndex].avg)+' hari rata-rata',sArr[c.dataIndex].n+' PO overdue']}}}}});
-  const PS=30,tp=Math.max(1,Math.ceil(rows.length/PS));if(_ltPage>tp)_ltPage=1;
-  const fd=d=>d?d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'2-digit'}):'—';
-  const body=document.getElementById('ltBody');
-  if(body)body.innerHTML=rows.slice((_ltPage-1)*PS,_ltPage*PS).map(r=>`<tr${r.overdue?' style="background:rgba(248,81,73,0.05)"':''}>
-    <td style="font-family:var(--mono)">${r.plu}</td><td>${(r.desc||'—').slice(0,32).replace(/</g,'&lt;')}</td>
-    <td style="font-size:11.5px">${r.company.length>22?r.company.slice(0,20)+'…':r.company}</td>
-    <td style="font-family:var(--mono);font-size:11px">${r.lastPO||'—'}</td>
-    <td style="font-size:11.5px">${fd(r.lastOrder)}</td><td style="font-size:11.5px">${fd(r.lastArrExp)}</td>
-    <td class="right">${r.age==null?'—':r.age}</td>
-    <td class="right" style="font-weight:600;color:${r.overdue?'#f85149':'var(--text3)'}">${r.late==null?'—':(r.late>0?'+'+r.late:r.late)}</td>
-    <td class="right" style="color:var(--text3)">${r.lt||'—'}</td>
-    <td class="right">${_fmtTk(r.outVal)}</td></tr>`).join('')||'<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:14px">Tidak ada PO outstanding</td></tr>';
-  const pg=document.getElementById('ltPager');
-  if(pg)pg.innerHTML=tp<=1?'':`<button class="filter-btn" ${_ltPage<=1?'disabled style="opacity:.4"':''} onclick="_ltPage--;renderLeadTime()">‹ Sebelumnya</button><span style="color:var(--text3)">Halaman ${_ltPage} / ${tp} (${rows.length} PO)</span><button class="filter-btn" ${_ltPage>=tp?'disabled style="opacity:.4"':''} onclick="_ltPage++;renderLeadTime()">Berikutnya ›</button>`;
-  const sub=document.getElementById('ltSub');if(sub)sub.textContent=`${rows.length} PO · ${over.length} overdue · diurutkan dari paling telat`;
-}
-
-// ── 5. OOS by Class (TAG) ──
-function renderOosClass(){
-  if(!oosReady(['ocMain'],['ocNoData']))return;
-  const items=oosItems();
-  const tg={};items.forEach(i=>{if(!tg[i.tag])tg[i.tag]={tag:i.tag,n:0,val:0,lost:0,reasons:{}};const t=tg[i.tag];t.n++;t.val+=i.outVal;t.lost+=(i.avgTk>0?i.avgTk:i.avgPcs*i.cost);t.reasons[i.reason]=(t.reasons[i.reason]||0)+1;});
-  const tArr=Object.values(tg).sort((a,b)=>b.lost-a.lost);
-  const totLost=tArr.reduce((s,t)=>s+t.lost,0);
-  const colors=['#f85149','#d29922','#58a6ff','#a371f7','#3fb950','#8b949e'];
-  const cards=document.getElementById('ocCards');
-  if(cards)cards.innerHTML=tArr.slice(0,4).map((t,ix)=>`<div class="stat-card" style="border-left:3px solid ${colors[ix%colors.length]}">
-    <div class="stat-label">TAG ${t.tag}</div><div class="stat-value">${t.n}<span style="font-size:12px;color:var(--text3);font-weight:400"> item</span></div>
-    <div class="stat-sub">${_fmtTk(t.lost)} lost · ${totLost?(t.lost/totLost*100).toFixed(0):0}% dari total</div></div>`).join('');
-  makeChart('ocTagChart',{type:'bar',data:{labels:tArr.map(t=>'TAG '+t.tag),datasets:[
-    {label:'Item OOS',data:tArr.map(t=>t.n),backgroundColor:'rgba(88,166,255,0.75)',borderRadius:4,yAxisID:'y'},
-    {label:'Lost Value (Tk)',data:tArr.map(t=>Math.round(t.lost)),backgroundColor:'rgba(248,81,73,0.75)',borderRadius:4,yAxisID:'y1'}
-  ]},options:{...chartDefaults,scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,position:'left',title:{display:true,text:'Item',color:'#8b949e',font:{size:10}}},y1:{position:'right',grid:{display:false},ticks:{color:'#8b949e',font:{size:10},callback:v=>'Tk '+(v/1000).toFixed(0)+'K'},title:{display:true,text:'Lost Value',color:'#8b949e',font:{size:10}}}}}});
-  const allR=[...new Set(items.map(i=>i.reason))].sort();
-  makeChart('ocReasonChart',{type:'bar',data:{labels:tArr.map(t=>'TAG '+t.tag),datasets:allR.map((r,ix)=>({label:r.length>18?r.slice(0,16)+'…':r,data:tArr.map(t=>t.reasons[r]||0),backgroundColor:OOS_OWNER_COLOR[OOS_OWNER[r.toLowerCase()]||'Lainnya']+(ix%2?'cc':'88'),borderRadius:3}))},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{...chartDefaults.plugins.legend,labels:{...(chartDefaults.plugins.legend||{}).labels,boxWidth:10,font:{size:10}}}},scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,stacked:true},y:{...chartDefaults.scales.y,stacked:true}}}});
-  const divs=[...new Set(items.map(i=>i.div))].sort(),tags=tArr.map(t=>t.tag);
-  const mh=document.getElementById('ocMatrixHead'),mb=document.getElementById('ocMatrixBody');
-  if(mh)mh.innerHTML=`<tr><th>Division</th>${tags.map(t=>`<th class="right">TAG ${t}</th>`).join('')}<th class="right">Total</th><th class="right">Lost (Tk)</th></tr>`;
-  if(mb)mb.innerHTML=divs.map(d=>{
-    const sub=items.filter(i=>i.div===d);
-    const cells=tags.map(t=>sub.filter(i=>i.tag===t).length);
-    const lost=sub.reduce((s,i)=>s+(i.avgTk>0?i.avgTk:i.avgPcs*i.cost),0);
-    const mx=Math.max(...cells,1);
-    return `<tr><td style="font-weight:600">${d}</td>${cells.map(c=>`<td class="right" style="${c>0?`background:rgba(248,81,73,${(c/mx*0.28).toFixed(2)})`:''}">${c||'—'}</td>`).join('')}<td class="right" style="font-weight:700">${sub.length}</td><td class="right" style="color:#f85149">${_fmtTk(lost)}</td></tr>`;
-  }).join('')+`<tr style="font-weight:700;border-top:2px solid var(--border);background:var(--surface2)"><td>TOTAL</td>${tags.map(t=>`<td class="right">${items.filter(i=>i.tag===t).length}</td>`).join('')}<td class="right">${items.length}</td><td class="right">${_fmtTk(totLost)}</td></tr>`;
-}
-
-// ── 6. Fill Rate Warehouse ──
-function frSetMode(m){_frMode=m;const t=document.getElementById('frModeTog');if(t)t.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));renderFillRate();}
-function renderFillRate(){
-  if(!oosReady(['frMain'],['frNoData']))return;
-  const items=oosItems();
-  const mi=oosMonthSel('frMonthSel');
-  const pbV=items.reduce((s,i)=>s+i.wh[mi].pbV,0),shV=items.reduce((s,i)=>s+i.wh[mi].shV,0);
-  const sl=pbV>0?shV/pbV*100:null;
-  const set=(id,v,c)=>{const e=document.getElementById(id);if(e){e.textContent=v;if(c)e.style.color=c;}};
-  set('fr-sl',sl===null?'—':sl.toFixed(1)+'%',sl===null?'':slColor(sl));
-  set('fr-sl-sub',sl===null?'tidak ada PB bulan ini':`target ${SL_GOOD}% · ${slStatus(sl||0)}`);
-  set('fr-pb',_fmtTk(pbV));set('fr-ship',_fmtTk(shV));set('fr-gap',_fmtTk(Math.max(0,pbV-shV)));
-  const pbs=OOS_MONTHS.map((_,k)=>items.reduce((s,i)=>s+i.wh[k].pbV,0));
-  const shs=OOS_MONTHS.map((_,k)=>items.reduce((s,i)=>s+i.wh[k].shV,0));
-  makeChart('frTrendChart',{type:'bar',data:{labels:OOS_MONTHS,datasets:[
-    {type:'bar',label:'Permintaan PB (Tk)',data:pbs.map(Math.round),backgroundColor:'rgba(88,166,255,0.55)',borderRadius:4,yAxisID:'y'},
-    {type:'bar',label:'Terkirim (Tk)',data:shs.map(Math.round),backgroundColor:'rgba(63,185,80,0.8)',borderRadius:4,yAxisID:'y'},
-    {type:'line',label:'Fill Rate %',data:pbs.map((p,k)=>p>0?+(shs[k]/p*100).toFixed(1):null),borderColor:'#a371f7',tension:.3,pointRadius:4,spanGaps:true,yAxisID:'y1'}
-  ]},options:{...chartDefaults,scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>'Tk '+(v/1e6).toFixed(1)+'M'}},y1:{position:'right',min:0,max:100,grid:{display:false},ticks:{color:'#8b949e',font:{size:10},callback:v=>v+'%'}}}}});
-  const keyf=_frMode==='div'?(i=>i.div):_frMode==='sub'?(i=>i.subdept):(i=>i.company);
-  const lbl=_frMode==='div'?'Division':_frMode==='sub'?'Subdept':'Supplier';
-  const g={};items.forEach(i=>{const k=keyf(i);if(!g[k])g[k]={name:k,n:0,pb:0,sh:0};g[k].n++;g[k].pb+=i.wh[mi].pbV;g[k].sh+=i.wh[mi].shV;});
-  const arr=Object.values(g).map(x=>({...x,fr:x.pb>0?x.sh/x.pb*100:null})).sort((a,b)=>b.pb-a.pb);
-  const th=document.getElementById('frNameHead');if(th)th.textContent=lbl;
-  const tt=document.getElementById('frTblTitle');if(tt)tt.textContent='Fill Rate per '+lbl;
-  const body=document.getElementById('frBody');
-  if(body)body.innerHTML=arr.slice(0,60).map(x=>`<tr>
-    <td style="font-weight:600">${x.name.length>34?x.name.slice(0,32)+'…':x.name.replace(/</g,'&lt;')}</td>
-    <td class="right" style="color:var(--text3)">${x.n}</td>
-    <td class="right">${_fmtTk(x.pb)}</td><td class="right" style="color:#3fb950">${_fmtTk(x.sh)}</td>
-    <td class="right" style="color:#f85149">${_fmtTk(Math.max(0,x.pb-x.sh))}</td>
-    <td class="right" style="font-weight:700;color:${x.fr===null?'var(--text3)':slColor(x.fr)}">${x.fr===null?'—':x.fr.toFixed(1)+'%'}</td>
-    <td><span style="font-size:11px;padding:2px 8px;border-radius:10px;background:${x.fr===null?'var(--surface2)':slColor(x.fr)}22;color:${x.fr===null?'var(--text3)':slColor(x.fr)};font-weight:600">${x.fr===null?'—':slStatus(x.fr)}</span></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:14px">Tidak ada data</td></tr>';
-  const ft=document.getElementById('frFoot');
-  if(ft)ft.innerHTML=`<tr style="font-weight:700;border-top:2px solid var(--border);background:var(--surface2)"><td>TOTAL</td><td class="right">${items.length}</td><td class="right">${_fmtTk(pbV)}</td><td class="right">${_fmtTk(shV)}</td><td class="right">${_fmtTk(Math.max(0,pbV-shV))}</td><td class="right" style="color:${sl===null?'var(--text3)':slColor(sl)}">${sl===null?'—':sl.toFixed(1)+'%'}</td><td></td></tr>`;
-  const sub=document.getElementById('frSub');if(sub)sub.textContent=`${arr.length} ${lbl.toLowerCase()} · bulan ${OOS_MONTHS[mi]} 2026`+(arr.length>60?' · 60 teratas':'');
-}
-
-// ── Export ──
+// ── OOS × Promo export ──
 function oosExport(which){
   const items=oosItems();
   if(!items.length){alert('Belum ada data OOS.');return;}
-  const R=Math.round;let rows,name;
-  if(which==='dashboard'){
-    const mi=_oosData?_oosData.mi:OOS_MONTHS.length-1;
-    rows=[['Supplier','Item OOS','PO Outstanding (Tk)','SL Principal %','Avg LT (hari)','Reason Dominan']];
-    (_oosData?_oosData.sArr:[]).forEach(s=>rows.push([s.name,s.n,R(s.val),s.sl===null?'':+s.sl.toFixed(1),s.avgLt===null?'':R(s.avgLt),s.topReason?s.topReason[0]:'']));
-    name='OOS_Service_Level_'+OOS_MONTHS[mi];
-  } else if(which==='lost'){
-    const {rows:lr,gm}=lostRows();
-    rows=[['PLU','Deskripsi','TAG','Division','Supplier','Avg Sales Pcs','Lost @Cost','Lost Omzet (margin '+gm+'%)','Lost Margin','Reason']];
-    lr.forEach(i=>rows.push([i.plu,i.desc,i.tag,i.div,i.company,R(i.avgPcs),R(i.lostCost),R(i.lostRev),R(i.lostGm),i.reason]));
-    name='Lost_Sales_Opportunity';
-  } else if(which==='promo'){
-    const jset=typeof juklakPluSet==='function'?juklakPluSet():null;
-    const hit=jset?items.filter(i=>jset.has(mkPlu(i.plu))):[];
-    rows=[['PLU','Deskripsi','TAG','Supplier','Qty PO Outstanding','Est. Lost (Tk)','Reason','Catatan Supplier']];
-    hit.forEach(i=>rows.push([i.plu,i.desc,i.tag,i.company,R(i.qtyPO),R(i.avgTk>0?i.avgTk:i.avgPcs*i.cost),i.reason,i.reasonSup]));
-    name='OOS_Promo_Impact';
-  } else if(which==='leadtime'){
-    const now=new Date();now.setHours(0,0,0,0);
-    rows=[['PLU','Deskripsi','Supplier','No. PO','Tgl Order','Tgl Janji Tiba','Umur (hari)','Telat (hari)','LT Kontrak','Nilai (Tk)']];
-    items.filter(i=>i.lastOrder||i.lastArrExp).forEach(i=>{
-      const age=i.lastOrder?Math.floor((now-i.lastOrder)/86400000):'';
-      const late=i.lastArrExp?Math.floor((now-i.lastArrExp)/86400000):'';
-      rows.push([i.plu,i.desc,i.company,i.lastPO,i.lastOrder?i.lastOrder.toISOString().slice(0,10):'',i.lastArrExp?i.lastArrExp.toISOString().slice(0,10):'',age,late,i.lt||'',R(i.outVal)]);
-    });
-    name='Lead_Time_PO_Aging';
-  } else if(which==='class'){
-    rows=[['TAG','Division','Item OOS','PO Outstanding (Tk)','Lost Value (Tk)']];
-    const g={};items.forEach(i=>{const k=i.tag+'|'+i.div;if(!g[k])g[k]={tag:i.tag,div:i.div,n:0,val:0,lost:0};g[k].n++;g[k].val+=i.outVal;g[k].lost+=(i.avgTk>0?i.avgTk:i.avgPcs*i.cost);});
-    Object.values(g).sort((a,b)=>b.lost-a.lost).forEach(x=>rows.push([x.tag,x.div,x.n,R(x.val),R(x.lost)]));
-    name='OOS_by_Class';
-  } else {
-    const mi=oosMonthSel('frMonthSel');
-    const keyf=_frMode==='div'?(i=>i.div):_frMode==='sub'?(i=>i.subdept):(i=>i.company);
-    const lbl=_frMode==='div'?'Division':_frMode==='sub'?'Subdept':'Supplier';
-    rows=[[lbl,'Item','PB (Tk)','Shipping (Tk)','Gap (Tk)','Fill Rate %','Status']];
-    const g={};items.forEach(i=>{const k=keyf(i);if(!g[k])g[k]={name:k,n:0,pb:0,sh:0};g[k].n++;g[k].pb+=i.wh[mi].pbV;g[k].sh+=i.wh[mi].shV;});
-    Object.values(g).sort((a,b)=>b.pb-a.pb).forEach(x=>{const fr=x.pb>0?x.sh/x.pb*100:null;rows.push([x.name,x.n,R(x.pb),R(x.sh),R(Math.max(0,x.pb-x.sh)),fr===null?'':+fr.toFixed(1),fr===null?'':slStatus(fr)]);});
-    name='Fill_Rate_'+lbl+'_'+OOS_MONTHS[mi];
-  }
-  if(typeof xlsDownload==='function')xlsDownload(rows,name.slice(0,30),name+'.xlsx');
-  else{const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';dlCSV(rows.map(r=>r.map(q).join(',')),name+'.csv');}
+  const R=Math.round;
+  const jset=typeof juklakPluSet==='function'?juklakPluSet():null;
+  const hit=jset?items.filter(i=>jset.has(mkPlu(i.plu))):[];
+  const rows=[['PLU','Deskripsi','TAG','Supplier','Qty PO Outstanding','Est. Lost (Tk)','Reason','Catatan Supplier']];
+  hit.forEach(i=>rows.push([i.plu,i.desc,i.tag,i.company,R(i.qtyPO),R(i.avgTk>0?i.avgTk:i.avgPcs*i.cost),i.reason,i.reasonSup]));
+  xlsDownload(rows,'OOS_Promo_Impact','OOS_Promo_Impact.xlsx');
 }
 
-// ── Helper SL untuk Supplier Scorecard di panel Principal & Supplier ──
-function oosSupplierSL(){
-  const items=oosItems();if(!items.length)return null;
-  const mi=OOS_MONTHS.length-1,m={};
-  items.forEach(i=>{
-    const k=i.company.toLowerCase();
-    if(!m[k])m[k]={oosItems:0,poV:0,rcV:0,lt:[],outVal:0};
-    m[k].oosItems++;m[k].outVal+=i.outVal;
-    for(let j=0;j<9;j++){m[k].poV+=i.prin[j].poV;m[k].rcV+=i.prin[j].rcV;}
-    if(i.lt>0)m[k].lt.push(i.lt);
+// ══════════════════════════════════════════════
+//  MERCHANDISING
+// ══════════════════════════════════════════════
+const MER_MON=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const MER_PAL=['#58a6ff','#a371f7','#3fb950','#d29922','#f0883e','#f85149','#39c5cf','#db61a2','#8b949e','#6e7681'];
+const ST_OVER=50, ST_UNDER=100;
+const ST_DEF={dead:{l:'Dead Stock',c:'#f85149',o:0},over:{l:'Overstock',c:'#d29922',o:1},under:{l:'Under-supply',c:'#a371f7',o:2},norc:{l:'Tanpa Receipt',c:'#8b949e',o:3},normal:{l:'Normal',c:'#3fb950',o:4}};
+const _merPg={},_merLast={};
+let _merCache=null;
+const merYmLabel=ym=>{const p=String(ym||'').split('-');return p.length===2?MER_MON[+p[1]-1]+' '+p[0]:ym;};
+const merEsc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+const merCut=(s,n)=>{s=String(s||'');return s.length>n?s.slice(0,n-1)+'…':s;};
+const merStore=v=>String(v==null?'':v).trim().toUpperCase();
+const merBad=v=>!v||/^[-.\s0]*$|^(n\/?a|none|nil|tidak\s*ada)$/i.test(v);
+const merEmpty=(n,msg)=>`<tr><td colspan="${n}" style="text-align:center;color:var(--text3);padding:16px">${msg||'Tidak ada data untuk filter ini.'}</td></tr>`;
+const merQ=id=>((document.getElementById(id)||{}).value||'').trim().toLowerCase();
+const merTkTick=v=>{const a=Math.abs(v);return 'Tk '+(a>=1e6?(v/1e6).toFixed(1)+'M':a>=1e3?(v/1e3).toFixed(0)+'K':v);};
+const merPct=(a,b)=>b>0?a/b*100:null;
+function merSet(id,v,c){const e=document.getElementById(id);if(e){e.textContent=v;e.style.color=c||'';}}
+function merGate(mainId,noId,ok,msg){
+  const m=document.getElementById(mainId),n=document.getElementById(noId);
+  if(m)m.style.display=ok?'block':'none';
+  if(n){n.style.display=ok?'none':'flex';if(!ok&&msg){const t=n.querySelector('.insight-text');if(t)t.innerHTML=msg;}}
+  return ok;
+}
+function merFillSel(id,vals,labelFn,allLabel){
+  const s=document.getElementById(id);if(!s)return 'ALL';
+  const sig=vals.join('|');
+  if(s.dataset.sig!==sig){const cur=s.value;s.innerHTML=`<option value="ALL">${allLabel||'Semua'}</option>`+vals.map(v=>`<option value="${merEsc(v)}">${merEsc(labelFn?labelFn(v):v)}</option>`).join('');s.dataset.sig=sig;s.value=vals.includes(cur)?cur:'ALL';}
+  return s.value||'ALL';
+}
+function merPage(key,total,ps){const tp=Math.max(1,Math.ceil(total/ps));if(!_merPg[key]||_merPg[key]>tp||_merPg[key]<1)_merPg[key]=1;return _merPg[key];}
+function merPager(id,key,total,ps,fn){
+  const el=document.getElementById(id);if(!el)return;
+  const tp=Math.max(1,Math.ceil(total/ps)),p=_merPg[key]||1;
+  el.innerHTML=tp<=1?'':`<button class="filter-btn" ${p<=1?'disabled style="opacity:.4"':''} onclick="_merPg.${key}--;${fn}()">‹ Sebelumnya</button><span style="color:var(--text3)">Halaman ${p} / ${tp} (${total.toLocaleString('en-US')} baris)</span><button class="filter-btn" ${p>=tp?'disabled style="opacity:.4"':''} onclick="_merPg.${key}++;${fn}()">Berikutnya ›</button>`;
+}
+function merExport(k){
+  const d=_merLast[k];
+  if(!d||!d.rows||d.rows.length<2){alert('Belum ada data untuk diexport.');return;}
+  xlsDownload(d.rows,d.name.slice(0,30),d.name+'.xlsx');
+}
+function merBarH(id,labels,data,color,tipFn,tickFn){
+  makeChart(id,{type:'bar',data:{labels,datasets:[{data,backgroundColor:color,borderRadius:4}]},options:{...chartDefaults,indexAxis:'y',plugins:{...chartDefaults.plugins,legend:{display:false},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:tipFn}}},scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,ticks:{...chartDefaults.scales.x.ticks,callback:tickFn||merTkTick}}}}});
+}
+function merSum(list){let net=0,qty=0,cogs=0;list.forEach(a=>{net+=a.net;qty+=a.qty;cogs+=a.cogs;});return {net,qty,cogs,gm:net-cogs};}
+function merGroup(list,keyFn){
+  const m=new Map();
+  list.forEach(a=>{const k=keyFn(a);let g=m.get(k);if(!g){g={key:k,cat:a.cat,prin:a.prin,net:0,qty:0,cogs:0,skus:new Set(),prins:new Set()};m.set(k,g);}g.net+=a.net;g.qty+=a.qty;g.cogs+=a.cogs;g.skus.add(a.plu);g.prins.add(a.prin);});
+  return [...m.values()];
+}
+function merPrevYm(months,ym){const i=months.indexOf(ym);return i>0?months[i-1]:null;}
+
+// Agregasi sales: toko × bulan × PLU (di-cache)
+function merSales(){
+  const rows=(typeof uploads!=='undefined'&&Array.isArray(uploads.sales))?uploads.sales:[];
+  if(!rows.length)return null;
+  const master=typeof buildMasterAttrMap==='function'?buildMasterAttrMap():null;
+  const sig=rows.length+'|'+(master?master.map.size:0)+'|'+(recRows().length);
+  if(_merCache&&_merCache.src===rows&&_merCache.sig===sig)return _merCache;
+  const sc=sColDetect(rows);
+  const keys=Object.keys(rows[0]||{});
+  const cDesc=keys.find(k=>/^(desc|descp|description|deskripsi|namabarang|itemname|productname|namaproduk|itemdesc|descitem|namaitem)$/.test(k.toLowerCase().replace(/[^a-z]/g,'')));
+  const cogsIsUnit=sc.cogs&&/avg/i.test(sc.cogs);
+  const agg=new Map(),months=new Set(),stores=new Set(),desc=new Map();
+  const thisYear=new Date().getFullYear();
+  rows.forEach(r=>{
+    if(sc.type){const t=String(r[sc.type]||'').trim().toUpperCase();if(/^[VRX]/.test(t))return;}
+    const plu=mkPlu(r[sc.plu]);if(!plu)return;
+    const m=getMonthFromRow(r,sc);if(!m)return;
+    const y=getYearFromRow(r,sc)||thisYear;
+    const ym=y+'-'+String(m).padStart(2,'0');
+    const st=sc.store?merStore(r[sc.store]):'ALL';
+    const qty=sc.qty?parseN(r[sc.qty]):0,net=sc.net?parseN(r[sc.net]):0;
+    const cg=sc.cogs?(cogsIsUnit?parseN(r[sc.cogs])*qty:parseN(r[sc.cogs])):0;
+    const k=st+'|'+ym+'|'+plu;
+    let a=agg.get(k);if(!a){a={st,ym,plu,net:0,qty:0,cogs:0};agg.set(k,a);}
+    a.net+=net;a.qty+=qty;a.cogs+=cg;months.add(ym);stores.add(st);
+    if(cDesc&&!desc.has(plu)){const d=String(r[cDesc]||'').trim();if(d)desc.set(plu,d);}
   });
-  Object.values(m).forEach(v=>{v.sl=v.poV>0?v.rcV/v.poV*100:null;v.avgLt=v.lt.length?v.lt.reduce((a,b)=>a+b,0)/v.lt.length:null;});
+  recRows().forEach(r=>{if(!desc.has(r.plu)&&r.desc)desc.set(r.plu,r.desc);});
+  poLines().forEach(l=>{if(!desc.has(l.plu)&&l.desc)desc.set(l.plu,l.desc);});
+  const attr=plu=>{const i=master&&master.map.get(plu);const c=i&&i.category,p=i&&i.principal;return {cat:merBad(c)?'(Tanpa Kategori)':c,prin:merBad(p)?'(Tanpa Prinsipal)':p};};
+  const list=[...agg.values()];
+  list.forEach(a=>{const t=attr(a.plu);a.cat=t.cat;a.prin=t.prin;});
+  _merCache={src:rows,sig,list,months:[...months].sort(),stores:[...stores].sort(),desc,attr,hasCogs:!!sc.cogs,hasMaster:!!master};
+  return _merCache;
+}
+
+// ── Upload: PO Checking & Store Receipt ──
+function merReadXlsx(file,statusId,cb){
+  const st=document.getElementById(statusId);
+  const setS=(h,c)=>{if(st)st.innerHTML=`<div class="upload-status ${c||''}" style="margin-top:10px;font-size:12.5px">${h}</div>`;};
+  setS('⏳ Memproses file…');
+  const go=()=>{const rd=new FileReader();rd.onload=e=>{try{const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});cb(wb,setS);}catch(err){setS('❌ Error: '+merEsc(err.message),'error');console.error('[MERCH]',err);}};rd.readAsArrayBuffer(file);};
+  if(typeof XLSX==='undefined')ensureLib('xlsx').then(go).catch(()=>setS('❌ Gagal memuat pustaka Excel.','error'));else go();
+}
+function merFindSheet(wb,test){
+  for(const n of wb.SheetNames){
+    const a=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:'',blankrows:false,raw:true});
+    for(let i=0;i<Math.min(25,a.length);i++){const r=(a[i]||[]).map(v=>_oosS(v).toUpperCase());if(test(r))return {aoa:a,h:i,name:n};}
+  }
+  return null;
+}
+function merPersist(key,list,fname){
+  try{persistUpload(key,[{__meta:1,file:fname,loadedAt:new Date().toISOString()}].concat(list.map(o=>{const c={...o};for(const k in c)if(c[k] instanceof Date)c[k]=c[k].toISOString();return c;})),fname);}catch(e){console.warn('[MERCH] persist gagal',e);}
+}
+function poLines(){return (typeof uploads!=='undefined'&&uploads.po&&Array.isArray(uploads.po.lines))?uploads.po.lines:[];}
+function recRows(){return (typeof uploads!=='undefined'&&uploads.receipt&&Array.isArray(uploads.receipt.rows))?uploads.receipt.rows:[];}
+const poYm=d=>d&&!isNaN(d)?d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'):null;
+function handlePoFile(ev){
+  const f=ev.target.files&&ev.target.files[0];if(!f)return;
+  merReadXlsx(f,'status-po',(wb,setS)=>{
+    const S=merFindSheet(wb,r=>r.includes('PLU')&&r.some(v=>/SUPPLIER/.test(v)));
+    if(!S)throw new Error('Header (SUPPLIER NAME / PLU) tidak ditemukan');
+    const {aoa,h}=S;
+    const h1=(aoa[h]||[]).map(v=>_oosS(v).toUpperCase()),h2=(aoa[h+1]||[]).map(v=>_oosS(v).toUpperCase());
+    const twoRow=h2.some(v=>/QTY PO|VALUE PO|PO TYPE/.test(v));
+    const len=Math.max(h1.length,h2.length);
+    const names=[];for(let i=0;i<len;i++){const b=h2[i]||'';names.push(twoRow&&/[A-Z]/.test(b)?b:(h1[i]||''));}
+    const ix=(re,fb)=>{const i=names.findIndex(v=>re.test(v));return i>=0?i:fb;};
+    const C={sup:ix(/^SUPPLIER NAME$/,2),plu:ix(/^PLU$/,4),desc:ix(/^DESC/,5),tag:ix(/^TAG$/,9),po:ix(/^PO( DATE)?$|^TGL PO$/,13),type:ix(/PO TYPE/,14),no:ix(/INVOICE|^PO NO|^NO\.? PO/,15),qpo:ix(/QTY PO/,16),vpo:ix(/VALUE PO/,17),arr:ix(/ARRIVAL/,18),lpb:ix(/LPB/,19),qrc:ix(/QTY RECEIPT|QTY RECV|QTY LPB/,20),vrc:ix(/VALUE RECEIPT|VALUE RECV|VALUE LPB/,21)};
+    const lines=[];
+    for(let i=h+(twoRow?2:1);i<aoa.length;i++){
+      const r=aoa[i]||[];const plu=mkPlu(r[C.plu]);if(!plu||!/\d/.test(plu))continue;
+      const qPO=_oosN(r[C.qpo]),vPO=_oosN(r[C.vpo]);if(!qPO&&!vPO)continue;
+      lines.push({sup:_oosS(r[C.sup])||'(tanpa supplier)',plu,desc:_oosS(r[C.desc]),tag:_oosS(r[C.tag])||'-',po:_oosDate(r[C.po]),type:_oosS(r[C.type]).toUpperCase()||'-',no:_oosS(r[C.no]),qPO,vPO,arr:_oosDate(r[C.arr]),lpb:_oosS(r[C.lpb]),qRc:_oosN(r[C.qrc]),vRc:_oosN(r[C.vrc])});
+    }
+    if(!lines.length)throw new Error('Tidak ada baris PO terbaca');
+    uploads.po={lines,file:f.name,loadedAt:new Date().toISOString()};
+    merPersist('po',lines,f.name);
+    setS(`✅ <strong>${lines.length.toLocaleString('en-US')}</strong> baris PO dimuat · ${new Set(lines.map(l=>l.sup)).size} supplier · ${merEsc(f.name)}`,'success');
+    renderLeadTime();try{renderPrincipalPerf();}catch(_){}
+  });
+}
+const MER_MONIDX={JAN:1,FEB:2,MAR:3,APR:4,MAY:5,MEI:5,JUN:6,JUL:7,AUG:8,AGU:8,AGT:8,SEP:9,OCT:10,OKT:10,NOV:11,DEC:12,DES:12};
+function handleReceiptFile(ev){
+  const f=ev.target.files&&ev.target.files[0];if(!f)return;
+  merReadXlsx(f,'status-receipt',(wb,setS)=>{
+    const S=merFindSheet(wb,r=>r.includes('STORE CODE')&&r.includes('PLU'));
+    if(!S)throw new Error('Header (STORE CODE / PLU) tidak ditemukan — pastikan sheet berisi data mentah, bukan pivot');
+    const H=(S.aoa[S.h]||[]).map(v=>_oosS(v).toUpperCase());
+    const ix=re=>H.findIndex(v=>re.test(v));
+    const C={st:ix(/^STORE CODE$/),nm:ix(/^STORE NAME$/),plu:ix(/^PLU$/),desc:ix(/^DESC/),val:ix(/RECEIPT VALUE|^VALUE$|NILAI/),qty:ix(/RECEIPT QTY|^QTY$/),mon:ix(/^MONTH$|^BULAN$/),per:ix(/PERIOD/)};
+    if(C.st<0||C.plu<0)throw new Error('Kolom STORE CODE / PLU tidak ditemukan');
+    const rows=[],thisYear=new Date().getFullYear();
+    for(let i=S.h+1;i<S.aoa.length;i++){
+      const r=S.aoa[i]||[];const st=merStore(r[C.st]),plu=mkPlu(r[C.plu]);
+      if(!st||!plu||!/\d/.test(plu))continue;
+      const per=C.per>=0?_oosS(r[C.per]):'';
+      let mo=C.mon>=0?MER_MONIDX[_oosS(r[C.mon]).toUpperCase().slice(0,3)]:null;
+      if(!mo){const pm=per.match(/^\d{1,2}[-\/](\d{1,2})[-\/]\d{4}/);if(pm)mo=+pm[1];}
+      if(!mo)continue;
+      const yr=(per.match(/(\d{4})/)||[])[1]||thisYear;
+      rows.push({st,nm:C.nm>=0?_oosS(r[C.nm]):'',plu,desc:C.desc>=0?_oosS(r[C.desc]):'',val:C.val>=0?_oosN(r[C.val]):0,qty:C.qty>=0?_oosN(r[C.qty]):0,ym:yr+'-'+String(mo).padStart(2,'0')});
+    }
+    if(!rows.length)throw new Error('Tidak ada baris receipt terbaca');
+    uploads.receipt={rows,file:f.name,loadedAt:new Date().toISOString()};
+    merPersist('receipt',rows,f.name);
+    setS(`✅ <strong>${rows.length.toLocaleString('en-US')}</strong> baris receipt dimuat dari sheet "<strong>${merEsc(S.name)}</strong>" · ${new Set(rows.map(r=>r.st)).size} toko · ${merEsc(f.name)}`,'success');
+    _merCache=null;renderMerchReceipt();renderMerchSellThrough();
+  });
+}
+async function merRestore(){
+  const ok=(id,html)=>{const e=document.getElementById(id);if(e)e.innerHTML=`<div class="upload-status success" style="margin-top:10px;font-size:12.5px">${html}</div>`;};
+  try{const r=await dbLoadUpload('po');
+    if(r&&r.rows&&r.rows.length){const meta=r.rows[0]&&r.rows[0].__meta?r.rows[0]:null;
+      const lines=(meta?r.rows.slice(1):r.rows).map(o=>({...o,po:o.po?new Date(o.po):null,arr:o.arr?new Date(o.arr):null}));
+      uploads.po={lines,file:(meta&&meta.file)||r.filename||'tersimpan'};
+      ok('status-po',`✅ <strong>${lines.length.toLocaleString('en-US')}</strong> baris PO di-restore · ${merEsc(uploads.po.file)}`);
+      renderLeadTime();}
+  }catch(e){console.warn('[MERCH] restore PO gagal',e);}
+  try{const r=await dbLoadUpload('receipt');
+    if(r&&r.rows&&r.rows.length){const meta=r.rows[0]&&r.rows[0].__meta?r.rows[0]:null;
+      const rows=meta?r.rows.slice(1):r.rows;
+      uploads.receipt={rows,file:(meta&&meta.file)||r.filename||'tersimpan'};
+      ok('status-receipt',`✅ <strong>${rows.length.toLocaleString('en-US')}</strong> baris receipt di-restore · ${merEsc(uploads.receipt.file)}`);
+      _merCache=null;renderMerchReceipt();}
+  }catch(e){console.warn('[MERCH] restore receipt gagal',e);}
+}
+
+// ── 1. Sales Overview ──
+function renderMerchSales(){
+  const D=merSales();
+  if(!merGate('msMain','msNoData',!!D))return;
+  const w=document.getElementById('msMasterWarn');if(w)w.style.display=D.hasMaster?'none':'flex';
+  const fm=merFillSel('msMonth',D.months,merYmLabel,'Semua Bulan');
+  const fs=merFillSel('msStore',D.stores,null,'Semua Toko');
+  const q=merQ('msSearch');
+  const base=D.list.filter(a=>fs==='ALL'||a.st===fs);
+  const cur=base.filter(a=>fm==='ALL'||a.ym===fm);
+  const t=merSum(cur);
+  const prev=fm==='ALL'?null:merPrevYm(D.months,fm);
+  const tp=prev?merSum(base.filter(a=>a.ym===prev)):null;
+  const cn=tp&&tp.net>0?(t.net-tp.net)/tp.net*100:null;
+  merSet('ms-net',_fmtTk(t.net));
+  merSet('ms-net-sub',cn===null?(fm==='ALL'?`${D.months.length} bulan data`:'bulan pertama data'):`${cn>=0?'▲':'▼'} ${Math.abs(cn).toFixed(1)}% vs ${merYmLabel(prev)}`,cn===null?'':cn>=0?'#3fb950':'#f85149');
+  merSet('ms-qty',_fmtN(t.qty));merSet('ms-qty-sub',tp?`${merYmLabel(prev)}: ${_fmtN(tp.qty)} pcs`:'pcs');
+  merSet('ms-gm',D.hasCogs?_fmtTk(t.gm):'—');merSet('ms-gm-sub',D.hasCogs?(t.net>0?`GM ${(t.gm/t.net*100).toFixed(1)}%`:'—'):'kolom cost tidak ada');
+  const plus=merGroup(cur,a=>a.plu);
+  merSet('ms-sku',_fmtN(plus.length));merSet('ms-sku-sub',`${new Set(cur.map(a=>a.cat)).size} kategori · ${new Set(cur.map(a=>a.prin)).size} prinsipal`);
+  const tmap={};base.forEach(a=>{tmap[a.ym]=(tmap[a.ym]||0)+a.net;});
+  makeChart('msTrendChart',{type:'bar',data:{labels:D.months.map(merYmLabel),datasets:[{label:'Net Sales',data:D.months.map(m=>Math.round(tmap[m]||0)),backgroundColor:D.months.map(m=>fm==='ALL'||m===fm?'rgba(88,166,255,0.85)':'rgba(88,166,255,0.28)'),borderRadius:4}]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:false},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>_fmtTk(c.raw)}}},scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:merTkTick}}}}});
+  const cats=merGroup(cur,a=>a.cat).sort((a,b)=>b.net-a.net).slice(0,10);
+  merBarH('msCatChart',cats.map(c=>merCut(c.key,22)),cats.map(c=>Math.round(c.net)),'rgba(163,113,247,0.78)',c=>{const g=cats[c.dataIndex];return [_fmtTk(g.net),'Share '+(t.net?(g.net/t.net*100).toFixed(1):0)+'%',g.skus.size+' SKU'];});
+  let rows=plus.map(g=>({plu:g.key,desc:D.desc.get(g.key)||'',cat:g.cat,prin:g.prin,qty:g.qty,net:g.net,gm:D.hasCogs&&g.net>0?(g.net-g.cogs)/g.net*100:null}));
+  if(q)rows=rows.filter(r=>(r.plu+' '+r.desc+' '+r.cat+' '+r.prin).toLowerCase().includes(q));
+  rows.sort((a,b)=>b.net-a.net);
+  const PS=30,pg=merPage('ms',rows.length,PS);
+  const body=document.getElementById('msBody');
+  if(body)body.innerHTML=rows.slice((pg-1)*PS,pg*PS).map((r,i)=>`<tr><td style="color:var(--text3);font-family:var(--mono)">${(pg-1)*PS+i+1}</td><td style="font-family:var(--mono)">${r.plu}</td><td>${merEsc(merCut(r.desc,34))||'—'}</td><td style="font-size:11.5px">${merEsc(merCut(r.cat,22))}</td><td style="font-size:11.5px">${merEsc(merCut(r.prin,22))}</td><td class="right">${_fmtN(r.qty)}</td><td class="right" style="font-weight:600">${_fmtTk(r.net)}</td><td class="right" style="color:${r.gm===null?'var(--text3)':r.gm>=0?'#3fb950':'#f85149'}">${r.gm===null?'—':r.gm.toFixed(1)+'%'}</td><td class="right" style="color:#58a6ff">${t.net?(r.net/t.net*100).toFixed(2):'0.00'}%</td></tr>`).join('')||merEmpty(9);
+  merPager('msPager','ms',rows.length,PS,'renderMerchSales');
+  const sub=document.getElementById('msSub');if(sub)sub.textContent=`${rows.length.toLocaleString('en-US')} PLU · ${fm==='ALL'?'semua bulan':merYmLabel(fm)} · ${fs==='ALL'?'semua toko':'toko '+fs} · 30/halaman`;
+  _merLast.sales={name:'Sales_Overview_'+(fm==='ALL'?'All':fm),rows:[['PLU','Deskripsi','Kategori','Prinsipal','Qty','Net Sales','GM %','Share %']].concat(rows.map(r=>[r.plu,r.desc,r.cat,r.prin,Math.round(r.qty),Math.round(r.net),r.gm===null?'':+r.gm.toFixed(1),t.net?+(r.net/t.net*100).toFixed(2):0]))};
+}
+
+// ── 2. Market Share by Category ──
+function renderMerchShareCat(){
+  const D=merSales();
+  if(!merGate('mcMain','mcNoData',!!D))return;
+  const w=document.getElementById('mcMasterWarn');if(w)w.style.display=D.hasMaster?'none':'flex';
+  const fm=merFillSel('mcMonth',D.months,merYmLabel,'Semua Bulan');
+  const fs=merFillSel('mcStore',D.stores,null,'Semua Toko');
+  const base=D.list.filter(a=>fs==='ALL'||a.st===fs);
+  const cur=base.filter(a=>fm==='ALL'||a.ym===fm);
+  const tot=merSum(cur).net;
+  const prev=fm==='ALL'?null:merPrevYm(D.months,fm);
+  const pm={};let ptot=0;
+  if(prev)base.forEach(a=>{if(a.ym===prev){pm[a.cat]=(pm[a.cat]||0)+a.net;ptot+=a.net;}});
+  const rows=merGroup(cur,a=>a.cat).map(x=>{const sh=tot?x.net/tot*100:0;const ps=prev&&ptot?(pm[x.key]||0)/ptot*100:null;return {cat:x.key,net:x.net,sh,ps,d:ps===null?null:sh-ps,prins:x.prins.size,skus:x.skus.size};}).sort((a,b)=>b.net-a.net);
+  merSet('mc-count',_fmtN(rows.length));merSet('mc-count-sub','total '+_fmtTk(tot));
+  merSet('mc-top',rows[0]?merCut(rows[0].cat,20):'—');merSet('mc-top-sub',rows[0]?`share ${rows[0].sh.toFixed(1)}% · ${_fmtTk(rows[0].net)}`:'—');
+  merSet('mc-conc',rows.slice(0,5).reduce((s,r)=>s+r.sh,0).toFixed(1)+'%');
+  const gain=prev?[...rows].filter(r=>r.d!==null).sort((a,b)=>b.d-a.d)[0]:null;
+  merSet('mc-gain',gain&&gain.d>0?merCut(gain.cat,20):'—');
+  merSet('mc-gain-sub',prev?(gain&&gain.d>0?`+${gain.d.toFixed(2)} pp vs ${merYmLabel(prev)}`:'tidak ada kenaikan'):'pilih bulan untuk membandingkan',gain&&gain.d>0?'#3fb950':'');
+  const pie=rows.slice(0,9).map(r=>({k:r.cat,v:r.sh}));const rest=rows.slice(9).reduce((s,r)=>s+r.sh,0);if(rest>0)pie.push({k:'Lainnya',v:rest});
+  makeChart('mcPieChart',{type:'doughnut',data:{labels:pie.map(p=>merCut(p.k,24)),datasets:[{data:pie.map(p=>+p.v.toFixed(2)),backgroundColor:MER_PAL,borderColor:'transparent'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{color:'#8b949e',boxWidth:10,font:{size:11}}},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>' '+c.label+': '+c.raw+'%'}}}}});
+  const mt={},cm={},ct={};
+  base.forEach(a=>{mt[a.ym]=(mt[a.ym]||0)+a.net;cm[a.cat+'|'+a.ym]=(cm[a.cat+'|'+a.ym]||0)+a.net;ct[a.cat]=(ct[a.cat]||0)+a.net;});
+  const top6=Object.entries(ct).sort((a,b)=>b[1]-a[1]).slice(0,6).map(e=>e[0]);
+  makeChart('mcTrendChart',{type:'line',data:{labels:D.months.map(merYmLabel),datasets:top6.map((c,i)=>({label:merCut(c,18),data:D.months.map(m=>mt[m]?+((cm[c+'|'+m]||0)/mt[m]*100).toFixed(2):null),borderColor:MER_PAL[i],backgroundColor:MER_PAL[i]+'22',tension:.3,pointRadius:3,spanGaps:true}))},options:{...chartDefaults,plugins:{...chartDefaults.plugins,tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>c.dataset.label+': '+(c.raw==null?'—':c.raw+'%')}}},scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>v+'%'}}}}});
+  const PS=30,pg=merPage('mc',rows.length,PS);
+  const dCell=d=>d===null?'<span style="color:var(--text3)">—</span>':`<span style="color:${d>0?'#3fb950':d<0?'#f85149':'var(--text3)'};font-weight:600">${d>0?'+':''}${d.toFixed(2)}</span>`;
+  const body=document.getElementById('mcBody');
+  if(body)body.innerHTML=rows.slice((pg-1)*PS,pg*PS).map((r,i)=>`<tr><td style="color:var(--text3);font-family:var(--mono)">${(pg-1)*PS+i+1}</td><td style="font-weight:600">${merEsc(r.cat)}</td><td class="right">${_fmtTk(r.net)}</td><td class="right" style="color:#58a6ff;font-weight:600">${r.sh.toFixed(2)}%</td><td class="right" style="color:var(--text3)">${r.ps===null?'—':r.ps.toFixed(2)+'%'}</td><td class="right">${dCell(r.d)}</td><td class="right" style="color:var(--text3)">${r.prins}</td><td class="right" style="color:var(--text3)">${r.skus}</td></tr>`).join('')||merEmpty(8);
+  merPager('mcPager','mc',rows.length,PS,'renderMerchShareCat');
+  const sub=document.getElementById('mcSub');if(sub)sub.textContent=`${rows.length} kategori · ${fm==='ALL'?'semua bulan':merYmLabel(fm)}${prev?' dibanding '+merYmLabel(prev):''} · ${fs==='ALL'?'semua toko':'toko '+fs}`;
+  _merLast.cat={name:'Market_Share_Kategori_'+(fm==='ALL'?'All':fm),rows:[['Kategori','Net Sales','Share %','Share Bln Lalu %','Delta pp','Prinsipal','SKU']].concat(rows.map(r=>[r.cat,Math.round(r.net),+r.sh.toFixed(2),r.ps===null?'':+r.ps.toFixed(2),r.d===null?'':+r.d.toFixed(2),r.prins,r.skus]))};
+}
+
+// ── 3. Market Share by Principal ──
+function renderMerchSharePrin(){
+  const D=merSales();
+  if(!merGate('mpMain','mpNoData',!!D))return;
+  const w=document.getElementById('mpMasterWarn');if(w)w.style.display=D.hasMaster?'none':'flex';
+  const fm=merFillSel('mpMonth',D.months,merYmLabel,'Semua Bulan');
+  const fs=merFillSel('mpStore',D.stores,null,'Semua Toko');
+  const fc=merFillSel('mpCat',[...new Set(D.list.map(a=>a.cat))].sort(),null,'Semua Kategori');
+  const q=merQ('mpSearch');
+  const base=D.list.filter(a=>(fs==='ALL'||a.st===fs)&&(fc==='ALL'||a.cat===fc));
+  const cur=base.filter(a=>fm==='ALL'||a.ym===fm);
+  const tot=merSum(cur).net;
+  const prev=fm==='ALL'?null:merPrevYm(D.months,fm);
+  const pm={};let ptot=0;
+  if(prev)base.forEach(a=>{if(a.ym===prev){pm[a.prin]=(pm[a.prin]||0)+a.net;ptot+=a.net;}});
+  const prevRank={};Object.entries(pm).sort((a,b)=>b[1]-a[1]).forEach((e,i)=>{prevRank[e[0]]=i+1;});
+  const pc={};cur.forEach(a=>{const k=a.prin;(pc[k]=pc[k]||{})[a.cat]=(pc[k][a.cat]||0)+a.net;});
+  let rows=merGroup(cur,a=>a.prin).sort((a,b)=>b.net-a.net).map((x,i)=>{
+    const sh=tot?x.net/tot*100:0,ps=prev&&ptot?(pm[x.key]||0)/ptot*100:null;
+    const pr=prevRank[x.key];const topCat=Object.entries(pc[x.key]||{}).sort((a,b)=>b[1]-a[1])[0];
+    return {rank:i+1,prin:x.key,net:x.net,sh,ps,d:ps===null?null:sh-ps,dr:prev?(pr?pr-(i+1):'new'):null,topCat:topCat?topCat[0]:'—',topCatSh:topCat&&x.net?topCat[1]/x.net*100:0,skus:x.skus.size};
+  });
+  merSet('mp-count',_fmtN(rows.length));merSet('mp-count-sub',(fc==='ALL'?'semua kategori':'kategori '+merCut(fc,20))+' · '+_fmtTk(tot));
+  merSet('mp-top',rows[0]?merCut(rows[0].prin,20):'—');merSet('mp-top-sub',rows[0]?`share ${rows[0].sh.toFixed(1)}% · ${_fmtTk(rows[0].net)}`:'—');
+  merSet('mp-conc',rows.slice(0,5).reduce((s,r)=>s+r.sh,0).toFixed(1)+'%');
+  const riser=prev?rows.filter(r=>typeof r.dr==='number'&&r.dr>0).sort((a,b)=>b.dr-a.dr)[0]:null;
+  merSet('mp-rise',riser?merCut(riser.prin,20):'—');
+  merSet('mp-rise-sub',prev?(riser?`▲ ${riser.dr} peringkat → #${riser.rank} vs ${merYmLabel(prev)}`:'tidak ada kenaikan'):'pilih bulan untuk membandingkan',riser?'#3fb950':'');
+  const top=rows.slice(0,10);
+  const ct=document.getElementById('mpChartTitle');if(ct)ct.textContent=fc==='ALL'?'Top 10 Prinsipal — Share':'Top 10 Prinsipal di '+merCut(fc,30);
+  merBarH('mpTopChart',top.map(r=>merCut(r.prin,24)),top.map(r=>+r.sh.toFixed(2)),'rgba(88,166,255,0.8)',c=>{const r=top[c.dataIndex];return ['Share '+r.sh.toFixed(2)+'%',_fmtTk(r.net),r.skus+' SKU'];},v=>v+'%');
+  const ch=document.getElementById('mpCatHead');if(ch)ch.textContent=fc==='ALL'?'Kategori Utama':'Kategori';
+  if(q)rows=rows.filter(r=>r.prin.toLowerCase().includes(q));
+  const PS=30,pg=merPage('mp',rows.length,PS);
+  const drCell=d=>d===null?'<span style="color:var(--text3)">—</span>':d==='new'?'<span style="color:#58a6ff;font-weight:600;font-size:11px">BARU</span>':d===0?'<span style="color:var(--text3)">=</span>':`<span style="color:${d>0?'#3fb950':'#f85149'};font-weight:600">${d>0?'▲':'▼'} ${Math.abs(d)}</span>`;
+  const dCell=d=>d===null?'<span style="color:var(--text3)">—</span>':`<span style="color:${d>0?'#3fb950':d<0?'#f85149':'var(--text3)'};font-weight:600">${d>0?'+':''}${d.toFixed(2)}</span>`;
+  const body=document.getElementById('mpBody');
+  if(body)body.innerHTML=rows.slice((pg-1)*PS,pg*PS).map(r=>`<tr><td style="font-family:var(--mono);color:var(--text3)">${r.rank}</td><td class="right">${drCell(r.dr)}</td><td style="font-weight:600">${merEsc(merCut(r.prin,34))}</td><td style="font-size:11.5px;color:var(--text2)">${merEsc(merCut(r.topCat,22))}${fc==='ALL'?` <span style="color:var(--text3)">(${r.topCatSh.toFixed(0)}%)</span>`:''}</td><td class="right">${_fmtTk(r.net)}</td><td class="right" style="color:#58a6ff;font-weight:600">${r.sh.toFixed(2)}%</td><td class="right" style="color:var(--text3)">${r.ps===null?'—':r.ps.toFixed(2)+'%'}</td><td class="right">${dCell(r.d)}</td><td class="right" style="color:var(--text3)">${r.skus}</td></tr>`).join('')||merEmpty(9);
+  merPager('mpPager','mp',rows.length,PS,'renderMerchSharePrin');
+  const sub=document.getElementById('mpSub');if(sub)sub.textContent=`${rows.length} prinsipal · ${fm==='ALL'?'semua bulan':merYmLabel(fm)}${prev?' dibanding '+merYmLabel(prev):''} · 30/halaman`;
+  _merLast.prin={name:'Market_Share_Prinsipal_'+(fm==='ALL'?'All':fm),rows:[['Rank','Delta Rank','Prinsipal','Kategori Utama','Net Sales','Share %','Share Bln Lalu %','Delta pp','SKU']].concat(rows.map(r=>[r.rank,r.dr===null?'':r.dr,r.prin,r.topCat,Math.round(r.net),+r.sh.toFixed(2),r.ps===null?'':+r.ps.toFixed(2),r.d===null?'':+r.d.toFixed(2),r.skus]))};
+}
+
+// ── 4. Store Receipt ──
+function renderMerchReceipt(){
+  const all=recRows();
+  if(!merGate('mrMain','mrNoData',all.length>0))return;
+  const months=[...new Set(all.map(r=>r.ym))].sort();
+  const names={};all.forEach(r=>{if(r.nm&&!names[r.st])names[r.st]=r.nm;});
+  const stores=Object.keys(names).length?[...new Set(all.map(r=>r.st))].sort():[...new Set(all.map(r=>r.st))].sort();
+  const fm=merFillSel('mrMonth',months,merYmLabel,'Semua Bulan');
+  const fs=merFillSel('mrStore',stores,s=>s+(names[s]?' — '+names[s]:''),'Semua Toko');
+  const q=merQ('mrSearch');
+  const fi=document.getElementById('mrFile');if(fi)fi.textContent=uploads.receipt.file?'File: '+uploads.receipt.file:'';
+  const base=all.filter(r=>fs==='ALL'||r.st===fs);
+  const cur=base.filter(r=>fm==='ALL'||r.ym===fm);
+  let tv=0,tq=0;const plus=new Set(),sts=new Set();cur.forEach(r=>{tv+=r.val;tq+=r.qty;plus.add(r.plu);sts.add(r.st);});
+  merSet('mr-val',_fmtTk(tv));merSet('mr-val-sub',`${fm==='ALL'?months.length+' bulan':merYmLabel(fm)} · ${fs==='ALL'?'semua toko':fs}`);
+  merSet('mr-qty',_fmtN(tq));merSet('mr-plu',_fmtN(plus.size));
+  merSet('mr-avg',sts.size?_fmtTk(tv/sts.size):'—');merSet('mr-avg-sub',`${sts.size} toko`);
+  // Deteksi bulan janggal (< 40% median)
+  const mtAll={};all.forEach(r=>{mtAll[r.ym]=(mtAll[r.ym]||0)+r.val;});
+  const vals=Object.values(mtAll).sort((a,b)=>a-b);const med=vals.length?vals[Math.floor(vals.length/2)]:0;
+  const odd=months.filter(m=>med>0&&mtAll[m]<med*0.4);
+  const wb=document.getElementById('mrWarn'),wt=document.getElementById('mrWarnText');
+  if(wb){wb.style.display=odd.length?'flex':'none';if(wt&&odd.length)wt.innerHTML=`<strong>Data bulan ${odd.map(merYmLabel).join(', ')} jauh di bawah normal</strong> (${odd.map(m=>_fmtTk(mtAll[m])).join(', ')} vs median ${_fmtTk(med)}). Kemungkinan data belum lengkap — cek file sumber sebelum dipakai untuk analisa.`;}
+  const stList=[...new Set(base.map(r=>r.st))].sort();
+  const sm={};base.forEach(r=>{sm[r.st+'|'+r.ym]=(sm[r.st+'|'+r.ym]||0)+r.val;});
+  makeChart('mrTrendChart',{type:'bar',data:{labels:months.map(merYmLabel),datasets:stList.map((s,i)=>({label:s+(names[s]?' '+merCut(names[s],14):''),data:months.map(m=>Math.round(sm[s+'|'+m]||0)),backgroundColor:MER_PAL[i%MER_PAL.length],borderRadius:2}))},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{...chartDefaults.plugins.legend,labels:{...((chartDefaults.plugins.legend||{}).labels||{}),boxWidth:10,font:{size:10}}},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>c.dataset.label+': '+_fmtTk(c.raw)}}},scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,stacked:true},y:{...chartDefaults.scales.y,stacked:true,ticks:{...chartDefaults.scales.y.ticks,callback:merTkTick}}}}});
+  const gs={};cur.forEach(r=>{const g=gs[r.st]||(gs[r.st]={st:r.st,v:0,q:0,p:new Set()});g.v+=r.val;g.q+=r.qty;g.p.add(r.plu);});
+  const sRows=Object.values(gs).sort((a,b)=>b.v-a.v);
+  const sb=document.getElementById('mrStoreBody');
+  if(sb)sb.innerHTML=sRows.map(g=>`<tr><td style="font-family:var(--mono);font-weight:600">${g.st}</td><td>${merEsc(names[g.st]||'—')}</td><td class="right" style="font-weight:600">${_fmtTk(g.v)}</td><td class="right">${_fmtN(g.q)}</td><td class="right" style="color:var(--text3)">${_fmtN(g.p.size)}</td><td class="right" style="color:#58a6ff">${tv?(g.v/tv*100).toFixed(1):0}%</td></tr>`).join('')||merEmpty(6);
+  const sf=document.getElementById('mrStoreFoot');
+  if(sf)sf.innerHTML=sRows.length?`<tr style="font-weight:700;border-top:2px solid var(--border);background:var(--surface2)"><td colspan="2">TOTAL</td><td class="right">${_fmtTk(tv)}</td><td class="right">${_fmtN(tq)}</td><td class="right">${_fmtN(plus.size)}</td><td class="right">100%</td></tr>`:'';
+  const ss=document.getElementById('mrStoreSub');if(ss)ss.textContent=`${sRows.length} toko · ${fm==='ALL'?'semua bulan':merYmLabel(fm)}`;
+  const gp={};cur.forEach(r=>{const g=gp[r.plu]||(gp[r.plu]={plu:r.plu,desc:r.desc,v:0,q:0,s:new Set()});g.v+=r.val;g.q+=r.qty;g.s.add(r.st);if(!g.desc&&r.desc)g.desc=r.desc;});
+  let pRows=Object.values(gp).sort((a,b)=>b.v-a.v);
+  if(q)pRows=pRows.filter(r=>(r.plu+' '+r.desc).toLowerCase().includes(q));
+  const PS=30,pg=merPage('mr',pRows.length,PS);
+  const pb=document.getElementById('mrPluBody');
+  if(pb)pb.innerHTML=pRows.slice((pg-1)*PS,pg*PS).map((r,i)=>`<tr><td style="color:var(--text3);font-family:var(--mono)">${(pg-1)*PS+i+1}</td><td style="font-family:var(--mono)">${r.plu}</td><td>${merEsc(merCut(r.desc,40))||'—'}</td><td class="right" style="font-weight:600">${_fmtTk(r.v)}</td><td class="right">${_fmtN(r.q)}</td><td class="right" style="color:var(--text3)">${r.s.size}</td></tr>`).join('')||merEmpty(6);
+  merPager('mrPager','mr',pRows.length,PS,'renderMerchReceipt');
+  const ps=document.getElementById('mrPluSub');if(ps)ps.textContent=`${pRows.length.toLocaleString('en-US')} PLU · diurutkan dari nilai terbesar · 30/halaman`;
+  _merLast.receipt={name:'Store_Receipt_'+(fm==='ALL'?'All':fm),rows:[['PLU','Deskripsi','Nilai Receipt','Qty Receipt','Jumlah Toko']].concat(pRows.map(r=>[r.plu,r.desc,Math.round(r.v),Math.round(r.q),r.s.size]))};
+}
+
+// ── 5. Receipt vs Sales (Sell-Through) ──
+function renderMerchSellThrough(){
+  const D=merSales(),R=recRows();
+  const ok=!!D&&R.length>0;
+  const msg=!D&&!R.length?'Butuh <strong>data sales</strong> dan file <strong>Store Receipt</strong>. Upload keduanya di Data Management.':(!D?'Butuh <strong>data sales</strong>. Upload di Data Management.':'Butuh file <strong>Store Receipt</strong>. Upload di Data Management.');
+  if(!merGate('stMain','stNoData',ok,msg))return;
+  const rMonths=new Set(R.map(r=>r.ym)),rStores=[...new Set(R.map(r=>r.st))].sort();
+  const months=D.months.filter(m=>rMonths.has(m)),stores=rStores.filter(s=>D.stores.includes(s));
+  const wb=document.getElementById('stWarn'),wt=document.getElementById('stWarnText'),wrap=document.getElementById('stBodyWrap');
+  if(!months.length||!stores.length){
+    if(wb){wb.style.display='flex';wt.innerHTML=!stores.length?`<strong>Kode toko tidak cocok</strong> antara data sales (${D.stores.slice(0,5).map(merEsc).join(', ')}) dan Store Receipt (${rStores.slice(0,5).map(merEsc).join(', ')}). Pastikan kode toko sama di kedua file.`:`<strong>Tidak ada bulan yang sama</strong> — sales: ${D.months.map(merYmLabel).join(', ')}; receipt: ${[...rMonths].sort().map(merYmLabel).join(', ')}.`;}
+    if(wrap)wrap.style.display='none';_merLast.st=null;return;
+  }
+  if(wrap)wrap.style.display='block';
+  const fm=merFillSel('stMonth',months,merYmLabel,'Semua Bulan (overlap)');
+  const fs=merFillSel('stStore',stores,null,'Semua Toko');
+  const fst=(document.getElementById('stStatus')||{}).value||'ALL';
+  const q=merQ('stSearch');
+  const missM=D.months.length!==months.length||rMonths.size!==months.length;
+  if(wb){wb.style.display=missM&&fm==='ALL'?'flex':'none';if(wt&&missM)wt.innerHTML=`Perbandingan hanya pada bulan yang ada di kedua data: <strong>${months.map(merYmLabel).join(', ')}</strong>.`;}
+  const inM=m=>fm==='ALL'?months.includes(m):m===fm,inS=s=>fs==='ALL'?stores.includes(s):s===fs;
+  const map=new Map();
+  const g=(st,plu)=>{const k=st+'|'+plu;let x=map.get(k);if(!x){x={st,plu,rq:0,rv:0,sq:0,sn:0};map.set(k,x);}return x;};
+  const rDesc={};
+  R.forEach(r=>{if(inM(r.ym)&&inS(r.st)){const x=g(r.st,r.plu);x.rq+=r.qty;x.rv+=r.val;if(r.desc&&!rDesc[r.plu])rDesc[r.plu]=r.desc;}});
+  D.list.forEach(a=>{if(inM(a.ym)&&inS(a.st)){const x=g(a.st,a.plu);x.sq+=a.qty;x.sn+=a.net;}});
+  let rows=[...map.values()].map(x=>{
+    x.stp=x.rq>0?x.sq/x.rq*100:null;
+    x.s=x.rq<=0?(x.sq>0?'norc':null):(x.sq<=0?'dead':x.stp<ST_OVER?'over':x.stp>ST_UNDER?'under':'normal');
+    x.desc=D.desc.get(x.plu)||rDesc[x.plu]||'';x.cat=D.attr(x.plu).cat;return x;
+  }).filter(x=>x.s);
+  let trq=0,tsq=0,tsqR=0;const cnt={dead:0,over:0,under:0,norc:0,normal:0},val={dead:0,over:0,under:0,norc:0,normal:0};
+  rows.forEach(x=>{trq+=x.rq;tsq+=x.sq;if(x.rq>0)tsqR+=x.sq;cnt[x.s]++;val[x.s]+=x.s==='norc'?x.sn:x.rv;});
+  const stAll=trq>0?tsqR/trq*100:null;
+  merSet('st-rq',_fmtN(trq));merSet('st-rq-sub',`${rows.filter(x=>x.rq>0).length.toLocaleString('en-US')} kombinasi toko×PLU`);
+  merSet('st-sq',_fmtN(tsq));merSet('st-sq-sub',`${fm==='ALL'?months.length+' bulan':merYmLabel(fm)}`);
+  merSet('st-pct',stAll===null?'—':stAll.toFixed(1)+'%',stAll===null?'':stAll<ST_OVER?'#d29922':stAll>ST_UNDER?'#a371f7':'#3fb950');
+  const cards=document.getElementById('stCards');
+  if(cards)cards.innerHTML=['dead','over','under','norc','normal'].map(k=>{const d=ST_DEF[k],act=fst===k;return `<div onclick="document.getElementById('stStatus').value='${act?'ALL':k}';_merPg.st=1;renderMerchSellThrough()" style="cursor:pointer;background:${act?d.c+'22':'var(--surface2)'};border:1px solid ${act?d.c:'var(--border)'};border-left:3px solid ${d.c};border-radius:6px;padding:10px 12px"><div style="font-size:11px;font-weight:700;color:${d.c};text-transform:uppercase;letter-spacing:.4px">${d.l}</div><div style="font-size:20px;font-weight:700;margin:2px 0">${_fmtN(cnt[k])}</div><div style="font-size:11px;color:var(--text3)">${_fmtTk(val[k])} ${k==='norc'?'sales':'receipt'}</div></div>`;}).join('');
+  const bs={};rows.forEach(x=>{const b=bs[x.st]||(bs[x.st]={rq:0,sq:0});if(x.rq>0){b.rq+=x.rq;b.sq+=x.sq;}});
+  const sArr=Object.entries(bs).map(([s,b])=>({s,p:b.rq>0?b.sq/b.rq*100:0})).sort((a,b)=>a.s.localeCompare(b.s));
+  makeChart('stStoreChart',{type:'bar',data:{labels:sArr.map(x=>x.s),datasets:[{label:'Sell-Through',data:sArr.map(x=>+x.p.toFixed(1)),backgroundColor:sArr.map(x=>x.p<ST_OVER?'#d29922cc':x.p>ST_UNDER?'#a371f7cc':'#3fb950cc'),borderRadius:4},{type:'line',label:'Batas bawah',data:sArr.map(()=>ST_OVER),borderColor:'#3fb950',borderDash:[5,4],pointRadius:0},{type:'line',label:'Batas atas',data:sArr.map(()=>ST_UNDER),borderColor:'#3fb950',borderDash:[5,4],pointRadius:0}]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:false},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>c.dataset.label+': '+c.raw+'%'}}},scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,beginAtZero:true,ticks:{...chartDefaults.scales.y.ticks,callback:v=>v+'%'}}}}});
+  if(fst!=='ALL')rows=rows.filter(x=>x.s===fst);
+  if(q)rows=rows.filter(x=>(x.plu+' '+x.desc+' '+x.cat).toLowerCase().includes(q));
+  rows.sort((a,b)=>ST_DEF[a.s].o-ST_DEF[b.s].o||(b.rv||b.sn)-(a.rv||a.sn));
+  const PS=30,pg=merPage('st',rows.length,PS);
+  const body=document.getElementById('stBody');
+  if(body)body.innerHTML=rows.slice((pg-1)*PS,pg*PS).map(x=>{const d=ST_DEF[x.s];return `<tr><td style="font-family:var(--mono);font-weight:600">${x.st}</td><td style="font-family:var(--mono)">${x.plu}</td><td>${merEsc(merCut(x.desc,30))||'—'}</td><td style="font-size:11.5px;color:var(--text2)">${merEsc(merCut(x.cat,20))}</td><td class="right">${_fmtN(x.rq)}</td><td class="right">${_fmtN(x.sq)}</td><td class="right" style="font-weight:700;color:${d.c}">${x.stp===null?'—':x.stp.toFixed(0)+'%'}</td><td class="right">${_fmtTk(x.rv)}</td><td class="right">${_fmtTk(x.sn)}</td><td><span style="font-size:11px;padding:2px 8px;border-radius:10px;background:${d.c}22;color:${d.c};font-weight:600;white-space:nowrap">${d.l}</span></td></tr>`;}).join('')||merEmpty(10);
+  merPager('stPager','st',rows.length,PS,'renderMerchSellThrough');
+  const sub=document.getElementById('stSub');if(sub)sub.textContent=`${rows.length.toLocaleString('en-US')} baris${fst!=='ALL'?' · status '+ST_DEF[fst].l:''} · ${fm==='ALL'?'bulan overlap':merYmLabel(fm)} · 30/halaman`;
+  _merLast.st={name:'Sell_Through_'+(fm==='ALL'?'All':fm),rows:[['Toko','PLU','Deskripsi','Kategori','Qty Diterima','Qty Terjual','Sell-Through %','Nilai Receipt','Net Sales','Status']].concat(rows.map(x=>[x.st,x.plu,x.desc,x.cat,Math.round(x.rq),Math.round(x.sq),x.stp===null?'':+x.stp.toFixed(1),Math.round(x.rv),Math.round(x.sn),ST_DEF[x.s].l]))};
+}
+
+// ── 6. PO Service Level & Lead Time ──
+function renderLeadTime(){
+  const all=poLines();
+  if(!merGate('ltMain','ltNoData',all.length>0))return;
+  const fi=document.getElementById('ltFile');if(fi)fi.textContent=uploads.po.file?'File: '+uploads.po.file:'';
+  const months=[...new Set(all.map(l=>poYm(l.po)).filter(Boolean))].sort();
+  const fm=merFillSel('ltMonth',months,merYmLabel,'Semua Bulan');
+  const ft=merFillSel('ltType',[...new Set(all.map(l=>l.type))].sort(),null,'Semua Tipe');
+  const q=merQ('ltSup');
+  const base=all.filter(l=>(ft==='ALL'||l.type===ft)&&(!q||l.sup.toLowerCase().includes(q)));
+  const cur=base.filter(l=>fm==='ALL'||poYm(l.po)===fm);
+  const today=new Date();today.setHours(0,0,0,0);
+  let qP=0,qR=0,vP=0,vR=0,zero=0,ltS=0,ltN=0;const over=[],sm={};
+  cur.forEach(l=>{
+    qP+=l.qPO;qR+=l.qRc;vP+=l.vPO;vR+=l.vRc;if(l.qRc<=0)zero++;
+    let lt=null;if(l.po&&l.arr){const d=(l.arr-l.po)/864e5;if(d>=0&&d<365){lt=d;ltS+=d;ltN++;}}
+    const isOver=l.qRc<l.qPO&&l.arr&&l.arr<today;
+    if(isOver)over.push({...l,late:Math.floor((today-l.arr)/864e5),outV:Math.max(0,l.vPO-l.vRc)});
+    const s=sm[l.sup]||(sm[l.sup]={sup:l.sup,n:0,vP:0,vR:0,qP:0,qR:0,zero:0,ltS:0,ltN:0,over:0});
+    s.n++;s.vP+=l.vPO;s.vR+=l.vRc;s.qP+=l.qPO;s.qR+=l.qRc;if(l.qRc<=0)s.zero++;if(lt!==null){s.ltS+=lt;s.ltN++;}if(isOver)s.over++;
+  });
+  const slv=merPct(vR,vP),slq=merPct(qR,qP);
+  merSet('lt-slv',slv===null?'—':slv.toFixed(1)+'%',slv===null?'':slColor(slv));merSet('lt-slv-sub',`${_fmtTk(vR)} dari ${_fmtTk(vP)}`);
+  merSet('lt-slq',slq===null?'—':slq.toFixed(1)+'%',slq===null?'':slColor(slq));merSet('lt-slq-sub',`${_fmtN(qR)} dari ${_fmtN(qP)} pcs`);
+  merSet('lt-zero',_fmtN(zero),zero?'#f85149':'');merSet('lt-zero-sub',cur.length?`${(zero/cur.length*100).toFixed(0)}% dari ${cur.length.toLocaleString('en-US')} baris PO`:'—');
+  merSet('lt-avglt',ltN?(ltS/ltN).toFixed(1)+' hr':'—');
+  merSet('lt-over',_fmtN(over.length),over.length?'#d29922':'');merSet('lt-over-sub',_fmtTk(over.reduce((s,o)=>s+o.outV,0))+' belum diterima');
+  const bm={};base.forEach(l=>{const m=poYm(l.po);if(!m)return;const b=bm[m]||(bm[m]={vP:0,vR:0,qP:0,qR:0});b.vP+=l.vPO;b.vR+=l.vRc;b.qP+=l.qPO;b.qR+=l.qRc;});
+  makeChart('ltTrendChart',{type:'line',data:{labels:months.map(merYmLabel),datasets:[
+    {label:'SL Value',data:months.map(m=>bm[m]&&bm[m].vP>0?+(bm[m].vR/bm[m].vP*100).toFixed(1):null),borderColor:'#58a6ff',backgroundColor:'#58a6ff22',tension:.3,pointRadius:4,spanGaps:true},
+    {label:'SL Qty',data:months.map(m=>bm[m]&&bm[m].qP>0?+(bm[m].qR/bm[m].qP*100).toFixed(1):null),borderColor:'#a371f7',backgroundColor:'#a371f722',tension:.3,pointRadius:4,spanGaps:true},
+    {label:`Target ${SL_GOOD}%`,data:months.map(()=>SL_GOOD),borderColor:'#3fb950',borderDash:[6,4],pointRadius:0,fill:false}
+  ]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>c.dataset.label+': '+(c.raw==null?'—':c.raw+'%')}}},scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,min:0,max:100,ticks:{...chartDefaults.scales.y.ticks,callback:v=>v+'%'}}}}});
+  const sArr=Object.values(sm).map(s=>({...s,slv:merPct(s.vR,s.vP),slq:merPct(s.qR,s.qP),out:Math.max(0,s.vP-s.vR),lt:s.ltN?s.ltS/s.ltN:null}));
+  const worst=[...sArr].sort((a,b)=>b.vP-a.vP).slice(0,30).filter(s=>s.slv!==null).sort((a,b)=>a.slv-b.slv).slice(0,10);
+  merBarH('ltSupChart',worst.map(s=>merCut(s.sup,22)),worst.map(s=>+s.slv.toFixed(1)),worst.map(s=>slColor(s.slv)+'cc'),c=>{const s=worst[c.dataIndex];return ['SL Value '+s.slv.toFixed(1)+'%','PO '+_fmtTk(s.vP),'Receipt '+_fmtTk(s.vR)];},v=>v+'%');
+  const bk=[{l:'1–7 hari',f:d=>d<=7,c:'#d29922'},{l:'8–14 hari',f:d=>d>7&&d<=14,c:'#f0883e'},{l:'15–30 hari',f:d=>d>14&&d<=30,c:'#f85149'},{l:'31–60 hari',f:d=>d>30&&d<=60,c:'#da3633'},{l:'> 60 hari',f:d=>d>60,c:'#b62324'}];
+  makeChart('ltAgingChart',{type:'bar',data:{labels:bk.map(b=>b.l),datasets:[{label:'Baris PO',data:bk.map(b=>over.filter(o=>b.f(o.late)).length),backgroundColor:bk.map(b=>b.c),borderRadius:4}]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:false},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>{const b=bk[c.dataIndex];const ls=over.filter(o=>b.f(o.late));return [ls.length+' baris PO',_fmtTk(ls.reduce((s,o)=>s+o.outV,0))+' outstanding'];}}}}}});
+  sArr.sort((a,b)=>b.out-a.out);
+  const PS=30,pg=merPage('lt',sArr.length,PS);
+  const body=document.getElementById('ltBody');
+  if(body)body.innerHTML=sArr.slice((pg-1)*PS,pg*PS).map((s,i)=>`<tr><td style="color:var(--text3);font-family:var(--mono)">${(pg-1)*PS+i+1}</td><td style="font-weight:600">${merEsc(merCut(s.sup,34))}</td><td class="right">${_fmtN(s.n)}</td><td class="right">${_fmtTk(s.vP)}</td><td class="right">${_fmtTk(s.vR)}</td><td class="right" style="color:#f85149">${_fmtTk(s.out)}</td><td class="right" style="font-weight:700;color:${s.slv===null?'var(--text3)':slColor(s.slv)}">${s.slv===null?'—':s.slv.toFixed(1)+'%'}</td><td class="right" style="color:${s.slq===null?'var(--text3)':slColor(s.slq)}">${s.slq===null?'—':s.slq.toFixed(1)+'%'}</td><td class="right" style="color:var(--text3)">${s.n?(s.zero/s.n*100).toFixed(0)+'%':'—'}</td><td class="right" style="color:var(--text3)">${s.lt===null?'—':s.lt.toFixed(1)+' hr'}</td><td class="right" style="color:${s.over?'#d29922':'var(--text3)'};font-weight:${s.over?600:400}">${s.over||'—'}</td></tr>`).join('')||merEmpty(11);
+  merPager('ltPager','lt',sArr.length,PS,'renderLeadTime');
+  const sub=document.getElementById('ltSub');if(sub)sub.textContent=`${sArr.length} supplier · ${fm==='ALL'?'semua bulan':merYmLabel(fm)} · diurutkan dari outstanding terbesar · target SL ${SL_GOOD}%`;
+  _merLast.posup={name:'Scorecard_Supplier_'+(fm==='ALL'?'All':fm),rows:[['Supplier','Baris PO','Nilai PO','Nilai Receipt','Outstanding','SL Value %','SL Qty %','% Baris Tanpa Receipt','Avg Lead Time (hari)','PO Overdue']].concat(sArr.map(s=>[s.sup,s.n,Math.round(s.vP),Math.round(s.vR),Math.round(s.out),s.slv===null?'':+s.slv.toFixed(1),s.slq===null?'':+s.slq.toFixed(1),s.n?+(s.zero/s.n*100).toFixed(1):'',s.lt===null?'':+s.lt.toFixed(1),s.over]))};
+  const fd=d=>d?d.toISOString().slice(0,10):'';
+  const outs=cur.filter(l=>l.qRc<l.qPO).sort((a,b)=>(a.arr||0)-(b.arr||0));
+  _merLast.poout={name:'PO_Outstanding_'+(fm==='ALL'?'All':fm),rows:[['Supplier','PLU','Deskripsi','TAG','Tipe PO','No. PO','Tgl PO','Arrival Date','Qty PO','Qty Receipt','Qty Outstanding','Nilai Outstanding','Telat (hari)']].concat(outs.map(l=>[l.sup,l.plu,l.desc,l.tag,l.type,l.no,fd(l.po),fd(l.arr),Math.round(l.qPO),Math.round(l.qRc),Math.round(l.qPO-l.qRc),Math.round(Math.max(0,l.vPO-l.vRc)),l.arr&&l.arr<today?Math.floor((today-l.arr)/864e5):'']))};
+}
+
+// ── SL untuk kolom Supplier Scorecard di panel Principal & Supplier ──
+function oosSupplierSL(){
+  const po=poLines(),oos=oosItems();
+  if(!po.length&&!oos.length)return null;
+  const m={};const g=k=>m[k]||(m[k]={oosItems:0,vP:0,vR:0,sl:null});
+  po.forEach(l=>{const x=g(l.sup.toLowerCase());x.vP+=l.vPO;x.vR+=l.vRc;});
+  oos.forEach(i=>{const x=g(i.company.toLowerCase());x.oosItems++;if(!po.length){for(let j=0;j<i.prin.length;j++){x.vP+=i.prin[j].poV;x.vR+=i.prin[j].rcV;}}});
+  Object.values(m).forEach(x=>{x.sl=x.vP>0?x.vR/x.vP*100:null;});
   return m;
 }
 
@@ -14853,7 +15116,7 @@ const PANEL_GROUP_MAP = {
   'mem-category':'grp-members',
   'promo-effectiveness':'grp-marketing','juklak-lookup':'grp-marketing','juklak-recap':'grp-marketing','promo-contribution':'grp-marketing','promo-member':'grp-marketing','promo-items':'grp-marketing',
   'promo-categories':'grp-marketing','basket':'grp-marketing','brand-perf':'grp-marketing','principal-perf':'grp-sales','section-contribution':'grp-marketing','promo-discount':'grp-marketing','promo-mechanic':'grp-marketing',
-  'oos-dashboard':'grp-supply','oos-lost-sales':'grp-supply','oos-promo':'grp-supply','oos-leadtime':'grp-supply','oos-class':'grp-supply','oos-fillrate':'grp-supply',
+  'merch-sales':'grp-merch','merch-share-cat':'grp-merch','merch-share-prin':'grp-merch','merch-receipt':'grp-merch','merch-sellthrough':'grp-merch','oos-leadtime':'grp-merch','oos-promo':'grp-merch',
   'sku-pareto':'grp-catmgmt','cat-overview':'grp-catmgmt','cat-promo-potential':'grp-catmgmt',
   'cat-member':'grp-catmgmt','cat-trend':'grp-catmgmt','cat-time':'grp-catmgmt','cat-detail':'grp-catmgmt',
   'revenue-drivers':'grp-analytics','peak-hours':'grp-analytics','void-return':'grp-analytics','ai-strategy':'grp-analytics','ai-chat':'grp-analytics',
@@ -17908,6 +18171,7 @@ rendered.add('sales');
 
 (async function autoRestoreFromDB(){
   try { oosRestore(); } catch(_) {}
+  try { merRestore(); } catch(_) {}
   try {
     const records = await dbListAll();
     if (!records || records.length === 0) {
@@ -19337,7 +19601,7 @@ async function downloadMcKinseyPPTX(){
     { id:'grp-sales', label:'Sales Reports', items:[['exec-summary','Executive Summary'],['sales','Sales Report'],['store-sales','Sales by Store'],['daily-sales','Daily Sales Trend'],['principal-perf','Principal & Supplier'],['target-actuals','Target vs Actuals'],['report-all','Export PDF Report']] },
     { id:'grp-members', label:'Members', items:[['lapse-member','Summary Lapse Member'],['churn-risk','Member Churn Risk'],['mem-detail','Member Detail'],['mem-contribution','Contribution'],['mem-vs-promo','Member vs Promo'],['mem-trend','Sales Trend'],['mem-database','Database'],['mem-homestore','Member by Store'],['mem-demo','Demographics'],['mem-transactions','Transactions'],['mem-retention','Retention'],['mem-category','Sales by Category']] },
     { id:'grp-marketing', label:'Marketing', items:[['promo-effectiveness','Promo Effectiveness'],['promo-contribution','Promo vs Sales'],['promo-member','Member × Promo'],['promo-items','Top Promo Items'],['promo-categories','Top Categories'],['basket','Basket Size'],['brand-perf','Brand Performance'],['promo-mechanic','Promo Mechanic'],['thema-juklak','Report Thema Juklak']] },
-    { id:'grp-supply', label:'Supply Chain', items:[['oos-dashboard','OOS & Service Level'],['oos-lost-sales','Lost Sales Opportunity'],['oos-promo','OOS × Promo Impact'],['oos-leadtime','Lead Time & PO Aging'],['oos-class','OOS by Class (TAG)'],['oos-fillrate','Fill Rate Warehouse']] },
+    { id:'grp-merch', label:'Merchandising', items:[['merch-sales','Sales Overview'],['merch-share-cat','Market Share Kategori'],['merch-share-prin','Market Share Prinsipal'],['merch-receipt','Store Receipt'],['merch-sellthrough','Receipt vs Sales'],['oos-leadtime','PO Service Level & Lead Time'],['oos-promo','OOS × Promo Impact']] },
     { id:'grp-catmgmt', label:'Category Management', items:[['sku-pareto','SKU Rationalization'],['cat-overview','Overview'],['cat-promo-potential','Promo Potential'],['cat-member','Member Category'],['cat-trend','Monthly Trend'],['cat-time','Time & Day'],['cat-detail','Category Detail']] },
     { id:'grp-analytics', label:'Analytics', items:[['revenue-drivers','Revenue & Value Drivers'],['peak-hours','Peak Hours & Days'],['void-return','Void & Return'],['cohort-analysis','Cohort Analysis'],['sales-forecast','Sales Forecasting'],['price-elasticity','Price Elasticity & ROI'],['data-quality','Data Quality'],['rokok-report','Category Basket Report']] },
     { id:'grp-data', label:'Data', items:[['data-mgmt','Data Management'],['store-map','Store Map']] }
