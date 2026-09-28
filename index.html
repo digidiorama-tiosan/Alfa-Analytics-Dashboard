@@ -1612,6 +1612,10 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="12" rx="1"/><path d="M5 1v4M11 1v4M1 7h14"/><path d="M4 10l2 2 4-3"/></svg>
           Daily Sales Trend
         </button>
+        <button class="nav-item" onclick="showPanel('sales-pivot',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="2" width="13" height="12" rx="1"/><path d="M1.5 6h13M5.5 2v12"/></svg>
+          Monthly Pivot Report
+        </button>
         <button class="nav-item" onclick="showPanel('principal-perf',this)">
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14V6l4-3 4 3v8"/><path d="M10 14V8h4v6"/><path d="M1 14h14"/></svg>
           Principal &amp; Supplier
@@ -4891,6 +4895,39 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 <!-- ══════════════════════════════════
      PANEL: PRINCIPAL & SUPPLIER
 ══════════════════════════════════ -->
+<div id="panel-sales-pivot" class="panel">
+  <div class="page-header">
+    <div><div class="page-title">Monthly Pivot Report</div><div class="page-subtitle">%GM &amp; Net Value by Subdept, Net Value by Principal, Qty Sales by PLU — per bulan</div></div>
+    <button class="btn-dl" onclick="spvExport()"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel (4 sheet)</button>
+  </div>
+  <div id="spvNoData" class="insight-box" style="display:none"><span class="insight-icon">🚫</span><div class="insight-text">Butuh data sales.</div></div>
+  <div id="spvMain" style="display:none">
+    <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap">
+      <span class="filter-label">Dari</span><select class="filter-select" id="spvFrom" onchange="_merPg.spv=1;renderSalesPivot()" style="min-width:120px"></select>
+      <span class="filter-label">Sampai</span><select class="filter-select" id="spvTo" onchange="_merPg.spv=1;renderSalesPivot()" style="min-width:120px"></select>
+      <span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select" id="spvStore" onchange="_merPg.spv=1;renderSalesPivot()" style="min-width:170px"></select>
+      <span class="filter-label" style="margin-left:8px">Cari</span><input type="text" class="filter-select" id="spvSearch" oninput="_merPg.spv=1;renderSalesPivot()" placeholder="Subdept / principal / PLU…" style="min-width:170px">
+    </div>
+    <div id="spvWarn" class="alert-box amber" style="display:none;margin-bottom:14px"><span style="font-size:16px">⚠️</span><div></div></div>
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
+      <div class="stat-card blue"><div class="stat-label">Net Value</div><div class="stat-value" id="spv-net">—</div><div class="stat-sub" id="spv-sub">—</div></div>
+      <div class="stat-card green"><div class="stat-label">% GM</div><div class="stat-value" id="spv-gm">—</div><div class="stat-sub">(Net − COGS) ÷ Net</div></div>
+      <div class="stat-card purple"><div class="stat-label">GM Value</div><div class="stat-value" id="spv-gmv">—</div><div class="stat-sub">Net − COGS</div></div>
+      <div class="stat-card amber"><div class="stat-label">Sales Qty</div><div class="stat-value" id="spv-qty">—</div><div class="stat-sub">pcs</div></div>
+    </div>
+    <div id="spvTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+      <button class="filter-btn" data-t="gm" onclick="spvTab('gm')">%GM by Subdept</button>
+      <button class="filter-btn" data-t="net" onclick="spvTab('net')">Net Value by Subdept</button>
+      <button class="filter-btn" data-t="prin" onclick="spvTab('prin')">Net Value by Principal</button>
+      <button class="filter-btn" data-t="plu" onclick="spvTab('plu')">Qty Sales by PLU</button>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header"><div><div class="chart-title" id="spvTitle">—</div><div class="chart-subtitle" id="spvNote">—</div></div></div>
+      <div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12px;white-space:nowrap"><thead id="spvHead"></thead><tbody id="spvBody"></tbody></table></div>
+      <div id="spvPager" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:12.5px"></div>
+    </div>
+  </div>
+</div>
 <div id="panel-principal-perf" class="panel">
   <div class="page-header">
     <div><div class="page-title">🏢 Principal &amp; Supplier Performance</div><div class="page-subtitle">Kontribusi margin &amp; uplift per prinsipal — dasar negosiasi trade support dan listing fee</div></div>
@@ -5353,7 +5390,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       <div class="stat-card purple"><div class="stat-label">PLU Diterima</div><div class="stat-value" id="mr-plu">—</div><div class="stat-sub">SKU unik</div></div>
       <div class="stat-card amber"><div class="stat-label">Rata-rata per Toko</div><div class="stat-value" id="mr-avg" style="font-size:18px">—</div><div class="stat-sub" id="mr-avg-sub">—</div></div>
     </div>
-    <div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Nilai Receipt per Bulan</div><div class="chart-subtitle">Ditumpuk per toko</div></div></div><div style="height:290px"><canvas id="mrTrendChart"></canvas></div></div>
+    <div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Nilai Receipt per Bulan</div><div class="chart-subtitle">Ditumpuk per toko</div></div></div><div style="height:330px"><canvas id="mrTrendChart"></canvas></div></div>
     <div class="chart-card" style="margin-bottom:16px">
       <div class="chart-header"><div><div class="chart-title">Receipt per Toko</div><div class="chart-subtitle" id="mrStoreSub">—</div></div></div>
       <div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px">
@@ -6798,6 +6835,7 @@ function renderPanel(id) {
     case 'basket': renderBasket(); break;
     case 'brand-perf': renderBrandPerf(); break;
     case 'principal-perf': renderPrincipalPerf(); break;
+    case 'sales-pivot': renderSalesPivot(); break;
     case 'section-contribution': renderSectionContribution(); break;
     case 'promo-discount': renderPromoDiscount(); break;
     case 'promo-mechanic': renderPromoMechanic(); break;
@@ -12118,7 +12156,7 @@ function renderMerchShareCat(){
   const mt={},cm={},ct={};
   base.forEach(a=>{mt[a.ym]=(mt[a.ym]||0)+a.net;cm[a.cat+'|'+a.ym]=(cm[a.cat+'|'+a.ym]||0)+a.net;ct[a.cat]=(ct[a.cat]||0)+a.net;});
   const top6=Object.entries(ct).sort((a,b)=>b[1]-a[1]).slice(0,6).map(e=>e[0]);
-  makeChart('mcTrendChart',{type:'line',data:{labels:D.months.map(merYmLabel),datasets:top6.map((c,i)=>({label:merCut(c,18),data:D.months.map(m=>mt[m]?+((cm[c+'|'+m]||0)/mt[m]*100).toFixed(2):null),borderColor:MER_PAL[i],backgroundColor:MER_PAL[i]+'22',tension:.3,pointRadius:3,spanGaps:true}))},options:{...chartDefaults,plugins:{...chartDefaults.plugins,tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>c.dataset.label+': '+(c.raw==null?'—':c.raw+'%')}}},scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>v+'%'}}}}});
+  makeChart('mcTrendChart',{type:'line',data:{labels:D.months.map(merYmLabel),datasets:top6.map((c,i)=>({label:merCut(c,18),data:D.months.map(m=>mt[m]?+((cm[c+'|'+m]||0)/mt[m]*100).toFixed(2):null),borderColor:MER_PAL[i],backgroundColor:MER_PAL[i]+'22',tension:.3,pointRadius:3,spanGaps:true}))},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:true,position:'bottom',labels:{color:'#8b949e',boxWidth:10,padding:10,font:{size:10.5}}},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>c.dataset.label+': '+(c.raw==null?'—':c.raw+'%')}}},scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>v+'%'}}}}});
   const PS=30,pg=merPage('mc',rows.length,PS);
   const dCell=d=>d===null?'<span style="color:var(--text3)">—</span>':`<span style="color:${d>0?'#3fb950':d<0?'#f85149':'var(--text3)'};font-weight:600">${d>0?'+':''}${d.toFixed(2)}</span>`;
   const body=document.getElementById('mcBody');
@@ -12257,7 +12295,7 @@ function renderMerchReceipt(){
   if(wb){wb.style.display=odd.length?'flex':'none';if(wt&&odd.length)wt.innerHTML=`<strong>Data bulan ${odd.map(merYmLabel).join(', ')} jauh di bawah normal</strong> (${odd.map(m=>_fmtTk(mtAll[m])).join(', ')} vs median ${_fmtTk(med)}). Kemungkinan data belum lengkap — cek file sumber sebelum dipakai untuk analisa.`;}
   const stList=[...new Set(base.map(r=>r.st))].sort();
   const sm={};base.forEach(r=>{sm[r.st+'|'+r.ym]=(sm[r.st+'|'+r.ym]||0)+r.val;});
-  makeChart('mrTrendChart',{type:'bar',data:{labels:months.map(merYmLabel),datasets:stList.map((s,i)=>({label:s+(names[s]?' '+merCut(names[s],14):''),data:months.map(m=>Math.round(sm[s+'|'+m]||0)),backgroundColor:MER_PAL[i%MER_PAL.length],borderRadius:2}))},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{...chartDefaults.plugins.legend,labels:{...((chartDefaults.plugins.legend||{}).labels||{}),boxWidth:10,font:{size:10}}},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>c.dataset.label+': '+_fmtTk(c.raw)}}},scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,stacked:true},y:{...chartDefaults.scales.y,stacked:true,ticks:{...chartDefaults.scales.y.ticks,callback:merTkTick}}}}});
+  makeChart('mrTrendChart',{type:'bar',data:{labels:months.map(merYmLabel),datasets:stList.map((s,i)=>({label:s+(names[s]?' '+merCut(names[s],14):''),data:months.map(m=>Math.round(sm[s+'|'+m]||0)),backgroundColor:MER_PAL[i%MER_PAL.length],borderRadius:2}))},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:true,position:'bottom',labels:{color:'#8b949e',boxWidth:10,padding:10,font:{size:10.5}}},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>c.dataset.label+': '+_fmtTk(c.raw)}}},scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,stacked:true},y:{...chartDefaults.scales.y,stacked:true,ticks:{...chartDefaults.scales.y.ticks,callback:merTkTick}}}}});
   const gs={};cur.forEach(r=>{const g=gs[r.st]||(gs[r.st]={st:r.st,v:0,q:0,p:new Set()});g.v+=r.val;g.q+=r.qty;g.p.add(r.plu);});
   const sRows=Object.values(gs).sort((a,b)=>b.v-a.v);
   const sb=document.getElementById('mrStoreBody');
@@ -12327,6 +12365,118 @@ function renderMerchSellThrough(){
   merPager('stPager','st',rows.length,PS,'renderMerchSellThrough');
   const sub=document.getElementById('stSub');if(sub)sub.textContent=`${rows.length.toLocaleString('en-US')} baris${fst!=='ALL'?' · status '+ST_DEF[fst].l:''} · ${fm==='ALL'?'bulan overlap':merYmLabel(fm)} · 30/halaman`;
   _merLast.st={name:'Sell_Through_'+(fm==='ALL'?'All':fm),rows:[['Toko','PLU','Deskripsi','Kategori','Qty Diterima','Qty Terjual','Sell-Through %','Nilai Receipt','Net Sales','Status']].concat(rows.map(x=>[x.st,x.plu,x.desc,x.cat,Math.round(x.rq),Math.round(x.sq),x.stp===null?'':+x.stp.toFixed(1),Math.round(x.rv),Math.round(x.sn),ST_DEF[x.s].l]))};
+}
+
+// ── Monthly Pivot Report (template: %GM by Subdept · Net Value by Subdept · Net Value by Principal · Qty Sales by PLU) ──
+const _spv={tab:'gm',pg:1};
+function spvSub(plu,master){
+  const i=master&&master.map.get(plu);if(!i)return '(Tanpa Subdept)';
+  const c=merBad(i.category)?'':i.category,k=merBad(i.catCode)?'':i.catCode;
+  if(!c&&!k)return '(Tanpa Subdept)';
+  if(k&&c&&!c.startsWith(k))return k+' - '+c;
+  return c||k;
+}
+function spvData(){
+  const D=merSales();if(!D)return null;
+  const master=typeof buildMasterAttrMap==='function'?buildMasterAttrMap():null;
+  const fromEl=document.getElementById('spvFrom'),toEl=document.getElementById('spvTo'),stEl=document.getElementById('spvStore');
+  const lab=ym=>{const y=new Set(D.months.map(m=>m.slice(0,4)));const p=ym.split('-');return ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][+p[1]-1]+(y.size>1?' '+p[0].slice(2):'');};
+  const sig=D.months.join('|');
+  [fromEl,toEl].forEach((el,ix)=>{if(el&&el.dataset.sig!==sig){el.innerHTML=D.months.map(m=>`<option value="${m}">${merYmLabel(m)}</option>`).join('');el.value=ix?D.months[D.months.length-1]:D.months[0];el.dataset.sig=sig;}});
+  if(stEl&&stEl.dataset.sig!==D.stores.join('|')){stEl.innerHTML='<option value="ALL">Semua Toko</option>'+D.stores.map(s=>`<option value="${merEsc(s)}">${merEsc(s)}</option>`).join('');stEl.dataset.sig=D.stores.join('|');}
+  let f=fromEl&&fromEl.value||D.months[0],t=toEl&&toEl.value||D.months[D.months.length-1];if(f>t){const x=f;f=t;t=x;}
+  const st=stEl&&stEl.value||'ALL';
+  const months=D.months.filter(m=>m>=f&&m<=t);const mi=new Map(months.map((m,i)=>[m,i]));
+  const sub=new Map(),prin=new Map(),plu=new Map(),subCache=new Map();
+  const tot={net:months.map(()=>0),cogs:months.map(()=>0),qty:months.map(()=>0)};
+  const bump=(map,key,i,a,extra)=>{let o=map.get(key);if(!o){o={key,net:months.map(()=>0),cogs:months.map(()=>0),qty:months.map(()=>0),...(extra||{})};map.set(key,o);}o.net[i]+=a.net;o.cogs[i]+=a.cogs;o.qty[i]+=a.qty;};
+  D.list.forEach(a=>{
+    if(st!=='ALL'&&a.st!==st)return;const i=mi.get(a.ym);if(i==null)return;
+    let s=subCache.get(a.plu);if(s==null){s=spvSub(a.plu,master);subCache.set(a.plu,s);}
+    bump(sub,s,i,a);bump(prin,a.prin,i,a);bump(plu,a.plu,i,a,{desc:D.desc.get(a.plu)||''});
+    tot.net[i]+=a.net;tot.cogs[i]+=a.cogs;tot.qty[i]+=a.qty;
+  });
+  const S=arr=>arr.reduce((x,y)=>x+y,0);
+  const fin=o=>{o.tNet=S(o.net);o.tCogs=S(o.cogs);o.tQty=S(o.qty);o.gm=o.net.map((n,i)=>n?(n-o.cogs[i])/n:null);o.tGm=o.tNet?(o.tNet-o.tCogs)/o.tNet:null;return o;};
+  const code=k=>{const m=String(k).match(/^(\d+)/);return m?+m[1]:1e9;};
+  return {months,labels:months.map(lab),st,hasCogs:D.hasCogs,hasMaster:!!master,
+    sub:[...sub.values()].map(fin),prin:[...prin.values()].map(fin),
+    plu:[...plu.values()].map(fin).sort((a,b)=>(+a.key||0)-(+b.key||0)||String(a.key).localeCompare(String(b.key))),
+    tot:fin({key:'Grand Total',...tot}),code};
+}
+function spvTab(t){_spv.tab=t;_spv.pg=1;renderSalesPivot();}
+function renderSalesPivot(){
+  const R=spvData();
+  if(!merGate('spvMain','spvNoData',!!R&&R.months.length,'Butuh <strong>data sales</strong>. Upload di Data Management.'))return;
+  const warn=document.getElementById('spvWarn');
+  const notes=[];if(!R.hasMaster)notes.push('Product Master (Oramas) belum diupload — Subdept &amp; Principal tampil sebagai "(Tanpa …)".');if(!R.hasCogs)notes.push('Kolom COGS/cost tidak ada di data sales — %GM tidak bisa dihitung.');
+  if(warn){warn.style.display=notes.length?'flex':'none';warn.querySelector('div').innerHTML=notes.join('<br>');}
+  document.querySelectorAll('#spvTabs button').forEach(b=>b.classList.toggle('primary',b.dataset.t===_spv.tab));
+  const nf=v=>v?Math.round(v).toLocaleString('en-US'):'';
+  const pf=v=>v==null?'':(v*100).toFixed(2)+'%';
+  const gmC=v=>v==null?'':v<0?'color:#f85149':v<0.10?'color:#d29922':v>=0.20?'color:#3fb950':'';
+  const q=merQ('spvSearch');
+  let head='',body='',foot='',rows=[],title='',note='';
+  const mh=R.labels.map(l=>`<th class="right">${l}</th>`).join('');
+  if(_spv.tab==='gm'){
+    title='%GM by Subdept';note='%GM = (Net Value − COGS) ÷ Net Value · urut kode subdept';
+    rows=R.sub.slice().sort((a,b)=>R.code(a.key)-R.code(b.key)||a.key.localeCompare(b.key));
+    head=`<th>SUBDEPT</th>${mh}<th class="right">Grand Total</th>`;
+    const row=o=>`<td>${merEsc(o.key)}</td>${o.gm.map(v=>`<td class="right" style="${gmC(v)}">${pf(v)}</td>`).join('')}<td class="right" style="font-weight:600;${gmC(o.tGm)}">${pf(o.tGm)}</td>`;
+    rows=rows.filter(o=>!q||o.key.toLowerCase().includes(q));
+    body=rows.map(o=>`<tr>${row(o)}</tr>`).join('');foot=`<tr style="font-weight:700;background:var(--bg3)">${row(R.tot)}</tr>`;
+  }else if(_spv.tab==='net'){
+    title='Net Value by Subdept';note='Urut Grand Total terbesar · CONT = kontribusi terhadap total · GM VALUE = Net × %GM';
+    rows=R.sub.slice().sort((a,b)=>b.tNet-a.tNet).filter(o=>!q||o.key.toLowerCase().includes(q));
+    head=`<th>SUBDEPT</th>${mh}<th class="right">Grand Total</th><th class="right">% GM</th><th class="right">CONT</th><th class="right">GM VALUE</th>`;
+    const row=o=>`<td>${merEsc(o.key)}</td>${o.net.map(v=>`<td class="right">${nf(v)}</td>`).join('')}<td class="right" style="font-weight:600">${nf(o.tNet)}</td><td class="right" style="${gmC(o.tGm)}">${pf(o.tGm)}</td><td class="right">${pf(R.tot.tNet?o.tNet/R.tot.tNet:null)}</td><td class="right">${nf(o.tNet-o.tCogs)}</td>`;
+    body=rows.map(o=>`<tr>${row(o)}</tr>`).join('');foot=`<tr style="font-weight:700;background:var(--bg3)">${row(R.tot)}</tr>`;
+  }else if(_spv.tab==='prin'){
+    title='Net Value by Principal';note='Urut Grand Total terbesar';
+    rows=R.prin.slice().sort((a,b)=>b.tNet-a.tNet).filter(o=>!q||o.key.toLowerCase().includes(q));
+    head=`<th>PRINCIPAL</th>${mh}<th class="right">Grand Total</th>`;
+    const row=o=>`<td>${merEsc(o.key)}</td>${o.net.map(v=>`<td class="right">${nf(v)}</td>`).join('')}<td class="right" style="font-weight:600">${nf(o.tNet)}</td>`;
+    const PS=30,pg=merPage('spv',rows.length,PS);body=rows.slice((pg-1)*PS,pg*PS).map(o=>`<tr>${row(o)}</tr>`).join('');foot=`<tr style="font-weight:700;background:var(--bg3)">${row(R.tot)}</tr>`;
+  }else{
+    title='Qty Sales by PLU';note='Sum of Sales Qty · urut PLU';
+    rows=R.plu.filter(o=>!q||(o.key+' '+o.desc).toLowerCase().includes(q));
+    head=`<th>PLU</th><th>DESCP</th>${mh}<th class="right">Grand Total</th>`;
+    const row=o=>`<td style="font-family:var(--mono)">${o.key==='Grand Total'?'Grand Total':o.key}</td><td>${merEsc(merCut(o.desc||'',38))}</td>${o.qty.map(v=>`<td class="right">${nf(v)}</td>`).join('')}<td class="right" style="font-weight:600">${nf(o.tQty)}</td>`;
+    const PS=30,pg=merPage('spv',rows.length,PS);body=rows.slice((pg-1)*PS,pg*PS).map(o=>`<tr>${row(o)}</tr>`).join('');foot=`<tr style="font-weight:700;background:var(--bg3)">${row({...R.tot,desc:''})}</tr>`;
+  }
+  merSet('spvTitle',title);merSet('spvNote',`${note} · ${R.labels[0]}–${R.labels[R.labels.length-1]} · ${R.st==='ALL'?'Semua toko':R.st} · ${rows.length.toLocaleString('en-US')} baris`);
+  document.getElementById('spvHead').innerHTML=`<tr>${head}</tr>`;
+  document.getElementById('spvBody').innerHTML=(body||merEmpty(R.months.length+3,'Tidak ada data.'))+foot;
+  if(_spv.tab==='prin'||_spv.tab==='plu')merPager('spvPager','spv',rows.length,30,'renderSalesPivot');else document.getElementById('spvPager').innerHTML='';
+  const g=R.tot;merSet('spv-net',_fmtTk(g.tNet));merSet('spv-gm',pf(g.tGm));merSet('spv-gmv',_fmtTk(g.tNet-g.tCogs));merSet('spv-qty',_fmtN(g.tQty));
+  merSet('spv-sub',R.sub.length+' subdept · '+R.prin.length+' principal · '+R.plu.length.toLocaleString('en-US')+' PLU');
+}
+function spvExport(){
+  const R=spvData();if(!R||!R.months.length){alert('Belum ada data untuk diexport.');return;}
+  const go=()=>{
+    const wb=XLSX.utils.book_new(),n=R.months.length,col=i=>XLSX.utils.encode_col(i);
+    const r2=v=>v==null?null:Math.round(v*100)/100;
+    const add=(name,aoa,fmt,widths)=>{const ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=widths;
+      const rg=XLSX.utils.decode_range(ws['!ref']);for(let r=4;r<=rg.e.r;r++)for(let c=0;c<=rg.e.c;c++){const a=XLSX.utils.encode_cell({r,c});const f=fmt(c);if(ws[a]&&f)ws[a].z=f;}
+      XLSX.utils.book_append_sheet(wb,ws,name);};
+    const info=[`Periode: ${R.labels[0]} – ${R.labels[n-1]}`,`Toko: ${R.st==='ALL'?'Semua Toko':R.st}`];
+    // %GM by Subdept
+    const gmRows=R.sub.slice().sort((a,b)=>R.code(a.key)-R.code(b.key)||a.key.localeCompare(b.key));
+    add('%GM by Subdept',[info,[],['%GM','MONTH'],['SUBDEPT',...R.labels,'Grand Total']].concat(gmRows.concat([R.tot]).map(o=>[o.key,...o.gm,o.tGm])),c=>c>0?'0.00%':null,[{wch:42}].concat(Array(n+1).fill({wch:11})));
+    // Net Value by Subdept (+ simulasi %GM dgn formula)
+    const nv=R.sub.slice().sort((a,b)=>b.tNet-a.tNet);const first=5,last=first+nv.length-1,tr=last+1;
+    const C=k=>col(n+1+k); // k=0 Grand Total
+    const nAoa=[info,[],['Sum of NET VALUE','MONTH'],['SUBDEPT',...R.labels,'Grand Total','% GM','CONT','GM VALUE','Simulasi % GM','Simulasi GM VALUE','Simulasi % GM (hasil)']];
+    nv.forEach((o,i)=>{const r=first+i;nAoa.push([o.key,...o.net.map(r2),r2(o.tNet),o.tGm,{t:'n',f:`${C(0)}${r}/${C(0)}${tr}`},{t:'n',f:`${C(0)}${r}*${C(1)}${r}`},o.tGm,{t:'n',f:`${C(4)}${r}*${C(0)}${r}`},{t:'n',f:`IF(${C(0)}${r}=0,0,${C(5)}${r}/${C(0)}${r})`}]);});
+    nAoa.push(['Grand Total',...R.tot.net.map(r2),r2(R.tot.tNet),R.tot.tGm,1,{t:'n',f:`SUM(${C(3)}${first}:${C(3)}${last})`},{t:'n',f:`IF(${C(0)}${tr}=0,0,${C(3)}${tr}/${C(0)}${tr})`},{t:'n',f:`SUM(${C(5)}${first}:${C(5)}${last})`},{t:'n',f:`IF(${C(0)}${tr}=0,0,${C(5)}${tr}/${C(0)}${tr})`}]);
+    add('Net Value by Subdept',nAoa,c=>c===0?null:(c===n+2||c===n+3||c===n+5||c===n+7)?'0.00%':'#,##0',[{wch:42}].concat(Array(n+1).fill({wch:12}),[{wch:9},{wch:9},{wch:12},{wch:13},{wch:16},{wch:18}]));
+    // Net Value by Principal
+    add('Net Value by Principal',[info,[],['Sum of NET VALUE','MONTH'],['PRINCIPAL',...R.labels,'Grand Total']].concat(R.prin.slice().sort((a,b)=>b.tNet-a.tNet).concat([R.tot]).map(o=>[o.key,...o.net.map(r2),r2(o.tNet)])),c=>c>0?'#,##0':null,[{wch:48}].concat(Array(n+1).fill({wch:12})));
+    // Qty Sales by PLU
+    add('Qty Sales by PLU',[info,[],['Sum of SALES QTY','','MONTH'],['PLU','DESCP',...R.labels,'Grand Total']].concat(R.plu.map(o=>[isNaN(+o.key)?o.key:+o.key,o.desc,...o.qty.map(v=>v||null),o.tQty]),[['Grand Total','',...R.tot.qty,R.tot.tQty]]),c=>c>1?'#,##0':null,[{wch:10},{wch:40}].concat(Array(n+1).fill({wch:9})));
+    XLSX.writeFile(wb,`Monthly_Pivot_Report_${R.months[0]}_${R.months[n-1]}${R.st==='ALL'?'':'_'+R.st}.xlsx`);
+  };
+  if(typeof XLSX==='undefined')ensureLib('xlsx').then(go).catch(()=>alert('Gagal memuat pustaka Excel.'));else go();
 }
 
 // ── 5b. Item Zero Sales ──
@@ -12436,7 +12586,7 @@ function renderLeadTime(){
     {label:'SL Value',data:months.map(m=>bm[m]&&bm[m].vP>0?+(bm[m].vR/bm[m].vP*100).toFixed(1):null),borderColor:'#58a6ff',backgroundColor:'#58a6ff22',tension:.3,pointRadius:4,spanGaps:true},
     {label:'SL Qty',data:months.map(m=>bm[m]&&bm[m].qP>0?+(bm[m].qR/bm[m].qP*100).toFixed(1):null),borderColor:'#a371f7',backgroundColor:'#a371f722',tension:.3,pointRadius:4,spanGaps:true},
     {label:`Target ${SL_GOOD}%`,data:months.map(()=>SL_GOOD),borderColor:'#3fb950',borderDash:[6,4],pointRadius:0,fill:false}
-  ]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>c.dataset.label+': '+(c.raw==null?'—':c.raw+'%')}}},scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,min:0,max:100,ticks:{...chartDefaults.scales.y.ticks,callback:v=>v+'%'}}}}});
+  ]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:true,position:'bottom',labels:{color:'#8b949e',boxWidth:10,padding:10,font:{size:10.5}}},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>c.dataset.label+': '+(c.raw==null?'—':c.raw+'%')}}},scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,min:0,max:100,ticks:{...chartDefaults.scales.y.ticks,callback:v=>v+'%'}}}}});
   const sArr=Object.values(sm).map(s=>({...s,slv:merPct(s.vR,s.vP),slq:merPct(s.qR,s.qP),out:Math.max(0,s.vP-s.vR),lt:s.ltN?s.ltS/s.ltN:null}));
   const worst=[...sArr].sort((a,b)=>b.vP-a.vP).slice(0,30).filter(s=>s.slv!==null).sort((a,b)=>a.slv-b.slv).slice(0,10);
   merBarH('ltSupChart',worst.map(s=>merCut(s.sup,22)),worst.map(s=>+s.slv.toFixed(1)),worst.map(s=>slColor(s.slv)+'cc'),c=>{const s=worst[c.dataIndex];return ['SL Value '+s.slv.toFixed(1)+'%','PO '+_fmtTk(s.vP),'Receipt '+_fmtTk(s.vR)];},v=>v+'%');
@@ -15253,7 +15403,7 @@ const PANEL_GROUP_MAP = {
   'mem-demo':'grp-members','mem-transactions':'grp-members','mem-retention':'grp-members','lapse-member':'grp-members',
   'mem-category':'grp-members',
   'promo-effectiveness':'grp-marketing','juklak-lookup':'grp-marketing','juklak-recap':'grp-marketing','promo-contribution':'grp-marketing','promo-member':'grp-marketing','promo-items':'grp-marketing',
-  'promo-categories':'grp-marketing','basket':'grp-marketing','brand-perf':'grp-marketing','principal-perf':'grp-sales','section-contribution':'grp-marketing','promo-discount':'grp-marketing','promo-mechanic':'grp-marketing',
+  'promo-categories':'grp-marketing','basket':'grp-marketing','brand-perf':'grp-marketing','principal-perf':'grp-sales','sales-pivot':'grp-sales','section-contribution':'grp-marketing','promo-discount':'grp-marketing','promo-mechanic':'grp-marketing',
   'merch-sales':'grp-merch','merch-share-cat':'grp-merch','merch-share-prin':'grp-merch','merch-share-brand':'grp-merch','merch-receipt':'grp-merch','merch-sellthrough':'grp-merch','merch-zero':'grp-merch','oos-leadtime':'grp-merch',
   'sku-pareto':'grp-catmgmt','cat-overview':'grp-catmgmt','cat-promo-potential':'grp-catmgmt',
   'cat-member':'grp-catmgmt','cat-trend':'grp-catmgmt','cat-time':'grp-catmgmt','cat-detail':'grp-catmgmt',
@@ -19743,7 +19893,7 @@ async function downloadMcKinseyPPTX(){
   // ══ MENU ACCESS CONTROL (admin-configurable RBAC) ══════════
   const MENU_GROUPS = [
     { id:'grp-platform', label:'Platform', items:[['command-center','Command Center'],['data-engine','Data Engine']] },
-    { id:'grp-sales', label:'Sales Reports', items:[['exec-summary','Executive Summary'],['sales','Sales Report'],['store-sales','Sales by Store'],['daily-sales','Daily Sales Trend'],['principal-perf','Principal & Supplier'],['target-actuals','Target vs Actuals'],['report-all','Export PDF Report']] },
+    { id:'grp-sales', label:'Sales Reports', items:[['exec-summary','Executive Summary'],['sales','Sales Report'],['store-sales','Sales by Store'],['daily-sales','Daily Sales Trend'],['sales-pivot','Monthly Pivot Report'],['principal-perf','Principal & Supplier'],['target-actuals','Target vs Actuals'],['report-all','Export PDF Report']] },
     { id:'grp-members', label:'Members', items:[['lapse-member','Summary Lapse Member'],['churn-risk','Member Churn Risk'],['mem-detail','Member Detail'],['mem-contribution','Contribution'],['mem-vs-promo','Member vs Promo'],['mem-trend','Sales Trend'],['mem-database','Database'],['mem-homestore','Member by Store'],['mem-demo','Demographics'],['mem-transactions','Transactions'],['mem-retention','Retention'],['mem-category','Sales by Category']] },
     { id:'grp-marketing', label:'Marketing', items:[['promo-effectiveness','Promo Effectiveness'],['promo-contribution','Promo vs Sales'],['promo-member','Member × Promo'],['promo-items','Top Promo Items'],['promo-categories','Top Categories'],['basket','Basket Size'],['brand-perf','Brand Performance'],['promo-mechanic','Promo Mechanic'],['thema-juklak','Report Thema Juklak']] },
     { id:'grp-merch', label:'Merchandising', items:[['merch-sales','Sales Overview'],['merch-share-cat','Market Share Kategori'],['merch-share-prin','Market Share Prinsipal'],['merch-share-brand','Market Share by Brand'],['merch-receipt','Store Receipt'],['merch-sellthrough','Receipt vs Sales'],['merch-zero','Item Zero Sales'],['oos-leadtime','PO Service Level & Lead Time']] },
@@ -19961,6 +20111,8 @@ async function downloadMcKinseyPPTX(){
     const kinds = DATA_KINDS.filter(k=>{const r=pfKindRows(k);return r&&r.length;});
     if(!kinds.length){ if(out) out.innerHTML='<span class="bad">✕ No data loaded to publish. Upload a file first.</span>'; if(btn){btn.disabled=false;btn.style.opacity='1';} return; }
     const lines=[];
+    const _skipped=DATA_KINDS.filter(k=>!kinds.includes(k));
+    if(_skipped.length) lines.push('<span style="color:#d29922">⚠ Dilewati (tidak ada data di browser ini): '+_skipped.join(', ')+' — upload file-nya di Data Management lalu publish ulang.</span>');
     const render=(extra)=>{ if(out) out.innerHTML = lines.concat(extra?[extra]:[]).join('<br>'); };
     for(const k of kinds){
       const rows = pfKindRows(k);
