@@ -62,6 +62,46 @@ window.__libs = (function(){
   return { load, warm };
 })();
 function ensureLib(name){ return window.__libs.load(name); }
+/* Nama toko otomatis di Excel: kolom 'Store Name' disisipkan setelah kolom kode toko */
+function pfStoreNameMap(){try{return typeof merStoreNames==='function'?merStoreNames():{};}catch(_){return {};}}
+function pfAddStoreNameCol(aoa){
+  try{
+    if(!Array.isArray(aoa)||!aoa.length)return aoa;
+    const nm=pfStoreNameMap();if(!Object.keys(nm).length)return aoa;
+    const key=v=>String(v==null?'':v).trim().toUpperCase();
+    const isHdr=v=>/^(STORE|TOKO|KODE TOKO|KD TOKO|STORE CODE|STORE_CODE|KODE_TOKO|KODE CABANG|CABANG|BRANCH|SITE|OUTLET)$/i.test(String(v==null?'':v).trim());
+    const isNameHdr=v=>/(NAMA|NAME)/i.test(String(v==null?'':v));
+    let out=aoa,shift=0;
+    for(let h=0;h<out.length;h++){
+      const row=out[h];if(!Array.isArray(row))continue;
+      for(let c=0;c<row.length;c++){
+        if(!isHdr(row[c])||isNameHdr(row[c+1]))continue;
+        let hit=0,tot=0;
+        for(let r=h+1;r<out.length&&tot<50;r++){const x=out[r];if(!Array.isArray(x)||x[c]==null||x[c]==='')continue;if(isHdr(x[c]))break;tot++;if(nm[key(x[c])])hit++;}
+        if(!tot||hit/tot<0.3)continue;
+        if(out===aoa)out=aoa.map(r=>Array.isArray(r)?r.slice():r);
+        for(let r=h;r<out.length;r++){const x=out[r];if(!Array.isArray(x))continue;if(r>h&&isHdr(x[c])&&!isNameHdr(x[c+1]))break;if(r>h&&x.length<=c&&!x.length)continue;
+          if(x.length<=c){continue;}
+          x.splice(c+1,0,r===h?'Store Name':(nm[key(x[c])]||''));}
+        shift++;break;
+      }
+    }
+    return out;
+  }catch(_){return aoa;}
+}
+(function(){let _x;const patch=v=>{try{if(v&&v.utils&&!v.utils.__pfPatched){const o=v.utils.aoa_to_sheet.bind(v.utils);v.utils.aoa_to_sheet=(d,opt)=>o(pfAddStoreNameCol(d),opt);v.utils.__pfPatched=true;}}catch(_){}};
+  try{if(window.XLSX){patch(window.XLSX);}else Object.defineProperty(window,'XLSX',{configurable:true,enumerable:true,get(){if(_x&&_x.utils&&!_x.utils.__pfPatched)patch(_x);return _x;},set(v){_x=v;patch(v);}});}catch(_){}})();
+/* Nama toko otomatis di label grafik: label berupa kode toko → 'A001 · Nama' */
+function pfStoreLabels(cfg){
+  try{
+    const L=cfg&&cfg.data&&cfg.data.labels;if(!Array.isArray(L)||!L.length||cfg.__noStoreName)return;
+    const nm=pfStoreNameMap();if(!Object.keys(nm).length)return;
+    const K=v=>String(v==null?'':v).trim().toUpperCase();
+    const hit=L.filter(v=>typeof v==='string'&&nm[K(v)]).length;if(hit/L.length<0.5)return;
+    const horiz=cfg.options&&cfg.options.indexAxis==='y',max=horiz?28:16;
+    cfg.data.labels=L.map(v=>{const n=typeof v==='string'&&nm[K(v)];if(!n)return v;const s=K(v)+' · '+n;return s.length>max?s.slice(0,max-1)+'…':s;});
+  }catch(_){}
+}
 /* Setelah halaman siap, prefetch XLSX saat browser idle — upload jadi instan
    tanpa memblokir render awal (tidak menghitung ke skor Lighthouse). */
 window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
@@ -6795,6 +6835,7 @@ function makeChart(id, config) {
     return null;
   }
   applyChartSetup();
+  pfStoreLabels(config);
   chartInstances[id] = new Chart(ctx, config);
   try{ attachChartDownload(id); }catch(_){}
   return chartInstances[id];
