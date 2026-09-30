@@ -6080,6 +6080,19 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       <div id="status-receipt"></div>
     </div>
 
+    <div class="upload-card">
+      <div class="upload-card-title">🏪 Store Master</div>
+      <div class="upload-card-sub">Daftar toko: <strong>kode &amp; nama toko</strong>. Dipakai sebagai nama toko di semua menu (Sales Data per PLU, Store Receipt, dll).</div>
+      <div class="upload-col-tags"><span class="col-tag">STORE CODE</span><span class="col-tag">STORE NAME</span><span class="col-tag">BRANCH / AREA (opsional)</span></div>
+      <div class="upload-zone" id="zone-storemaster" onclick="document.getElementById('file-storemaster').click()">
+        <input type="file" accept=".xlsx,.xls,.csv" id="file-storemaster" onchange="handleStoreMasterFile(event)">
+        <div class="upload-icon">🏪</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text)">Drop file di sini atau klik untuk pilih</div>
+        <div class="upload-hint">✅ .xlsx / .csv · header kolom otomatis dicari</div>
+      </div>
+      <div id="status-storemaster"></div>
+    </div>
+
   </div>
 
   <div class="section-title">How to Use</div>
@@ -12245,6 +12258,36 @@ function handleReceiptFile(ev){
     _merCache=null;renderMerchReceipt();renderMerchSellThrough();
   });
 }
+// ── Store Master (kode → nama toko) ──
+function storeMasterRows(){return (typeof uploads!=='undefined'&&Array.isArray(uploads.storemaster))?uploads.storemaster:[];}
+let _stNmCache=null;
+function merStoreNames(){
+  const sm=storeMasterRows(),rc=recRows(),sig=sm.length+'|'+rc.length;
+  if(_stNmCache&&_stNmCache.sig===sig&&_stNmCache.sm===sm)return _stNmCache.map;
+  const m={};rc.forEach(r=>{if(r.nm&&!m[r.st])m[r.st]=r.nm;});
+  sm.forEach(r=>{const k=merStore(r.st);if(k&&r.nm)m[k]=String(r.nm).trim();});
+  _stNmCache={sig,sm,map:m};return m;
+}
+function handleStoreMasterFile(ev){
+  const f=ev.target.files&&ev.target.files[0];if(!f)return;
+  merReadXlsx(f,'status-storemaster',(wb,setS)=>{
+    const isCode=v=>/^(STORE ?CODE|KODE ?TOKO|KD ?TOKO|STORE ?ID|SITE ?CODE|KODE ?STORE|STORE|TOKO|SITE|KODE)$/.test(v);
+    const isName=v=>/^(STORE ?NAME|NAMA ?TOKO|NAMA ?STORE|SITE ?NAME|NAME|NAMA|STORE ?DESC)$/.test(v);
+    const S=merFindSheet(wb,r=>r.some(isCode)&&r.some(isName));
+    if(!S)throw new Error('Header STORE CODE / STORE NAME tidak ditemukan');
+    const H=(S.aoa[S.h]||[]).map(v=>_oosS(v).toUpperCase().replace(/[_\s]+/g,' ').trim());
+    const pick=(fn,pref)=>{const a=H.findIndex(v=>pref.test(v));return a>=0?a:H.findIndex(fn);};
+    const cC=pick(isCode,/STORE ?CODE|KODE ?TOKO/),cN=pick(isName,/STORE ?NAME|NAMA ?TOKO/),cB=H.findIndex(v=>/^(BRANCH|AREA|CABANG|REGION|WILAYAH|CITY|KOTA)/.test(v));
+    const rows=[],seen=new Set();
+    for(let i=S.h+1;i<S.aoa.length;i++){const r=S.aoa[i]||[];const st=merStore(r[cC]),nm=_oosS(r[cN]);if(!st||!nm||seen.has(st))continue;seen.add(st);rows.push({st,nm,br:cB>=0?_oosS(r[cB]):''});}
+    if(!rows.length)throw new Error('Tidak ada baris toko terbaca');
+    uploads.storemaster=rows;_stNmCache=null;
+    persistUpload('storemaster',rows,f.name);
+    const sales=typeof sdBase==='function'?sdBase():null,miss=sales?[...new Set(sales.list.map(r=>r.st))].filter(s=>!seen.has(s)):[];
+    setS(`✅ <strong>${rows.length}</strong> toko dimuat · ${merEsc(f.name)}`+(miss.length?`<br><span style="color:#d29922">⚠ ${miss.length} kode toko di data sales tidak ada di Store Master: ${merEsc(miss.slice(0,15).join(', '))}${miss.length>15?' …':''}</span>`:''),'success');
+    try{renderSalesData();}catch(_){}try{renderMerchReceipt();}catch(_){}
+  });
+}
 // Serialisasi PO/Receipt untuk sinkron server (publish) & sebaliknya
 function merApplyRows(key,rows,fallbackName){
   const meta=rows[0]&&rows[0].__meta?rows[0]:null;const data=meta?rows.slice(1):rows;
@@ -12455,7 +12498,7 @@ function renderMerchReceipt(){
   const all=recRows();
   if(!merGate('mrMain','mrNoData',all.length>0))return;
   const months=[...new Set(all.map(r=>r.ym))].sort();
-  const names={};all.forEach(r=>{if(r.nm&&!names[r.st])names[r.st]=r.nm;});
+  const names=merStoreNames();
   const stores=Object.keys(names).length?[...new Set(all.map(r=>r.st))].sort():[...new Set(all.map(r=>r.st))].sort();
   const fm=merFillSel('mrMonth',months,merYmLabel,'Semua Bulan');
   const fs=merFillSel('mrStore',stores,s=>s+(names[s]?' — '+names[s]:''),'Semua Toko');
@@ -12627,7 +12670,7 @@ function renderSalesData(){
   let a,b;
   if(mode==='day'){a=fEl.value||dmin;b=tEl.value||dmax;}else{a=mf.value+'-01';const e=mt.value;b=e+'-31';}
   if(a>b){const x=a;a=b;b=x;}
-  const stores=[...new Set(B.list.map(r=>r.st))].sort(),names={};recRows().forEach(r=>{if(r.nm&&!names[r.st])names[r.st]=r.nm;});
+  const stores=[...new Set(B.list.map(r=>r.st))].sort(),names=merStoreNames();
   const st=merFillSel('sdStore',stores,s=>s+(names[s]?' — '+names[s]:''),'Semua Toko (National)');
   const inR=B.list.filter(r=>r.d>=a&&r.d<=b&&(st==='ALL'||r.st===st));
   const prins=[...new Set(inR.map(r=>B.A(r.plu).prin||'(Tanpa Prinsipal)'))].sort();
@@ -20596,7 +20639,7 @@ async function downloadMcKinseyPPTX(){
   //  PHASE 2 — SHARED DATA via Supabase
   //  admin uploads → pushed to DB → all users pull + auto-refresh
   // ══════════════════════════════════════════════════════════════
-  const DATA_KINDS = ['sales','member','promo','product','po','receipt'];
+  const DATA_KINDS = ['sales','member','promo','product','po','receipt','storemaster'];
   const SYNC_ROW_CAP = 1000000;     // safety ceiling
   let _dataChan=null, _syncT=null, _lastPushAt=0;
 
