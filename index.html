@@ -2029,6 +2029,8 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     <span class="here" id="pfHere">Command Center</span>
   </div>
   <div class="pf-top-spacer"></div>
+  <label id="pfYearWrap" title="Filter tahun berlaku untuk semua menu" style="display:none;align-items:center;flex-shrink:0"><select class="filter-select" id="pfYearSel" onchange="pfSetYear(this.value)" style="min-width:0;width:auto;padding:5px 8px;font-size:12px"></select></label>
+  <style>.pf-topbar .pf-search{flex-shrink:1;min-width:0}@media(max-width:1100px){.pf-topbar .pf-live{display:none}}</style>
   <div class="pf-live"><span class="dot"></span>Pipeline live</div>
   <label class="pf-search">
     <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg>
@@ -6758,6 +6760,7 @@ async function refreshSavedDataStatus() {
 // Auto-save helper — dipanggil dari setiap handler upload (sales/member/promo/product)
 // Strategy: DELETE+INSERT (replace total). Filename disertakan untuk audit trail.
 function persistUpload(key, rows, filename) {
+  if (key==='sales' && Array.isArray(_pfSalesRaw) && _pfSalesRaw.length) rows=_pfSalesRaw;
   if (!rows || rows.length === 0) return;
   // Fire-and-forget; don't block UI
   dbSaveUpload(key, rows, filename).then(ok => {
@@ -6783,6 +6786,69 @@ function persistUpload(key, rows, filename) {
 //  UPLOADED DATA STORE
 // ══════════════════════════════════════════════
 const uploads = { sales: null, member: null, promo: null, product: null, oos: null };
+// ── Filter Tahun global: uploads.sales mengembalikan baris tahun terpilih; data asli tetap utuh di _pfSalesRaw ──
+let _pfSalesRaw=null,_pfYear=(()=>{try{return localStorage.getItem('pf_year')||'';}catch(_){return '';}})(),_pfYrInfo=null,_pfYrView=null;
+function pfSalesYears(){
+  const raw=_pfSalesRaw;if(!Array.isArray(raw)||!raw.length)return null;
+  if(_pfYrInfo&&_pfYrInfo.src===raw&&_pfYrInfo.n===raw.length)return _pfYrInfo;
+  let sc={};try{sc=sColDetect(raw)||{};}catch(_){}
+  const yr=new Int16Array(raw.length),set=new Set();
+  for(let i=0;i<raw.length;i++){let y=0;try{y=+getYearFromRow(raw[i],sc)||0;}catch(_){}if(y<2000||y>2100)y=0;yr[i]=y;if(y)set.add(y);}
+  _pfYrInfo={src:raw,n:raw.length,yr,years:[...set].sort((a,b)=>a-b)};return _pfYrInfo;
+}
+function pfActiveYear(){const I=pfSalesYears();if(!I||!I.years.length)return 'ALL';
+  if(_pfYear==='ALL')return 'ALL';if(_pfYear&&I.years.includes(+_pfYear))return _pfYear;
+  return I.years.length>1?String(I.years[I.years.length-1]):'ALL';}
+Object.defineProperty(uploads,'sales',{enumerable:true,configurable:true,
+  get(){const raw=_pfSalesRaw;if(!Array.isArray(raw))return raw;const y=pfActiveYear();if(y==='ALL')return raw;
+    if(_pfYrView&&_pfYrView.src===raw&&_pfYrView.n===raw.length&&_pfYrView.y===y)return _pfYrView.rows;
+    const I=pfSalesYears(),Y=+y,rows=raw.filter((r,i)=>!I.yr[i]||I.yr[i]===Y);
+    _pfYrView={src:raw,n:raw.length,y,rows};return rows;},
+  set(v){_pfSalesRaw=v;_pfYrInfo=null;_pfYrView=null;setTimeout(pfYearRefresh,0);}});
+function pfSalesAll(){return _pfSalesRaw;}
+// Upload sales = GABUNG: tanggal/bulan yang ada di file baru menggantikan data lama di tanggal/bulan itu; periode lain tetap tersimpan
+window._pfSalesChanged=null;
+function pfSalesKeyFn(rows){
+  let sc={};try{sc=sColDetect(rows)||{};}catch(_){}
+  return r=>{try{
+    if(sc.date&&typeof sdDay==='function'){const d=sdDay(r[sc.date]);if(d)return d;}
+    const y=+getYearFromRow(r,sc)||0,m=+getMonthFromRow(r,sc)||0;return y&&m?y+'-'+String(m).padStart(2,'0'):'';
+  }catch(_){return '';}};
+}
+function pfMergeSalesUpload(newRows){
+  const old=_pfSalesRaw;
+  const kN=pfSalesKeyFn(newRows),keys=new Set(),months=new Set(),yrs=new Set();
+  for(const r of newRows){const k=kN(r);keys.add(k);if(k){months.add(k.slice(0,7));yrs.add(+k.slice(0,4));}}
+  window._pfSalesChanged=months.size?months:null;
+  if(!Array.isArray(old)||!old.length||old===newRows)return newRows;
+  const kO=pfSalesKeyFn(old),byDay=[...keys].some(k=>k.length===10);
+  const out=newRows.slice();let kept=0;const keptM=new Set();
+  for(const r of old){const k=kO(r);
+    const hit=byDay?keys.has(k):(k&&months.has(k.slice(0,7)))||(!k&&keys.has(''));
+    if(!hit){out.push(r);kept++;if(k)keptM.add(k.slice(0,7));}}
+  const ym=s=>{const [y,m]=s.split('-');return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+' '+y;};
+  const ms=[...months].sort(),ks=[...keptM].sort();
+  window._pfLastMerge={kept,added:newRows.length,total:out.length,newM:ms,keptM:ks};
+  setTimeout(()=>{const el=document.getElementById('status-sales');if(!el)return;const d=document.createElement('div');
+    d.style.cssText='background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.3);border-radius:6px;padding:8px 12px;margin-top:6px;font-size:11.5px;line-height:1.6';
+    d.innerHTML='🔗 <strong>Data digabung</strong> — file baru: '+(ms.length?ym(ms[0])+(ms.length>1?' – '+ym(ms[ms.length-1]):''):'—')+' ('+newRows.length.toLocaleString('en-US')+' baris). Data lama dipertahankan: '+(ks.length?ym(ks[0])+(ks.length>1?' – '+ym(ks[ks.length-1]):''):'—')+' ('+kept.toLocaleString('en-US')+' baris). Total: <strong>'+out.length.toLocaleString('en-US')+'</strong> baris.';
+    el.appendChild(d);},400);
+  return out;
+}
+function pfYearRefresh(){
+  const w=document.getElementById('pfYearWrap'),s=document.getElementById('pfYearSel');if(!w||!s)return;
+  const I=pfSalesYears(),ys=I?I.years:[];
+  if(!ys.length){w.style.display='none';return;}
+  w.style.display='flex';
+  s.innerHTML='<option value="ALL">Semua Tahun</option>'+ys.slice().reverse().map(y=>`<option value="${y}">Tahun ${y}</option>`).join('');
+  s.value=pfActiveYear();
+}
+function pfSetYear(v){
+  _pfYear=v;_pfYrView=null;try{localStorage.setItem('pf_year',v);}catch(_){}
+  try{if(typeof _recYrCache!=='undefined')_recYrCache=null;}catch(_){}
+  try{if(_pfSalesRaw&&_pfSalesRaw.length&&typeof rebuildDashboard==='function')rebuildDashboard();else if(typeof reRenderAll==='function')reRenderAll();}catch(e){console.warn('[Year]',e);}
+  pfYearRefresh();
+}
 
 // Active working data (rebuilt from uploads or sample)
 let D = JSON.parse(JSON.stringify(SAMPLE));
@@ -10315,7 +10381,7 @@ async function connectGoogleSheet(key) {
   setUploadStatus(key, 'pending', '⏳ Connecting to Google Sheet…');
   try {
     const rows = await fetchSheetRows(url);
-    uploads[key] = rows;
+    uploads[key] = (key==='sales'?pfMergeSalesUpload(rows):rows);
     if (key === 'sales') normalizeSalesDates(rows);
     // AUTO-SAVE: DELETE+INSERT (replace total — data lama hilang), sama seperti upload file.
     persistUpload(key, rows, 'Google Sheet · ' + new Date().toLocaleString());
@@ -10556,7 +10622,7 @@ function processFile(file, key) {
           }
         }
 
-        uploads[key] = rows;
+        uploads[key] = (key==='sales'?pfMergeSalesUpload(rows):rows);
         if (key === 'sales') normalizeSalesDates(rows);
         // AUTO-SAVE: DELETE+INSERT ke IndexedDB (replace total, data lama hilang)
         persistUpload(key, rows, file.name);
@@ -10617,7 +10683,7 @@ function processFile(file, key) {
         if (fields.length === 0 && allRows.length > 0) {
           fields = Object.keys(allRows[0]);
         }
-        uploads[key] = allRows;
+        uploads[key] = (key==='sales'?pfMergeSalesUpload(allRows):allRows);
         // AUTO-SAVE: DELETE+INSERT ke IndexedDB (replace total, data lama hilang)
         persistUpload(key, allRows, file.name);
         setUploadStatus(key, 'success',
@@ -12244,7 +12310,11 @@ function merPersist(key,list,fname){
   try{persistUpload(key,[{__meta:1,file:fname,loadedAt:new Date().toISOString()}].concat(list.map(o=>{const c={...o};for(const k in c)if(c[k] instanceof Date)c[k]=c[k].toISOString();return c;})),fname);}catch(e){console.warn('[MERCH] persist gagal',e);}
 }
 function poLines(){return (typeof uploads!=='undefined'&&uploads.po&&Array.isArray(uploads.po.lines))?uploads.po.lines:[];}
-function recRows(){return (typeof uploads!=='undefined'&&uploads.receipt&&Array.isArray(uploads.receipt.rows))?uploads.receipt.rows:[];}
+function recRowsAll(){return (typeof uploads!=='undefined'&&uploads.receipt&&Array.isArray(uploads.receipt.rows))?uploads.receipt.rows:[];}
+let _recYrCache=null;
+function recRows(){const a=recRowsAll(),y=typeof pfActiveYear==='function'?pfActiveYear():'ALL';if(y==='ALL'||!a.length)return a;
+  if(_recYrCache&&_recYrCache.src===a&&_recYrCache.n===a.length&&_recYrCache.y===y)return _recYrCache.rows;
+  const rows=a.filter(r=>!r.ym||String(r.ym).slice(0,4)===y);_recYrCache={src:a,n:a.length,y,rows};return rows;}
 const poYm=d=>d&&!isNaN(d)?d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'):null;
 function handlePoFile(ev){
   const f=ev.target.files&&ev.target.files[0];if(!f)return;
@@ -12338,9 +12408,10 @@ function merApplyRows(key,rows,fallbackName){
 }
 function pfKindRows(k){
   if(k==='po'||k==='receipt'){
-    const src=k==='po'?poLines():recRows();if(!src.length)return null;
+    const src=k==='po'?poLines():recRowsAll();if(!src.length)return null;
     return [{__meta:1,file:(uploads[k]&&uploads[k].file)||''}].concat(src.map(o=>{const c={...o};for(const x in c)if(c[x] instanceof Date)c[x]=c[x].toISOString();return c;}));
   }
+  if(k==='sales')return Array.isArray(_pfSalesRaw)?_pfSalesRaw:null;
   return Array.isArray(uploads[k])?uploads[k]:null;
 }
 function pfKindSet(k,rows){if(k==='po'||k==='receipt')merApplyRows(k,rows,'server');else uploads[k]=rows;}
@@ -20736,11 +20807,32 @@ async function downloadMcKinseyPPTX(){
     _lastPushAt = Date.now();
   }
 
+  // Sales disimpan di server PER BULAN: kind 'sales@2026-09' … — upload/publish hanya bulan yang berubah
+  async function sbPublishSales(rows, filename, onProgress, onlyMonths){
+    const kf=pfSalesKeyFn(rows),groups=new Map();
+    for(let i=0;i<rows.length;i++){const k=kf(rows[i]);const m=k?k.slice(0,7):'0000-00';let g=groups.get(m);if(!g){g=[];groups.set(m,g);}g.push(rows[i]);}
+    let srv=[];try{const {data}=await sbc.from('datasets').select('kind,row_count');srv=(data||[]).filter(d=>d.kind==='sales'||/^sales@/.test(d.kind));}catch(_){}
+    const legacy=srv.filter(d=>d.kind==='sales'||/^sales@\d{4}$/.test(d.kind)).map(d=>d.kind);
+    const srvCnt={};srv.forEach(d=>{srvCnt[d.kind]=d.row_count;});
+    const todo=[...groups.entries()].filter(([m,g])=>{
+      if(legacy.length)return true;
+      if(onlyMonths&&onlyMonths.size)return onlyMonths.has(m);
+      return srvCnt['sales@'+m]!==g.length;
+    }).sort((x,y)=>x[0].localeCompare(y[0]));
+    const total=todo.reduce((s,[,g])=>s+g.length,0);let sent=0;const done=[];
+    for(const [m,g] of todo){
+      await sbPublishKind('sales@'+m, g, filename, onProgress?(d)=>onProgress(sent+d,total):null);
+      sent+=g.length;done.push(m==='0000-00'?'tanpa tanggal':m);
+    }
+    for(const k of legacy){ try{ await sbc.from('dataset_chunks').delete().eq('kind',k); await sbc.from('datasets').delete().eq('kind',k); }catch(_){} }
+    return {done,skipped:groups.size-todo.length,sent};
+  }
   async function sbPushDataset(kind, rows, filename){
     if(!SUPA_ON || !pfSession || pfSession.role!=='admin') return;
     if(!DATA_KINDS.includes(kind) || !rows || !rows.length) return;
     if(rows.length > SYNC_ROW_CAP){ pfToast('Dataset too large to sync ('+rows.length.toLocaleString()+' rows) — kept local', 'info'); return; }
     try{
+      if(kind==='sales'){ const r=await sbPublishSales(rows, filename, null, window._pfSalesChanged); window._pfSalesChanged=null; logAudit('change','dataset:sales '+r.done.join(',')+' ('+r.sent+' rows)'); pfToast(r.done.length?'Sales '+r.done.join(', ')+' published ('+r.sent.toLocaleString()+' rows)':'Sales sudah sinkron di server'); return; }
       await sbPublishKind(kind, rows, filename);
       logAudit('change','dataset:'+kind+' ('+rows.length+' rows)');
       pfToast('“'+kind+'” published to all users ('+rows.length.toLocaleString()+' rows)');
@@ -20790,9 +20882,9 @@ async function downloadMcKinseyPPTX(){
       const rows = pfKindRows(k);
       if(rows.length > SYNC_ROW_CAP){ lines.push('<span class="bad">⚠ '+k+': '+rows.length.toLocaleString()+' rows exceeds the sync ceiling — kept local only.</span>'); render(); continue; }
       try{
-        await sbPublishKind(k, rows, (rows._filename||''), (done,total)=>{
-          render('<span style="color:var(--accent)">⏳ '+k+': '+done.toLocaleString()+'/'+total.toLocaleString()+' rows sent…</span>');
-        });
+        const _prog=(done,total)=>{ render('<span style="color:var(--accent)">⏳ '+k+': '+done.toLocaleString()+'/'+total.toLocaleString()+' rows sent…</span>'); };
+        if(k==='sales'){ const r=await sbPublishSales(rows,(rows._filename||''),_prog,null); lines.push('<span class="ok">✓ sales — '+(r.done.length?'dikirim bulan '+r.done.join(', ')+' ('+r.sent.toLocaleString()+' rows)':'tidak ada perubahan')+(r.skipped?' · '+r.skipped+' bulan lain sudah tersimpan di server (dilewati)':'')+'</span>'); logAudit('change','dataset:sales ('+rows.length+' rows)'); render(); continue; }
+        await sbPublishKind(k, rows, (rows._filename||''), _prog);
         lines.push('<span class="ok">✓ '+k+' published — '+rows.length.toLocaleString()+' rows</span>');
         logAudit('change','dataset:'+k+' ('+rows.length+' rows)');
         render();
@@ -20842,7 +20934,15 @@ async function downloadMcKinseyPPTX(){
     try{
       const { data:meta } = await sbc.from('datasets').select('kind,rows,row_count,chunk_count,updated_at,uploaded_by');
       if(meta && meta.length){
+        const _salesParts=meta.filter(d=>/^sales@/.test(d.kind)).sort((a,b)=>a.kind.localeCompare(b.kind));
+        if(_salesParts.length){
+          const all=[];let okAll=true;
+          for(const d of _salesParts){ const part=d.chunk_count>0?await sbPullChunks(d.kind,d.chunk_count):(Array.isArray(d.rows)?d.rows:[]); if(!part){okAll=false;continue;} for(let i=0;i<part.length;i++)all.push(part[i]); }
+          if(all.length){ pfKindSet('sales',all); got=true; }
+        }
         for(const d of meta){
+          if(/^sales@/.test(d.kind)) continue;
+          if(d.kind==='sales' && _salesParts.length) continue;
           // pengaturan global (mis. definisi promo) — dipilih admin, dipakai semua browser
           if(d.kind==='settings'){
             try{ const s=Array.isArray(d.rows)?d.rows[0]:null;
@@ -20867,7 +20967,7 @@ async function downloadMcKinseyPPTX(){
           }
         }
         if(meta.some(d=>d.kind==='po'||d.kind==='receipt')){ try{ renderLeadTime(); renderMerchReceipt(); renderMerchSellThrough(); }catch(_){} }
-        const sales=meta.find(d=>d.kind==='sales');
+        const sales=meta.filter(d=>d.kind==='sales'||/^sales@/.test(d.kind)).sort((a,b)=>new Date(b.updated_at)-new Date(a.updated_at))[0];
         if(sales){ try{ localStorage.setItem('pf_data_updated', String(new Date(sales.updated_at).getTime())); localStorage.removeItem('pf_demo'); }catch(_){ } }
       }
     }catch(e){ console.warn('[P2] pull failed', e); }
@@ -20923,6 +21023,7 @@ async function downloadMcKinseyPPTX(){
     const _origPersist = window.persistUpload;
     window.persistUpload = function(key, rows, filename){
       _origPersist(key, rows, filename);
+      if(key==='sales' && Array.isArray(_pfSalesRaw) && _pfSalesRaw.length) rows=_pfSalesRaw;
       sbPushDataset(key, rows, filename);
     };
   }
