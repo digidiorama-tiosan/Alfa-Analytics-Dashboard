@@ -2722,8 +2722,20 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     </div>
   </div>
 
-  <div class="section-title">Detailed Store Table</div>
-  <div class="chart-card" style="margin-bottom:20px">
+<div id="ddCard" style="margin-bottom:20px">
+<div class="section-title">Sales Day by Day</div>
+<div class="chart-card" style="margin-bottom:12px">
+<div class="chart-header"><div><div class="chart-title">Net Sales · SPD · STD · APC per Hari</div><div class="chart-subtitle" id="ddSub">—</div></div>
+<div style="display:flex;gap:8px;align-items:center"><select class="filter-select" id="ddMet" onchange="renderStoreDaily()" style="min-width:120px"><option value="net">Net Sales</option><option value="spd">SPD</option><option value="std">STD</option><option value="apc">APC</option></select><button class="btn-dl" onclick="ddExport()"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Excel</button></div></div>
+<div class="chart-wrap" style="height:260px"><canvas id="ddChart"></canvas></div>
+</div>
+<div class="chart-card"><div class="table-wrap" style="max-height:380px;overflow-y:auto">
+<table class="data-table" style="font-size:12.5px"><thead style="position:sticky;top:0;z-index:1;background:var(--bg2)"><tr><th>Tanggal</th><th>Hari</th><th class="right" id="ddStoresTh">Toko Aktif</th><th class="right">Net Sales (Tk)</th><th class="right">Struk</th><th class="right" title="SPD = Net Sales ÷ toko aktif hari itu">SPD (Tk)</th><th class="right" title="STD = Struk ÷ toko aktif hari itu">STD</th><th class="right" title="APC = Net Sales ÷ Struk">APC (Tk)</th></tr></thead>
+<tbody id="ddBody"></tbody><tfoot id="ddFoot"></tfoot></table></div>
+<div style="font-size:11px;color:var(--text3);margin-top:8px">Hijau = hari tertinggi, merah = terendah untuk metric yang dipilih. Baris berwarna = Sabtu/Minggu. Mengikuti filter Store Code &amp; Month di atas.</div></div>
+</div>
+<div class="section-title" style="display:flex;align-items:center;gap:10px">Detailed Store Table <button class="filter-btn" style="padding:3px 10px;font-size:11.5px" onclick="ddToggleDetail(this)" id="ddDetBtn">▾ Sembunyikan</button></div>
+<div class="chart-card" style="margin-bottom:20px" id="storeDetailWrap">
     <div class="table-wrap">
       <table class="data-table">
         <thead>
@@ -7455,8 +7467,78 @@ let storeChartInst = null, storeCompChartInst = null;
 function renderStoreSales() {
   populateStoreFilters();
   applyStoreFilter();
+  try{if(localStorage.getItem('pf_storeDetailHidden')==='1'){document.getElementById('storeDetailWrap').style.display='none';document.getElementById('ddDetBtn').textContent='▸ Tampilkan';}}catch(_){}
 }
 
+// ── Sales by Store: Day by Day (Net Sales, SPD, STD, APC) ──
+let _ddCache=null,_ddLast=null;
+function ddAgg(){
+  const S=(typeof uploads!=='undefined'&&Array.isArray(uploads.sales))?uploads.sales:null;
+  if(!S||!S.length)return null;
+  if(_ddCache&&_ddCache.src===S&&_ddCache.n===S.length)return _ddCache;
+  const sc=sColDetect(S);if(!sc.date||!sc.net)return null;
+  const num=v=>{if(typeof v==='number')return v;const n=parseFloat(String(v??'').replace(/[^0-9.-]/g,''));return isNaN(n)?0:n;};
+  const bad=/void|return|retur|exchange|cancel|batal/i,map=new Map();
+  for(const r of S){
+    const d=sdDay(r[sc.date]);if(!d)continue;
+    const st=sc.store?String(r[sc.store]||'').trim()||'A001':'A001',k=d+'|'+st;
+    let o=map.get(k);if(!o){o={d,st,net:0,bills:new Set(),rows:0};map.set(k,o);}
+    o.net+=num(r[sc.net]);o.rows++;
+    if(sc.bon&&!(sc.type&&bad.test(String(r[sc.type]||''))))o.bills.add(String(r[sc.bon]));
+  }
+  const recs=[...map.values()].map(o=>({d:o.d,st:o.st,net:o.net,txn:sc.bon?o.bills.size:o.rows}));
+  _ddCache={src:S,n:S.length,recs};return _ddCache;
+}
+const DD_MET={net:['Net Sales','Tk'],spd:['SPD','Tk'],std:['STD','struk'],apc:['APC','Tk']};
+function renderStoreDaily(){
+  const card=document.getElementById('ddCard');if(!card)return;
+  const A=ddAgg();
+  if(!A){card.style.display='none';return;}card.style.display='';
+  const sv=document.getElementById('storeCodeSelect').value,mv=document.getElementById('storeMonthSelect').value;
+  const rec=A.recs.filter(r=>(sv==='ALL'||r.st===sv)&&(mv==='ALL'||+r.d.slice(5,7)===+mv));
+  const by=new Map();
+  rec.forEach(r=>{let o=by.get(r.d);if(!o){o={d:r.d,net:0,txn:0,st:new Set()};by.set(r.d,o);}o.net+=r.net;o.txn+=r.txn;o.st.add(r.st);});
+  const rows=[...by.values()].sort((a,b)=>a.d.localeCompare(b.d)).map(o=>{const n=o.st.size||1;return {d:o.d,stores:o.st.size,net:o.net,txn:o.txn,spd:o.net/n,std:o.txn/n,apc:o.txn?o.net/o.txn:0};});
+  const DN=['Min','Sen','Sel','Rab','Kam','Jum','Sab'],MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const lab=d=>{const x=new Date(d+'T00:00:00');return x.getDate()+' '+MN[x.getMonth()];};
+  const dow=d=>DN[new Date(d+'T00:00:00').getDay()];
+  const f0=v=>Math.round(v).toLocaleString('en-US'),f1=v=>v.toLocaleString('en-US',{maximumFractionDigits:1});
+  const met=document.getElementById('ddMet').value;
+  const tot=rows.reduce((s,r)=>({net:s.net+r.net,txn:s.txn+r.txn,spd:s.spd+r.spd,std:s.std+r.std}),{net:0,txn:0,spd:0,std:0});
+  const n=rows.length||1,avg={net:tot.net/n,spd:tot.spd/n,std:tot.std/n,apc:tot.txn?tot.net/tot.txn:0};
+  const multi=sv==='ALL';
+  document.getElementById('ddSub').textContent=`${rows.length} hari · ${sv==='ALL'?'semua toko':sv}${mv==='ALL'?'':' · '+(document.getElementById('storeMonthSelect').selectedOptions[0]||{}).text}`+(multi?' · SPD & STD = rata-rata per toko aktif':'');
+  const vals=rows.map(r=>met==='std'?+r.std.toFixed(1):Math.round(r[met]));
+  makeChart('ddChart',{type:'line',data:{labels:rows.map(r=>lab(r.d)),datasets:[
+    {label:DD_MET[met][0],data:vals,borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,.12)',fill:true,tension:.3,pointRadius:rows.length>60?0:2.5,borderWidth:2},
+    {label:'Rata-rata',data:rows.map(()=>met==='std'?+avg.std.toFixed(1):Math.round(avg[met])),borderColor:'#d29922',borderDash:[5,4],pointRadius:0,borderWidth:1.5,fill:false}]},
+    options:{...chartDefaults,interaction:{mode:'index',intersect:false},plugins:{...chartDefaults.plugins,legend:{display:true,labels:{color:'#8b949e',boxWidth:12,font:{size:11}}},
+      tooltip:{...chartDefaults.plugins.tooltip,callbacks:{title:c=>{const r=rows[c[0].dataIndex];return r?dow(r.d)+', '+lab(r.d):'';},label:c=>c.dataset.label+': '+(met==='std'?f1(c.raw):f0(c.raw))}}},
+      scales:{x:{...chartDefaults.scales.x,ticks:{...chartDefaults.scales.x.ticks,maxTicksLimit:16,autoSkip:true}},y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>met==='std'?v:fmt(v)}}}}});
+  const hi=Math.max(...rows.map(r=>r[met])),lo=Math.min(...rows.map(r=>r[met]));
+  const cell=(r,k,f)=>`<td class="right"${r[k]===hi&&k===met&&rows.length>1?' style="color:#3fb950;font-weight:700"':r[k]===lo&&k===met&&rows.length>1?' style="color:#f85149;font-weight:700"':''}>${f(r[k])}</td>`;
+  document.getElementById('ddBody').innerHTML=rows.map(r=>`<tr${['Sab','Min'].includes(dow(r.d))?' style="background:rgba(88,166,255,.04)"':''}><td style="font-family:var(--mono);white-space:nowrap">${r.d}</td><td>${dow(r.d)}</td>${multi?`<td class="right">${r.stores}</td>`:''}${cell(r,'net',f0)}<td class="right">${f0(r.txn)}</td>${cell(r,'spd',f0)}${cell(r,'std',f1)}${cell(r,'apc',f0)}</tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--text3)">Tidak ada data</td></tr>';
+  document.getElementById('ddFoot').innerHTML=rows.length?`<tr style="font-weight:700;background:var(--bg3)"><td colspan="${multi?3:2}">TOTAL / RATA-RATA</td><td class="right">${f0(tot.net)}</td><td class="right">${f0(tot.txn)}</td><td class="right">${f0(avg.spd)}</td><td class="right">${f1(avg.std)}</td><td class="right">${f0(avg.apc)}</td></tr>`:'';
+  document.getElementById('ddStoresTh').style.display=multi?'':'none';
+  _ddLast={rows,multi,sv,mv,tot,avg,dow};
+}
+function ddExport(){
+  const L=_ddLast;if(!L||!L.rows.length){alert('Belum ada data harian.');return;}
+  const go=()=>{
+    const H=['Tanggal','Hari'].concat(L.multi?['Toko Aktif']:[],['Net Sales (Tk)','Struk','SPD (Tk)','STD','APC (Tk)']);
+    const aoa=[['SALES DAY BY DAY — '+(L.sv==='ALL'?'Semua Toko':L.sv)],[],H];
+    L.rows.forEach(r=>aoa.push([r.d,L.dow(r.d)].concat(L.multi?[r.stores]:[],[Math.round(r.net),r.txn,Math.round(r.spd),Math.round(r.std*10)/10,Math.round(r.apc)])));
+    aoa.push(['TOTAL / RATA-RATA',''].concat(L.multi?['']:[],[Math.round(L.tot.net),L.tot.txn,Math.round(L.avg.spd),Math.round(L.avg.std*10)/10,Math.round(L.avg.apc)]));
+    const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=H.map((_,i)=>({wch:i?14:12}));
+    XLSX.utils.book_append_sheet(wb,ws,'Day by Day');XLSX.writeFile(wb,'Sales_Day_by_Day.xlsx');
+  };
+  if(typeof XLSX==='undefined')ensureLib('xlsx').then(go).catch(()=>alert('Gagal memuat pustaka Excel.'));else go();
+}
+function ddToggleDetail(btn){
+  const w=document.getElementById('storeDetailWrap'),hide=w.style.display!=='none';
+  w.style.display=hide?'none':'';btn.textContent=hide?'▸ Tampilkan':'▾ Sembunyikan';
+  try{localStorage.setItem('pf_storeDetailHidden',hide?'1':'0');}catch(_){}
+}
 function populateStoreFilters() {
   // Also refresh all Marketing panel sync bars
   if (typeof mktPopulateSyncBars === 'function') {
@@ -7478,6 +7560,7 @@ function resetStoreFilter() {
 }
 
 function applyStoreFilter() {
+  setTimeout(()=>{try{renderStoreDaily();}catch(e){console.warn('daily',e);}},0);
   const storeVal = document.getElementById('storeCodeSelect').value;
   const monthVal = document.getElementById('storeMonthSelect').value;
 
@@ -12902,7 +12985,7 @@ function renderStoreGrowth(){
   nd.style.display='none';mn.style.display='block';
   const names=typeof merStoreNames==='function'?merStoreNames():{};
   const mf=document.getElementById('sgFrom'),mt=document.getElementById('sgTo'),sig=B.ks.join('|');
-  [mf,mt].forEach((el,i)=>{if(el.dataset.sig!==sig){el.innerHTML=B.ks.map(k=>`<option value="${k}">${B.months.get(k)}</option>`).join('');el.value=i?B.ks[B.ks.length-1]:B.ks[Math.max(0,B.ks.length-6)];el.dataset.sig=sig;}});
+  [mf,mt].forEach((el,i)=>{if(el.dataset.sig!==sig){el.innerHTML=B.ks.map(k=>`<option value="${k}">${B.months.get(k)}</option>`).join('');el.value=i?B.ks[B.ks.length-1]:B.ks[0];el.dataset.sig=sig;}});
   let a=+mf.value,b=+mt.value;if(a>b){const x=a;a=b;b=x;}
   const ks=B.ks.filter(k=>k>=a&&k<=b);
   const allSt=[...B.stores.keys()].sort();
