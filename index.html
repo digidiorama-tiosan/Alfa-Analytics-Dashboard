@@ -2729,10 +2729,10 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 <div style="display:flex;gap:8px;align-items:center"><select class="filter-select" id="ddMet" onchange="renderStoreDaily()" style="min-width:120px"><option value="net">Net Sales</option><option value="spd">SPD</option><option value="std">STD</option><option value="apc">APC</option></select><button class="btn-dl" onclick="ddExport()"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Excel</button></div></div>
 <div class="chart-wrap" style="height:260px"><canvas id="ddChart"></canvas></div>
 </div>
-<div class="chart-card"><div class="table-wrap" style="max-height:380px;overflow-y:auto">
-<table class="data-table" style="font-size:12.5px"><thead style="position:sticky;top:0;z-index:1;background:var(--bg2)"><tr><th>Tanggal</th><th>Hari</th><th class="right" id="ddStoresTh">Toko Aktif</th><th class="right">Net Sales (Tk)</th><th class="right">Struk</th><th class="right" title="SPD = Net Sales ÷ toko aktif hari itu">SPD (Tk)</th><th class="right" title="STD = Struk ÷ toko aktif hari itu">STD</th><th class="right" title="APC = Net Sales ÷ Struk">APC (Tk)</th></tr></thead>
+<div class="chart-card"><div id="ddPages" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div><div class="table-wrap">
+<table class="data-table" style="font-size:12.5px"><thead><tr><th>Tanggal</th><th>Hari</th><th class="right" id="ddStoresTh">Toko Aktif</th><th class="right">Net Sales (Tk)</th><th class="right">Struk</th><th class="right" title="SPD = Net Sales ÷ toko aktif hari itu">SPD (Tk)</th><th class="right" title="STD = Struk ÷ toko aktif hari itu">STD</th><th class="right" title="APC = Net Sales ÷ Struk">APC (Tk)</th></tr></thead>
 <tbody id="ddBody"></tbody><tfoot id="ddFoot"></tfoot></table></div>
-<div style="font-size:11px;color:var(--text3);margin-top:8px">Hijau = hari tertinggi, merah = terendah untuk metric yang dipilih. Baris berwarna = Sabtu/Minggu. Mengikuti filter Store Code &amp; Month di atas.</div></div>
+<div style="font-size:11px;color:var(--text3);margin-top:8px">Hijau = hari tertinggi, merah = terendah untuk metric yang dipilih. Baris berwarna = Sabtu/Minggu. Pilih bulan dengan tombol di atas tabel. Baris Total / Rata-rata = seluruh periode di grafik. Mengikuti filter Store Code &amp; Month.</div></div>
 </div>
 <div class="section-title" style="display:flex;align-items:center;gap:10px">Detailed Store Table <button class="filter-btn" style="padding:3px 10px;font-size:11.5px" onclick="ddToggleDetail(this)" id="ddDetBtn">▾ Sembunyikan</button></div>
 <div class="chart-card" style="margin-bottom:20px" id="storeDetailWrap">
@@ -7517,7 +7517,12 @@ function renderStoreDaily(){
       scales:{x:{...chartDefaults.scales.x,ticks:{...chartDefaults.scales.x.ticks,maxTicksLimit:16,autoSkip:true}},y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>met==='std'?v:fmt(v)}}}}});
   const hi=Math.max(...rows.map(r=>r[met])),lo=Math.min(...rows.map(r=>r[met]));
   const cell=(r,k,f)=>`<td class="right"${r[k]===hi&&k===met&&rows.length>1?' style="color:#3fb950;font-weight:700"':r[k]===lo&&k===met&&rows.length>1?' style="color:#f85149;font-weight:700"':''}>${f(r[k])}</td>`;
-  document.getElementById('ddBody').innerHTML=rows.map(r=>`<tr${['Sab','Min'].includes(dow(r.d))?' style="background:rgba(88,166,255,.04)"':''}><td style="font-family:var(--mono);white-space:nowrap">${r.d}</td><td>${dow(r.d)}</td>${multi?`<td class="right">${r.stores}</td>`:''}${cell(r,'net',f0)}<td class="right">${f0(r.txn)}</td>${cell(r,'spd',f0)}${cell(r,'std',f1)}${cell(r,'apc',f0)}</tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--text3)">Tidak ada data</td></tr>';
+  const mk=[...new Set(rows.map(r=>r.d.slice(0,7)))];
+  const pg=document.getElementById('ddPages');
+  if(!mk.includes(window._ddPage))window._ddPage=mk[mk.length-1];
+  pg.innerHTML=mk.length>1?mk.map(m=>`<button class="filter-btn${m===window._ddPage?' primary':''}" style="padding:3px 10px;font-size:11.5px" onclick="window._ddPage='${m}';renderStoreDaily()">${MN[+m.slice(5,7)-1]} ${m.slice(2,4)}</button>`).join(''):'';
+  const tRows=mk.length>1?rows.filter(r=>r.d.startsWith(window._ddPage)):rows;
+  document.getElementById('ddBody').innerHTML=tRows.map(r=>`<tr${['Sab','Min'].includes(dow(r.d))?' style="background:rgba(88,166,255,.04)"':''}><td style="font-family:var(--mono);white-space:nowrap">${r.d}</td><td>${dow(r.d)}</td>${multi?`<td class="right">${r.stores}</td>`:''}${cell(r,'net',f0)}<td class="right">${f0(r.txn)}</td>${cell(r,'spd',f0)}${cell(r,'std',f1)}${cell(r,'apc',f0)}</tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--text3)">Tidak ada data</td></tr>';
   document.getElementById('ddFoot').innerHTML=rows.length?`<tr style="font-weight:700;background:var(--bg3)"><td colspan="${multi?3:2}">TOTAL / RATA-RATA</td><td class="right">${f0(tot.net)}</td><td class="right">${f0(tot.txn)}</td><td class="right">${f0(avg.spd)}</td><td class="right">${f1(avg.std)}</td><td class="right">${f0(avg.apc)}</td></tr>`:'';
   document.getElementById('ddStoresTh').style.display=multi?'':'none';
   _ddLast={rows,multi,sv,mv,tot,avg,dow};
