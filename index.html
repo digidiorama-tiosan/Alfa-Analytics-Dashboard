@@ -6793,6 +6793,7 @@ async function refreshSavedDataStatus() {
 // Strategy: DELETE+INSERT (replace total). Filename disertakan untuk audit trail.
 function persistUpload(key, rows, filename) {
   if (key==='sales' && Array.isArray(_pfSalesRaw) && _pfSalesRaw.length) rows=_pfSalesRaw;
+  else if ((key==='promo'||key==='product') && Array.isArray(uploads[key]) && uploads[key].length) rows=uploads[key];
   if (!rows || rows.length === 0) return;
   // Fire-and-forget; don't block UI
   dbSaveUpload(key, rows, filename).then(ok => {
@@ -7864,6 +7865,45 @@ function mkCleanName(v){return String(v==null?'':v).replace(/[\u200B-\u200F\u206
 function mkNum(v){if(v==null||v==='')return 0;const n=parseFloat(String(v).replace(/[^\d.\-]/g,''));return isNaN(n)?0:n;}
 // File Excel dengan baris judul kosong \u2192 header jadi __EMPTY_x dan header asli ada di baris data.
 // Deteksi & perbaiki: cari baris yang berisi 'PLU'/'MEREK'/'DESCP', jadikan header, buang baris di atasnya.
+// Upload Juklak & Oramas = GABUNG: baris dengan kunci yang sama diganti versi baru, sisanya tetap tersimpan
+window._pfProdPrev=null;
+function pfKeyFnFor(key,rows){
+  if(key==='product'){const pc=(()=>{const s=new Set();for(let i=0;i<Math.min(rows.length,25);i++)Object.keys(rows[i]||{}).forEach(k=>s.add(k));return [...s];})();
+    const c=mkFind(pc,['plu','item_code','kode_barang','barcode','sku','kode']);if(!c)return null;
+    return r=>{const v=String(r[c]??'').trim();return v?'P:'+(v.replace(/^0+/,'')||v):'';};}
+  if(key==='promo'){const jc=jColDetect(rows);
+    const g=r=>((jc.guideline?String(r[jc.guideline]??'').trim():'')+'‖'+(jc.skp?String(r[jc.skp]??'').trim():''));
+    if(!jc.guideline&&!jc.skp&&!jc.code)return null;
+    return r=>{const k=g(r);if(k!=='‖')return 'J:'+k;
+      const p=jc.code?String(r[jc.code]??'').trim().replace(/^0+/,''):'';if(!p)return '';
+      return 'I:'+p+'|'+(jc.startDate?String(r[jc.startDate]??''):'')+'|'+(jc.endDate?String(r[jc.endDate]??''):'');};}
+  return null;
+}
+function pfMergeKeyed(key,newRows,old){
+  if(!Array.isArray(newRows)||!newRows.length)return newRows;
+  if(!Array.isArray(old)||!old.length||old===newRows)return newRows;
+  const kN=pfKeyFnFor(key,newRows),kO=pfKeyFnFor(key,old);
+  if(!kN||!kO)return newRows;   // kolom kunci tidak terbaca → ganti total (aman)
+  const keys=new Set();for(const r of newRows){const k=kN(r);if(k)keys.add(k);}
+  if(!keys.size)return newRows;
+  const out=newRows.slice();let kept=0,repl=0;
+  for(const r of old){const k=kO(r);if(k&&keys.has(k))repl++;else{out.push(r);kept++;}}
+  const lbl=key==='promo'?'Juklak':'Product Master (Oramas)',unit=key==='promo'?'juklak/item':'PLU';
+  setTimeout(()=>{const el=document.getElementById('status-'+key);if(!el)return;const d=document.createElement('div');
+    d.style.cssText='background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.3);border-radius:6px;padding:8px 12px;margin-top:6px;font-size:11.5px;line-height:1.6';
+    d.innerHTML='🔗 <strong>'+lbl+' digabung</strong> — file baru: '+newRows.length.toLocaleString('en-US')+' baris ('+keys.size.toLocaleString('en-US')+' '+unit+'). Diganti versi baru: '+repl.toLocaleString('en-US')+' baris lama. Data lama dipertahankan: '+kept.toLocaleString('en-US')+' baris. Total: <strong>'+out.length.toLocaleString('en-US')+'</strong> baris.';
+    el.appendChild(d);},400);
+  return out;
+}
+function pfMergeUpload(key,rows){
+  if(key==='sales')return pfMergeSalesUpload(rows);
+  if(key==='promo')return pfMergeKeyed('promo',rows,uploads.promo);
+  if(key==='product'){const prev=uploads.product;
+    const pc=Object.keys(rows[0]||{});
+    if(pc.some(k=>/^__empty/i.test(k)||/^column\d+$/i.test(k))){window._pfProdPrev=prev;return rows;} // header di baris bawah → digabung setelah perbaikan header
+    return pfMergeKeyed('product',rows,prev);}
+  return rows;
+}
 function pfFixProductHeaders(){
   const prod=(typeof uploads!=='undefined'&&Array.isArray(uploads.product))?uploads.product:[];
   if(!prod.length)return false;
@@ -7876,6 +7916,7 @@ function pfFixProductHeaders(){
       const hdr={};const seen={};
       keys.forEach(k=>{let h=String(prod[i][k]==null?'':prod[i][k]).trim()||k;if(seen[h]!=null){seen[h]++;h=h+'_'+seen[h];}else seen[h]=0;hdr[k]=h;});
       uploads.product=prod.slice(i+1).map(r=>{const o={};keys.forEach(k=>{o[hdr[k]]=r[k];});return o;});
+      if(window._pfProdPrev){const pv=window._pfProdPrev;window._pfProdPrev=null;try{uploads.product=pfMergeKeyed('product',uploads.product,pv);}catch(e){console.warn('merge product',e);}}
       console.log('[Master] Header Oramas diperbaiki otomatis (baris header di baris',i+1,') \u2014',uploads.product.length,'baris data');
       try{if(typeof persistUpload==='function')persistUpload('product',uploads.product,'auto-reheader');}catch(_){}
       return true;
@@ -10490,7 +10531,7 @@ async function connectGoogleSheet(key) {
   setUploadStatus(key, 'pending', '⏳ Connecting to Google Sheet…');
   try {
     const rows = await fetchSheetRows(url);
-    uploads[key] = (key==='sales'?pfMergeSalesUpload(rows):rows);
+    uploads[key] = pfMergeUpload(key,rows);
     if (key === 'sales') normalizeSalesDates(rows);
     // AUTO-SAVE: DELETE+INSERT (replace total — data lama hilang), sama seperti upload file.
     persistUpload(key, rows, 'Google Sheet · ' + new Date().toLocaleString());
@@ -10731,7 +10772,7 @@ function processFile(file, key) {
           }
         }
 
-        uploads[key] = (key==='sales'?pfMergeSalesUpload(rows):rows);
+        uploads[key] = pfMergeUpload(key,rows);
         if (key === 'sales') normalizeSalesDates(rows);
         // AUTO-SAVE: DELETE+INSERT ke IndexedDB (replace total, data lama hilang)
         persistUpload(key, rows, file.name);
@@ -10792,7 +10833,7 @@ function processFile(file, key) {
         if (fields.length === 0 && allRows.length > 0) {
           fields = Object.keys(allRows[0]);
         }
-        uploads[key] = (key==='sales'?pfMergeSalesUpload(allRows):allRows);
+        uploads[key] = pfMergeUpload(key,allRows);
         // AUTO-SAVE: DELETE+INSERT ke IndexedDB (replace total, data lama hilang)
         persistUpload(key, allRows, file.name);
         setUploadStatus(key, 'success',
