@@ -10923,7 +10923,6 @@ function normalizeSalesDates(rows) {
 }
 
 function rebuildDashboard() {
-  try{if(Array.isArray(_pfSalesRaw)&&_pfSalesRaw.length){const fx=pfFixHeaderRows(_pfSalesRaw);if(fx!==_pfSalesRaw){uploads.sales=fx;window._pfSalesChanged=null;try{persistUpload('sales',fx,'sales');}catch(_){}}}}catch(e){console.warn('[fixHdr]',e);}
   if (!uploads.sales) {
     D = JSON.parse(JSON.stringify(SAMPLE));
     alert('No sales data uploaded — using the built-in sample data.');
