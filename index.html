@@ -11306,7 +11306,16 @@ function rebuildDashboard() {
     return g;
   }).sort((a,b)=>a.month-b.month||a.store_code.localeCompare(b.store_code));
 
-  if (!monthly.length) { alert('No valid data. Check Diagnostic.'); return; }
+  if (!monthly.length) {
+    const yr=(typeof pfActiveYear==='function')?pfActiveYear():'ALL';
+    if(yr!=='ALL'&&!window.__pfRetryAll&&Array.isArray(_pfSalesRaw)&&_pfSalesRaw.length>salesRows.length){
+      window.__pfRetryAll=true;_pfYear='ALL';_pfYrView=null;try{localStorage.setItem('pf_year','ALL');}catch(_){}
+      try{return rebuildDashboard();}finally{window.__pfRetryAll=false;}
+    }
+    const smp=salesRows.slice(0,3).map(r=>'  • '+(colDate?colDate+'='+JSON.stringify(r[colDate]):'')+(colMonth?' | '+colMonth+'='+JSON.stringify(r[colMonth]):'')+(colStore?' | '+colStore+'='+JSON.stringify(r[colStore]):'')).join('\n');
+    alert('Data sales tidak terbaca ('+salesRows.length.toLocaleString('en-US')+' baris, filter tahun: '+yr+').\n\nKolom tanggal: '+(colDate||'TIDAK DITEMUKAN')+'\nKolom bulan: '+(colMonth||'-')+'\nKolom toko: '+(colStore||'-')+'\nKolom file: '+actualCols.slice(0,25).join(', ')+'\n\nContoh baris:\n'+smp+'\n\nKirim screenshot pesan ini untuk dicek.');
+    return;
+  }
 
   // ── Finalize hourMap & dowMap ────────────────────────────────────
   for (const h in hourMap) { hourMap[h].std=hourMap[h].std_set.size; hourMap[h].txns=hourMap[h].txns_set.size; delete hourMap[h].std_set; delete hourMap[h].txns_set; }
