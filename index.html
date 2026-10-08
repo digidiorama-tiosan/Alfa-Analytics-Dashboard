@@ -6848,7 +6848,25 @@ function pfSalesKeyFn(rows){
     const y=+getYearFromRow(r,sc)||0,m=+getMonthFromRow(r,sc)||0;return y&&m?y+'-'+String(m).padStart(2,'0'):'';
   }catch(_){return '';}};
 }
+function pfFixHeaderRows(rows){
+  if(!Array.isArray(rows)||!rows.length)return rows;
+  const bad=r=>{const ks=Object.keys(r||{});return ks.length&&ks.filter(k=>/^__EMPTY/i.test(k)).length>=ks.length*0.5;};
+  if(!rows.some(bad))return rows;
+  const HT=/^(tgl|tanggal|date|kodetoko|kdtoko|toko|store|plu|netsales|net|qty|nobon|bon|type|tipe|kdbranch|branch|desc|deskripsi|harga|price|gross|member|kodemember|jam|bulan|month|cogs|hpp)/;
+  const isHdr=r=>{let n=0;for(const v of Object.values(r)){const s=String(v??'').toLowerCase().replace(/[^a-z0-9]/g,'');if(s&&isNaN(+s)&&HT.test(s))n++;}return n>=3;};
+  const out=[];let map=null,fixed=0,drop=0;
+  for(const r of rows){
+    if(!bad(r)){out.push(r);continue;}
+    if(isHdr(r)){map={};const seen={};for(const k of Object.keys(r)){let n=String(r[k]??'').trim();if(!n)continue;if(seen[n]!=null){seen[n]++;n=n+'_'+seen[n];}else seen[n]=0;map[k]=n;}drop++;continue;}
+    if(!map){drop++;continue;}
+    const o={};let any=false;for(const k in map){const v=r[k];o[map[k]]=v;if(v!=null&&v!=='')any=true;}
+    if(any){out.push(o);fixed++;}else drop++;
+  }
+  console.log('[pfFixHeaderRows] baris diperbaiki:',fixed,'baris judul/kosong dibuang:',drop);
+  return out;
+}
 function pfMergeSalesUpload(newRows){
+  newRows=pfFixHeaderRows(newRows);try{normalizeSalesDates(newRows);}catch(_){}
   const old=_pfSalesRaw;
   const kN=pfSalesKeyFn(newRows),keys=new Set(),months=new Set(),yrs=new Set();
   for(const r of newRows){const k=kN(r);keys.add(k);if(k){months.add(k.slice(0,7));yrs.add(+k.slice(0,4));}}
@@ -10905,6 +10923,7 @@ function normalizeSalesDates(rows) {
 }
 
 function rebuildDashboard() {
+  try{if(Array.isArray(_pfSalesRaw)&&_pfSalesRaw.length){const fx=pfFixHeaderRows(_pfSalesRaw);if(fx!==_pfSalesRaw){uploads.sales=fx;window._pfSalesChanged=null;try{persistUpload('sales',fx,'sales');}catch(_){}}}}catch(e){console.warn('[fixHdr]',e);}
   if (!uploads.sales) {
     D = JSON.parse(JSON.stringify(SAMPLE));
     alert('No sales data uploaded — using the built-in sample data.');
