@@ -6791,7 +6791,12 @@ async function refreshSavedDataStatus() {
 
 // Auto-save helper — dipanggil dari setiap handler upload (sales/member/promo/product)
 // Strategy: DELETE+INSERT (replace total). Filename disertakan untuk audit trail.
+// Data yang diupload admin tapi belum di-publish → jangan ditimpa data server saat sync
+function pfDirtyGet(){try{return new Set(JSON.parse(localStorage.getItem('pf_dirty')||'[]'));}catch(_){return new Set();}}
+function pfIsDirty(k){return pfDirtyGet().has(k);}
+function pfSetDirty(k,on){const s=pfDirtyGet();on?s.add(k):s.delete(k);try{localStorage.setItem('pf_dirty',JSON.stringify([...s]));}catch(_){}}
 function persistUpload(key, rows, filename) {
+  try{pfSetDirty(key,true);}catch(_){}
   if (key==='sales' && Array.isArray(_pfSalesRaw) && _pfSalesRaw.length) rows=_pfSalesRaw;
   else if ((key==='promo'||key==='product') && Array.isArray(uploads[key]) && uploads[key].length) rows=uploads[key];
   if (!rows || rows.length === 0) return;
@@ -21147,9 +21152,9 @@ async function downloadMcKinseyPPTX(){
       if(rows.length > SYNC_ROW_CAP){ lines.push('<span class="bad">⚠ '+k+': '+rows.length.toLocaleString()+' rows exceeds the sync ceiling — kept local only.</span>'); render(); continue; }
       try{
         const _prog=(done,total)=>{ render('<span style="color:var(--accent)">⏳ '+k+': '+done.toLocaleString()+'/'+total.toLocaleString()+' rows sent…</span>'); };
-        if(k==='sales'){ const r=await sbPublishSales(rows,(rows._filename||''),_prog,null); lines.push('<span class="ok">✓ sales — '+(r.done.length?'dikirim bulan '+r.done.join(', ')+' ('+r.sent.toLocaleString()+' rows)':'tidak ada perubahan')+(r.skipped?' · '+r.skipped+' bulan lain sudah tersimpan di server (dilewati)':'')+'</span>'); logAudit('change','dataset:sales ('+rows.length+' rows)'); render(); continue; }
+        if(k==='sales'){ const r=await sbPublishSales(rows,(rows._filename||''),_prog,null); lines.push('<span class="ok">✓ sales — '+(r.done.length?'dikirim bulan '+r.done.join(', ')+' ('+r.sent.toLocaleString()+' rows)':'tidak ada perubahan')+(r.skipped?' · '+r.skipped+' bulan lain sudah tersimpan di server (dilewati)':'')+'</span>'); logAudit('change','dataset:sales ('+rows.length+' rows)'); pfSetDirty('sales',false); render(); continue; }
         await sbPublishKind(k, rows, (rows._filename||''), _prog);
-        lines.push('<span class="ok">✓ '+k+' published — '+rows.length.toLocaleString()+' rows</span>');
+        lines.push('<span class="ok">✓ '+k+' published — '+rows.length.toLocaleString()+' rows</span>'); pfSetDirty(k,false);
         logAudit('change','dataset:'+k+' ('+rows.length+' rows)');
         render();
       }catch(e){
@@ -21202,7 +21207,8 @@ async function downloadMcKinseyPPTX(){
         if(_salesParts.length){
           const all=[];let okAll=true;
           for(const d of _salesParts){ const part=d.chunk_count>0?await sbPullChunks(d.kind,d.chunk_count):(Array.isArray(d.rows)?d.rows:[]); if(!part){okAll=false;continue;} for(let i=0;i<part.length;i++)all.push(part[i]); }
-          if(all.length){ pfKindSet('sales',all); got=true; }
+          if(all.length && okAll && !pfIsDirty('sales')){ pfKindSet('sales',all); got=true; }
+          else if(pfIsDirty('sales')) console.log('[Sync] sales lokal belum di-publish — data server tidak menimpa');
         }
         for(const d of meta){
           if(/^sales@/.test(d.kind)) continue;
@@ -21222,6 +21228,7 @@ async function downloadMcKinseyPPTX(){
             continue;
           }
           if(!DATA_KINDS.includes(d.kind)) continue;
+          if(pfIsDirty(d.kind)) { console.log('[Sync] '+d.kind+' lokal belum di-publish — dilewati'); continue; }
           if(d.chunk_count && d.chunk_count>0){
             const all = await sbPullChunks(d.kind, d.chunk_count);
             if(all && all.length){ pfKindSet(d.kind,all); got=true; }
