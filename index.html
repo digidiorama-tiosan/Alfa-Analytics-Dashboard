@@ -859,6 +859,8 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
   #panel-exec-summary .chart-card{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;will-change:transform}
   #panel-exec-summary .chart-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.28);border-color:var(--border2)}
   @media (prefers-reduced-motion:reduce){#panel-exec-summary .chart-card{transition:none}#panel-exec-summary .chart-card:hover{transform:none}}
+  #panel-exec-summary .kpi-card,#panel-exec-summary .stat-card{transition:transform .18s ease}
+  #panel-exec-summary .kpi-card:hover,#panel-exec-summary .stat-card:hover{transform:translateY(-2px)}
   #demoPivotTable tr>:nth-child(1),#demoPivotTable tr>:nth-child(2){position:sticky;z-index:2;background:var(--surface)}
   #demoPivotTable tr>:nth-child(1){left:0;min-width:96px;max-width:96px;width:96px}
   #demoPivotTable tr>:nth-child(2){left:96px;min-width:80px;box-shadow:inset -1px 0 0 var(--border2)}
@@ -21425,6 +21427,34 @@ async function downloadMcKinseyPPTX(){
       window.showPanel('command-center', document.querySelector('[onclick*="command-center"]'));
     }
   })();
+})();
+</script>
+<script>
+(function(){
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const busy=new WeakMap();
+  function replay(card){
+    if(typeof Chart==='undefined')return;
+    card.querySelectorAll('canvas').forEach(cv=>{
+      const ch=Chart.getChart(cv); if(!ch)return;
+      const now=Date.now(); if(busy.get(ch)>now)return;
+      const t=ch.config.type, isRound=t==='doughnut'||t==='pie'||t==='polarArea';
+      const anim=ch.options.animation=Object.assign({},ch.options.animation||{});
+      anim.duration=isRound?900:750; anim.easing='easeOutQuart';
+      if(isRound){anim.animateRotate=true;anim.animateScale=true;}
+      else{
+        const n=Math.max(1,(ch.data.labels||[]).length);
+        anim.delay=(c)=>c.type==='data'&&c.mode==='default'?Math.min(c.dataIndex*(400/n),400)+(c.datasetIndex||0)*80:0;
+      }
+      busy.set(ch,now+(anim.duration+500));
+      ch.reset(); ch.update();
+    });
+  }
+  document.addEventListener('mouseover',e=>{
+    const card=e.target.closest&&e.target.closest('#panel-exec-summary .chart-card');
+    if(!card||card.contains(e.relatedTarget))return;
+    replay(card);
+  });
 })();
 </script>
 </body>
