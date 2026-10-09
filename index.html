@@ -856,6 +856,9 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 
   /* ENHANCED CHART STYLES */
   .chart-card { position: relative; }
+  #panel-exec-summary .chart-card{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;will-change:transform}
+  #panel-exec-summary .chart-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.28);border-color:var(--border2)}
+  @media (prefers-reduced-motion:reduce){#panel-exec-summary .chart-card{transition:none}#panel-exec-summary .chart-card:hover{transform:none}}
   #demoPivotTable tr>:nth-child(1),#demoPivotTable tr>:nth-child(2){position:sticky;z-index:2;background:var(--surface)}
   #demoPivotTable tr>:nth-child(1){left:0;min-width:96px;max-width:96px;width:96px}
   #demoPivotTable tr>:nth-child(2){left:96px;min-width:80px;box-shadow:inset -1px 0 0 var(--border2)}
