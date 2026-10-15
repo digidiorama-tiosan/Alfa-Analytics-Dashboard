@@ -2302,10 +2302,16 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       <div class="page-title">⚡ Executive Summary</div>
       <div class="page-subtitle" id="esPeriodSub">Overall business performance summary</div>
     </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn-dl" onclick="mrOpen()" title="Ringkasan bulanan untuk meeting (Excel / PDF)">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="1.5" width="12" height="13" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h3"/></svg>
+      Ringkasan Meeting
+    </button>
     <button class="btn-dl" onclick="downloadExcelExecSummary()">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg>
       Download Excel
     </button>
+    </div>
   </div>
 
   <!-- HERO KPI - 6 cards -->
@@ -13130,6 +13136,103 @@ function sgExport(){
     XLSX.writeFile(wb,'Store_Growth_MoM.xlsx');
   };
   if(typeof XLSX==='undefined')ensureLib('xlsx').then(go).catch(()=>alert('Gagal memuat pustaka Excel.'));else go();
+}
+
+// ── Ringkasan Bulanan untuk Meeting (Excel / PDF) ──
+function mrData(k,st){
+  const B=sgBuild();if(!B)return null;
+  const ks=B.ks,i=ks.indexOf(k),pk=i>0?ks[i-1]:null;
+  const allSt=[...B.stores.keys()].sort(),stores=st==='ALL'?allSt:[st];
+  const names=typeof merStoreNames==='function'?merStoreNames():{};
+  const agg=m=>{if(m==null)return null;const o={net:0,gm:0,std:0,mem:0};
+    (D.monthly||[]).forEach(r=>{if(+r.month!==m)return;if(!stores.includes(r.store_code||'A001'))return;o.net+=r.net_sales||0;o.gm+=r.gm||0;o.std+=(r.std!==undefined?r.std:r.txns)||0;o.mem+=r.member_sales||0;});
+    const pr=st==='ALL'?((D.mvp_monthly||[]).find(x=>+x.month===m)||{}).promo:null;
+    return {net:o.net,gmPct:o.net?o.gm/o.net*100:null,spd:sgNat(B,stores,m,'spd'),std:sgNat(B,stores,m,'std'),apc:o.std?o.net/o.std:null,struk:o.std,memPct:o.net?o.mem/o.net*100:null,promoPct:pr&&o.net?pr/o.net*100:null,stores:stores.filter(s=>((B.stores.get(s)||{})[m]||{}).net).length};};
+  const cur=agg(k),prv=agg(pk);
+  const rows=stores.map(s=>{const S=B.stores.get(s)||{},c=S[k],p=pk!=null?S[pk]:null;const v=met=>sgVal(c,met),pv=met=>sgVal(p,met);
+    return {st:s,nm:names[s]||'',net:v('net'),spd:v('spd'),std:v('std'),apc:v('apc'),gNet:sgG(v('net'),pv('net')),gSpd:sgG(v('spd'),pv('spd')),gStd:sgG(v('std'),pv('std')),gApc:sgG(v('apc'),pv('apc'))};}).filter(r=>r.net);
+  rows.sort((a,b)=>(b.net||0)-(a.net||0));
+  const trend=ks.filter(m=>m<=k).map((m,j,arr)=>{const a=agg(m),p=j?agg(arr[j-1]):null;return {m,lbl:B.months.get(m),...a,gNet:p?sgG(a.net,p.net):null,gSpd:p?sgG(a.spd,p.spd):null};});
+  const withG=rows.filter(r=>r.gSpd!=null).sort((a,b)=>b.gSpd-a.gSpd);
+  return {k,pk,lbl:B.months.get(k),plbl:pk!=null?B.months.get(pk):null,st,stName:st==='ALL'?'Semua Toko':st+(names[st]?' — '+names[st]:''),cur,prv,rows,trend,top:withG.slice(0,5),bot:withG.slice(-5).reverse(),up:withG.filter(r=>r.gSpd>0).length,dn:withG.filter(r=>r.gSpd<0).length};
+}
+const MR_KPI=[['net','Net Sales (Tk)',0],['gmPct','Gross Margin %',2],['spd','SPD — Sales per Day (rata-rata toko)',0],['std','STD — Struk per Day (rata-rata toko)',1],['apc','APC — Avg per Customer (Tk)',0],['struk','Total Struk',0],['memPct','Member Sales % Net',2],['promoPct','Promo Sales % Net',2],['stores','Jumlah Toko Aktif',0]];
+function mrOpen(){
+  const B=sgBuild();if(!B||!B.ks.length){alert('Belum ada data sales. Upload & Rebuild Dashboard dulu.');return;}
+  let ov=document.getElementById('mrModal');
+  if(!ov){ov=document.createElement('div');ov.id='mrModal';ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';document.body.appendChild(ov);ov.addEventListener('click',e=>{if(e.target===ov)ov.style.display='none';});}
+  const names=typeof merStoreNames==='function'?merStoreNames():{},allSt=[...B.stores.keys()].sort();
+  ov.innerHTML=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:22px;width:100%;max-width:420px;display:flex;flex-direction:column;gap:14px">
+    <div><div style="font-size:16px;font-weight:700">Ringkasan Bulanan untuk Meeting</div><div style="font-size:12px;color:var(--text3);margin-top:4px">KPI bulan terpilih vs bulan sebelumnya, performa per toko, top/bottom toko (growth SPD) & tren bulanan.</div></div>
+    <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)">Bulan<select id="mrMonth" class="filter-select">${B.ks.map(k=>`<option value="${k}">${B.months.get(k)}</option>`).join('')}</select></label>
+    <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)">Toko<select id="mrStore" class="filter-select"><option value="ALL">Semua Toko</option>${allSt.map(s=>`<option value="${s}">${s}${names[s]?' — '+merEsc(names[s]):''}</option>`).join('')}</select></label>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:4px">
+      <button class="btn-dl" onclick="document.getElementById('mrModal').style.display='none'" style="background:transparent">Batal</button>
+      <button class="btn-dl" onclick="mrExcel()">⬇ Excel</button>
+      <button class="btn-dl" onclick="mrPdf()">⬇ PDF</button>
+    </div></div>`;
+  document.getElementById('mrMonth').value=B.ks[B.ks.length-1];ov.style.display='flex';
+}
+function mrSel(){return mrData(+document.getElementById('mrMonth').value,document.getElementById('mrStore').value);}
+function mrExcel(){
+  const M=mrSel();if(!M)return;
+  const go=()=>{
+    const wb=XLSX.utils.book_new(),r=(v,d)=>v==null?'':(d?Math.round(v*Math.pow(10,d))/Math.pow(10,d):Math.round(v)),g=v=>v==null?'':Math.round(v*10)/10;
+    const info=['Periode: '+M.lbl+(M.plbl?' (vs '+M.plbl+')':'')+' · Toko: '+M.stName];
+    const s1=[['RINGKASAN BULANAN — '+M.lbl],info,[],['Indikator',M.lbl,M.plbl||'Bulan lalu','Growth %']];
+    MR_KPI.forEach(([k,l,d])=>{const c=M.cur[k],p=M.prv?M.prv[k]:null;s1.push([l,r(c,d),r(p,d),/Pct$/.test(k)?(c!=null&&p!=null?Math.round((c-p)*100)/100+' pp':''):g(sgG(c,p))]);});
+    s1.push([],['Toko naik (SPD)',M.up],['Toko turun (SPD)',M.dn]);
+    const ws1=XLSX.utils.aoa_to_sheet(s1);ws1['!cols']=[{wch:38},{wch:16},{wch:16},{wch:12}];XLSX.utils.book_append_sheet(wb,ws1,'Ringkasan');
+    const s2=[['PERFORMA PER TOKO — '+M.lbl],info,[],['Kode Toko','Nama Toko','Net Sales','Growth Net %','SPD','Growth SPD %','STD','Growth STD %','APC','Growth APC %']];
+    M.rows.forEach(x=>s2.push([x.st,x.nm,r(x.net),g(x.gNet),r(x.spd),g(x.gSpd),r(x.std,1),g(x.gStd),r(x.apc),g(x.gApc)]));
+    const ws2=XLSX.utils.aoa_to_sheet(s2);ws2['!cols']=[{wch:11},{wch:26}].concat(Array(8).fill({wch:13}));ws2['!autofilter']={ref:'A4:J'+(4+M.rows.length)};XLSX.utils.book_append_sheet(wb,ws2,'Per Toko');
+    const s3=[['TOP & BOTTOM 5 TOKO — Growth SPD '+M.lbl+(M.plbl?' vs '+M.plbl:'')],[],['TOP 5'],['Kode Toko','Nama Toko','SPD','Growth SPD %']];
+    M.top.forEach(x=>s3.push([x.st,x.nm,r(x.spd),g(x.gSpd)]));s3.push([],['BOTTOM 5'],['Kode Toko','Nama Toko','SPD','Growth SPD %']);M.bot.forEach(x=>s3.push([x.st,x.nm,r(x.spd),g(x.gSpd)]));
+    const ws3=XLSX.utils.aoa_to_sheet(s3);ws3['!cols']=[{wch:11},{wch:26},{wch:13},{wch:13}];XLSX.utils.book_append_sheet(wb,ws3,'Top-Bottom Toko');
+    const s4=[['TREN BULANAN s/d '+M.lbl],info,[],['Bulan','Net Sales','Growth Net %','GM %','SPD','Growth SPD %','STD','APC','Member %']];
+    M.trend.forEach(x=>s4.push([x.lbl,r(x.net),g(x.gNet),r(x.gmPct,2),r(x.spd),g(x.gSpd),r(x.std,1),r(x.apc),r(x.memPct,2)]));
+    const ws4=XLSX.utils.aoa_to_sheet(s4);ws4['!cols']=Array(9).fill({wch:13});XLSX.utils.book_append_sheet(wb,ws4,'Tren Bulanan');
+    XLSX.writeFile(wb,'Ringkasan_Meeting_'+M.lbl.replace(/\s/g,'_')+(M.st==='ALL'?'':'_'+M.st)+'.xlsx');
+  };
+  if(typeof XLSX==='undefined')ensureLib('xlsx').then(go).catch(()=>alert('Gagal memuat pustaka Excel.'));else go();
+}
+function mrPdf(){
+  const M=mrSel();if(!M)return;
+  const w=window.open('','_blank');if(!w){alert('Pop-up diblokir browser. Izinkan pop-up untuk situs ini.');return;}
+  const e=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const n=(v,d)=>v==null?'—':v.toLocaleString('en-US',{minimumFractionDigits:d||0,maximumFractionDigits:d||0});
+  const big=v=>v==null?'—':v>=1e9?(v/1e9).toFixed(2)+' B':v>=1e6?(v/1e6).toFixed(2)+' M':n(v);
+  const gp=v=>v==null?'<span class="mu">—</span>':`<span class="${v>=0?'up':'dn'}">${v>=0?'▲':'▼'} ${Math.abs(v).toFixed(1)}%</span>`;
+  const pp=(c,p)=>c==null||p==null?'<span class="mu">—</span>':`<span class="${c-p>=0?'up':'dn'}">${c-p>=0?'▲':'▼'} ${Math.abs(c-p).toFixed(2)} pp</span>`;
+  const C=M.cur,P=M.prv||{};
+  const cards=[['Net Sales','Tk '+big(C.net),gp(sgG(C.net,P.net))],['SPD (rata-rata toko)','Tk '+n(C.spd),gp(sgG(C.spd,P.spd))],['STD (rata-rata toko)',n(C.std,1),gp(sgG(C.std,P.std))],['APC','Tk '+n(C.apc),gp(sgG(C.apc,P.apc))],['Gross Margin',C.gmPct==null?'—':C.gmPct.toFixed(2)+'%',pp(C.gmPct,P.gmPct)],['Member Sales',C.memPct==null?'—':C.memPct.toFixed(1)+'% Net',pp(C.memPct,P.memPct)]];
+  const hl=[];
+  if(M.prv){hl.push(`Net Sales ${M.lbl} ${sgG(C.net,P.net)>=0?'naik':'turun'} <b>${Math.abs(sgG(C.net,P.net)||0).toFixed(1)}%</b> vs ${e(M.plbl)} (Tk ${big(C.net)} vs Tk ${big(P.net)}).`);
+    hl.push(`SPD rata-rata toko ${sgG(C.spd,P.spd)>=0?'naik':'turun'} <b>${Math.abs(sgG(C.spd,P.spd)||0).toFixed(1)}%</b>; STD ${sgG(C.std,P.std)>=0?'naik':'turun'} <b>${Math.abs(sgG(C.std,P.std)||0).toFixed(1)}%</b>; APC ${sgG(C.apc,P.apc)>=0?'naik':'turun'} <b>${Math.abs(sgG(C.apc,P.apc)||0).toFixed(1)}%</b>.`);}
+  if(M.rows.length>1)hl.push(`<b>${M.up}</b> toko SPD-nya naik, <b>${M.dn}</b> toko turun.`);
+  if(M.top[0]&&M.rows.length>1)hl.push(`Growth SPD tertinggi: <b>${e(M.top[0].st)} ${e(M.top[0].nm)}</b> (${M.top[0].gSpd.toFixed(1)}%); terendah: <b>${e(M.bot[0].st)} ${e(M.bot[0].nm)}</b> (${M.bot[0].gSpd.toFixed(1)}%).`);
+  const tb=(arr)=>arr.map(x=>`<tr><td><b>${e(x.st)}</b> ${e(x.nm)}</td><td class="r">${n(x.spd)}</td><td class="r">${gp(x.gSpd)}</td></tr>`).join('');
+  const html=`<!doctype html><html><head><meta charset="utf-8"><title>Ringkasan Meeting ${e(M.lbl)}</title><style>
+@page{size:A4 landscape;margin:12mm}*{box-sizing:border-box}body{font-family:"Segoe UI",system-ui,sans-serif;color:#1c2330;margin:0;font-size:11pt}
+h1{font-size:20pt;margin:0}h2{font-size:13pt;margin:18px 0 8px;border-bottom:2px solid #1c2330;padding-bottom:4px}.sub{color:#5b6472;margin-top:4px}
+.hd{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;border-bottom:3px solid #c8102e;padding-bottom:10px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.cd{border:1px solid #d5dae1;border-radius:6px;padding:10px 12px}.cd .l{font-size:9.5pt;color:#5b6472}.cd .v{font-size:17pt;font-weight:700;margin:2px 0}
+ul{margin:0;padding-left:18px;line-height:1.6}table{width:100%;border-collapse:collapse;font-size:9.5pt}th,td{padding:4px 6px;border-bottom:1px solid #e3e6ea;text-align:left}th{background:#f1f3f6;font-weight:600}.r{text-align:right}
+.up{color:#18794e;font-weight:600}.dn{color:#c8102e;font-weight:600}.mu{color:#8a93a0}.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}.pb{break-before:page}tr{break-inside:avoid}
+.bar{position:fixed;top:0;left:0;right:0;background:#1c2330;color:#fff;padding:8px 14px;display:flex;gap:10px;align-items:center;font-size:10pt}.bar button{padding:6px 14px;border:0;border-radius:4px;background:#c8102e;color:#fff;font-weight:600;cursor:pointer}
+@media print{.bar{display:none}body{padding-top:0}}@media screen{body{padding:56px 24px 24px;max-width:1100px;margin:0 auto}}
+</style></head><body>
+<div class="bar"><button onclick="print()">Simpan sebagai PDF / Print</button><span>Pilih "Save as PDF" di dialog print.</span></div>
+<div class="hd"><div><h1>Ringkasan Bulanan — ${e(M.lbl)}</h1><div class="sub">${e(M.stName)}${M.plbl?' · dibandingkan '+e(M.plbl):''} · ${C.stores} toko aktif</div></div><div class="sub">Dicetak ${new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</div></div>
+<div class="cards">${cards.map(c=>`<div class="cd"><div class="l">${c[0]}</div><div class="v">${c[1]}</div><div>${c[2]} <span class="mu">vs ${e(M.plbl||'—')}</span></div></div>`).join('')}</div>
+${hl.length?`<h2>Poin Utama</h2><ul>${hl.map(x=>'<li>'+x+'</li>').join('')}</ul>`:''}
+${M.rows.length>1?`<h2>Top & Bottom 5 Toko — Growth SPD</h2><div class="two"><table><thead><tr><th>Top 5</th><th class="r">SPD</th><th class="r">Growth</th></tr></thead><tbody>${tb(M.top)}</tbody></table><table><thead><tr><th>Bottom 5</th><th class="r">SPD</th><th class="r">Growth</th></tr></thead><tbody>${tb(M.bot)}</tbody></table></div>`:''}
+<h2>Tren Bulanan</h2><table><thead><tr><th>Bulan</th><th class="r">Net Sales</th><th class="r">Growth</th><th class="r">GM %</th><th class="r">SPD</th><th class="r">Growth SPD</th><th class="r">STD</th><th class="r">APC</th><th class="r">Member %</th></tr></thead><tbody>
+${M.trend.map(x=>`<tr><td>${e(x.lbl)}</td><td class="r">${n(x.net)}</td><td class="r">${gp(x.gNet)}</td><td class="r">${x.gmPct==null?'—':x.gmPct.toFixed(2)}</td><td class="r">${n(x.spd)}</td><td class="r">${gp(x.gSpd)}</td><td class="r">${n(x.std,1)}</td><td class="r">${n(x.apc)}</td><td class="r">${x.memPct==null?'—':x.memPct.toFixed(1)}</td></tr>`).join('')}</tbody></table>
+${M.rows.length>1?`<h2 class="pb">Performa per Toko — ${e(M.lbl)}</h2><table><thead><tr><th>Toko</th><th class="r">Net Sales</th><th class="r">Growth</th><th class="r">SPD</th><th class="r">Growth</th><th class="r">STD</th><th class="r">Growth</th><th class="r">APC</th><th class="r">Growth</th></tr></thead><tbody>
+${M.rows.map(x=>`<tr><td><b>${e(x.st)}</b> ${e(x.nm)}</td><td class="r">${n(x.net)}</td><td class="r">${gp(x.gNet)}</td><td class="r">${n(x.spd)}</td><td class="r">${gp(x.gSpd)}</td><td class="r">${n(x.std,1)}</td><td class="r">${gp(x.gStd)}</td><td class="r">${n(x.apc)}</td><td class="r">${gp(x.gApc)}</td></tr>`).join('')}</tbody></table>`:''}
+<script>setTimeout(()=>print(),600)<\/script></body></html>`;
+  w.document.open();w.document.write(html);w.document.close();
 }
 // ── Monthly Pivot Report (template: %GM by Subdept · Net Value by Subdept · Net Value by Principal · Qty Sales by PLU) ──
 const _spv={tab:'gm',pg:1};
