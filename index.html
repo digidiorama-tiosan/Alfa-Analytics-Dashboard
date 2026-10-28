@@ -5421,6 +5421,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       <span class="filter-label">Bulan</span><select class="filter-select" id="mcMonth" onchange="_merPg.mc=1;renderMerchShareCat()" style="min-width:140px"></select>
       <span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select" id="mcStore" onchange="_merPg.mc=1;renderMerchShareCat()" style="min-width:130px"></select>
     </div>
+    <div id="mcNoCatWarn" class="alert-box amber" style="display:none;margin-bottom:14px;align-items:center;gap:10px"></div>
     <div id="mcMasterWarn" class="alert-box amber" style="display:none;margin-bottom:14px"><span style="font-size:16px">⚠️</span><div>Product Master belum diupload — semua item masuk "(Tanpa Kategori)".</div></div>
     <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
       <div class="stat-card blue"><div class="stat-label">Jumlah Kategori</div><div class="stat-value" id="mc-count">—</div><div class="stat-sub" id="mc-count-sub">—</div></div>
@@ -12681,6 +12682,7 @@ function renderMerchShareCat(){
   const D=merSales();
   if(!merGate('mcMain','mcNoData',!!D))return;
   const w=document.getElementById('mcMasterWarn');if(w)w.style.display=D.hasMaster?'none':'flex';
+  mcNoCatCheck(D);
   const fm=merFillSel('mcMonth',D.months,merYmLabel,'Semua Bulan');
   const fs=merFillSel('mcStore',D.stores,null,'Semua Toko');
   const base=D.list.filter(a=>fs==='ALL'||a.st===fs);
@@ -13353,6 +13355,27 @@ function spvExport(){
 
 // ── 5b. Item Zero Sales ──
 const MZ_DEF={toko:{l:'Ada di Toko',c:'#f85149',o:0},po:{l:'Sudah PO',c:'#d29922',o:1},master:{l:'Hanya di Master',c:'#8b949e',o:2}};
+function mcNoCatList(D){
+  const m=typeof buildMasterAttrMap==='function'?buildMasterAttrMap():null,agg=new Map();let tot=0;
+  D.list.forEach(a=>{tot+=a.net;if(a.cat!=='(Tanpa Kategori)')return;let x=agg.get(a.plu);if(!x){x={plu:a.plu,desc:D.desc.get(a.plu)||'',net:0,qty:0,why:m&&m.map.has(a.plu)?'Ada di Master, kolom kategori kosong':'PLU tidak ada di Product Master'};agg.set(a.plu,x);}x.net+=a.net;x.qty+=a.qty;});
+  const list=[...agg.values()].sort((a,b)=>b.net-a.net),net=list.reduce((s,x)=>s+x.net,0);
+  return {list,net,tot,pct:tot?net/tot*100:0,notIn:list.filter(x=>x.why[0]==='P').length,master:m?m.map.size:0};
+}
+function mcNoCatCheck(D){
+  const el=document.getElementById('mcNoCatWarn');if(!el)return;
+  if(!D.hasMaster){el.style.display='none';return;}
+  const r=mcNoCatList(D);if(r.pct<2){el.style.display='none';return;}
+  el.style.display='flex';
+  el.innerHTML=`<span style="font-size:16px">⚠️</span><div style="flex:1"><b>${r.list.length.toLocaleString()} PLU (${r.pct.toFixed(1)}% net sales)</b> belum punya kategori. ${r.notIn.toLocaleString()} PLU tidak ditemukan di Product Master (${r.master.toLocaleString()} PLU), ${(r.list.length-r.notIn).toLocaleString()} PLU ada di master tapi kategorinya kosong. Upload ulang Product Master (Oramas) terbaru yang memuat PLU ini, lalu Rebuild & Publish.</div><button class="btn-dl" onclick="mcNoCatDownload()">⬇ Daftar PLU</button>`;
+}
+function mcNoCatDownload(){
+  const D=merSales();if(!D)return;const r=mcNoCatList(D);
+  const go=()=>{const aoa=[['PLU TANPA KATEGORI'],['Total '+r.list.length+' PLU · '+r.pct.toFixed(1)+'% dari net sales'],[],['PLU','Deskripsi','Net Sales','Qty','Keterangan']];
+    r.list.forEach(x=>aoa.push([x.plu,x.desc,Math.round(x.net),Math.round(x.qty),x.why]));
+    const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=[{wch:12},{wch:40},{wch:14},{wch:10},{wch:36}];ws['!autofilter']={ref:'A4:E'+(4+r.list.length)};
+    XLSX.utils.book_append_sheet(wb,ws,'Tanpa Kategori');XLSX.writeFile(wb,'PLU_Tanpa_Kategori.xlsx');};
+  if(typeof XLSX==='undefined')ensureLib('xlsx').then(go).catch(()=>alert('Gagal memuat pustaka Excel.'));else go();
+}
 function merMasterList(){
   const prod=(typeof uploads!=='undefined'&&Array.isArray(uploads.product))?uploads.product:[];
   if(!prod.length)return [];
