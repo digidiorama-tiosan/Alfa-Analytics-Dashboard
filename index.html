@@ -2623,8 +2623,8 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 
   <div class="charts-grid cols-2">
     <div class="chart-card">
-      <div class="chart-header"><div><div class="chart-title">Monthly Net Sales</div><div class="chart-subtitle">Revenue trend by month</div></div><span class="chart-tag">BDT</span></div>
-      <div class="chart-wrap" style="height:220px"><canvas id="monthlySalesChart"></canvas></div>
+      <div class="chart-header"><div><div class="chart-title">Monthly Net Sales</div><div class="chart-subtitle">Revenue trend by month · SPD & STD rata-rata per toko per hari (sumbu kanan)</div></div><span class="chart-tag">BDT</span></div>
+      <div class="chart-wrap" style="height:260px"><canvas id="monthlySalesChart"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-header"><div><div class="chart-title">Gross Margin % by Month</div><div class="chart-subtitle">GP ratio trend</div></div><span class="chart-tag">%</span></div>
@@ -7469,19 +7469,24 @@ function applySalesFilter() {
 
   // Charts (filtered) — agregasi per bulan supaya label bulan tidak berulang (data = per toko×bulan)
   const _cMap={};
-  filtered.forEach(m=>{const k=m.month;if(!_cMap[k])_cMap[k]={month:k,month_name:m.month_name,net_sales:0,member_sales:0,gm:0,cogs:0};const g=_cMap[k];g.net_sales+=m.net_sales||0;g.member_sales+=m.member_sales||0;g.gm+=m.gm||0;g.cogs+=m.cogs||0;});
-  const cAgg=Object.values(_cMap).sort((a,b)=>a.month-b.month).map(g=>({...g,gm_pct:g.net_sales>0?parseFloat((g.gm/g.net_sales*100).toFixed(1)):0}));
+  filtered.forEach(m=>{const k=m.month;if(!_cMap[k])_cMap[k]={month:k,month_name:m.month_name,net_sales:0,member_sales:0,gm:0,cogs:0,std:0,sd:0,sdNet:0,sdStd:0};const g=_cMap[k];const _sd=pfDaysFor(_wd,m.store_code||'A001',m.month)||0,_st=(m.std!==undefined?m.std:m.txns)||0;g.std+=_st;if(_sd>0){g.sd+=_sd;g.sdNet+=m.net_sales||0;g.sdStd+=_st;}g.net_sales+=m.net_sales||0;g.member_sales+=m.member_sales||0;g.gm+=m.gm||0;g.cogs+=m.cogs||0;});
+  const cAgg=Object.values(_cMap).sort((a,b)=>a.month-b.month).map(g=>({...g,gm_pct:g.net_sales>0?parseFloat((g.gm/g.net_sales*100).toFixed(1)):0,spd:g.sd>0?Math.round(g.sdNet/g.sd):null,stdD:g.sd>0?Math.round(g.sdStd/g.sd*10)/10:null}));
   makeChart('monthlySalesChart', {
     type:'bar',
     data:{
       labels: cAgg.map(m=>m.month_name),
       datasets:[
         {label:'Net Sales',data:cAgg.map(m=>m.net_sales),backgroundColor:cAgg.map((_,i)=>ACCENT+(i===cAgg.length-1?'':'66')),borderColor:ACCENT,borderWidth:1,borderRadius:6},
-        {label:'Member Sales',data:cAgg.map(m=>m.member_sales),backgroundColor:AMBER+'88',borderColor:AMBER,borderWidth:1,borderRadius:6}
+        {label:'Member Sales',data:cAgg.map(m=>m.member_sales),backgroundColor:AMBER+'88',borderColor:AMBER,borderWidth:1,borderRadius:6,order:3},
+        {type:'line',label:'SPD (Tk/hari/toko)',data:cAgg.map(m=>m.spd),yAxisID:'y1',borderColor:GREEN,backgroundColor:GREEN,borderWidth:2,tension:0.35,pointRadius:4,pointBackgroundColor:GREEN,order:1},
+        {type:'line',label:'STD (struk/hari/toko)',data:cAgg.map(m=>m.stdD),yAxisID:'y2',borderColor:'#f778ba',backgroundColor:'#f778ba',borderWidth:2,borderDash:[5,4],tension:0.35,pointRadius:4,pointBackgroundColor:'#f778ba',order:0}
       ]
     },
-    options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:true,position:'top',labels:{color:'#8b949e',usePointStyle:true,pointStyle:'rect',font:{family:FONT,size:11}}}},
-      scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>'Tk '+(v/1000)+'K'}}}}
+    options:{...chartDefaults,interaction:{mode:'index',intersect:false},plugins:{...chartDefaults.plugins,legend:{display:true,position:'top',labels:{color:'#8b949e',usePointStyle:true,pointStyle:'rect',font:{family:FONT,size:11}}},
+        tooltip:{...(chartDefaults.plugins&&chartDefaults.plugins.tooltip||{}),callbacks:{label:c=>{const v=c.parsed.y;if(v==null)return c.dataset.label+': —';return c.dataset.yAxisID==='y2'?c.dataset.label+': '+v.toLocaleString('en-US',{maximumFractionDigits:1}):c.dataset.label+': Tk '+Math.round(v).toLocaleString('en-US');}}}},
+      scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>'Tk '+(v/1000)+'K'}},
+        y1:{position:'right',grid:{drawOnChartArea:false},ticks:{color:GREEN,font:{family:FONT,size:10},callback:v=>'Tk '+(v>=1000?(v/1000)+'K':v)},title:{display:true,text:'SPD',color:GREEN,font:{family:FONT,size:10}}},
+        y2:{position:'right',grid:{drawOnChartArea:false},ticks:{color:'#f778ba',font:{family:FONT,size:10}},title:{display:true,text:'STD',color:'#f778ba',font:{family:FONT,size:10}}}}}
   });
   makeChart('monthlyGMChart', {
     type:'line',
