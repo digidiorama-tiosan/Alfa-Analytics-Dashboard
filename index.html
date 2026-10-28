@@ -7554,14 +7554,14 @@ function renderStoreDaily(){
   const tot=rows.reduce((s,r)=>({net:s.net+r.net,txn:s.txn+r.txn,spd:s.spd+r.spd,std:s.std+r.std}),{net:0,txn:0,spd:0,std:0});
   const n=rows.length||1,avg={net:tot.net/n,spd:tot.spd/n,std:tot.std/n,apc:tot.txn?tot.net/tot.txn:0};
   const multi=sv==='ALL';
-  document.getElementById('ddSub').textContent=`${rows.length} hari · ${sv==='ALL'?'semua toko':sv}${mv==='ALL'?'':' · '+(document.getElementById('storeMonthSelect').selectedOptions[0]||{}).text}`+(multi?' · SPD & STD = rata-rata per toko aktif':'');
+  document.getElementById('ddSub').textContent=(rows.length?lab(rows[0].d)+' '+rows[0].d.slice(0,4)+' – '+lab(rows[rows.length-1].d)+' '+rows[rows.length-1].d.slice(0,4)+' · ':'')+`${rows.length} hari · ${sv==='ALL'?'semua toko':sv}${mv==='ALL'?'':' · '+(document.getElementById('storeMonthSelect').selectedOptions[0]||{}).text}`+(multi?' · SPD & STD = rata-rata per toko aktif':'');
   const vals=rows.map(r=>met==='std'?+r.std.toFixed(1):Math.round(r[met]));
   makeChart('ddChart',{type:'line',data:{labels:rows.map(r=>lab(r.d)),datasets:[
     {label:DD_MET[met][0],data:vals,borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,.12)',fill:true,tension:.3,pointRadius:rows.length>60?0:2.5,borderWidth:2},
     {label:'Rata-rata',data:rows.map(()=>met==='std'?+avg.std.toFixed(1):Math.round(avg[met])),borderColor:'#d29922',borderDash:[5,4],pointRadius:0,borderWidth:1.5,fill:false}]},
     options:{...chartDefaults,interaction:{mode:'index',intersect:false},plugins:{...chartDefaults.plugins,legend:{display:true,labels:{color:'#8b949e',boxWidth:12,font:{size:11}}},
       tooltip:{...chartDefaults.plugins.tooltip,callbacks:{title:c=>{const r=rows[c[0].dataIndex];return r?dow(r.d)+', '+lab(r.d):'';},label:c=>c.dataset.label+': '+(met==='std'?f1(c.raw):f0(c.raw))}}},
-      scales:{x:{...chartDefaults.scales.x,ticks:{...chartDefaults.scales.x.ticks,maxTicksLimit:16,autoSkip:true}},y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>met==='std'?v:fmt(v)}}}}});
+      scales:{x:{...chartDefaults.scales.x,ticks:{...chartDefaults.scales.x.ticks,autoSkip:false,maxRotation:0,callback:(v,i)=>{const L=rows.length,st=Math.max(1,Math.ceil(L/14));return (i===L-1||(i%st===0&&L-1-i>=st*0.6))?lab(rows[i].d):'';}}},y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>met==='std'?v:fmt(v)}}}}});
   const hi=Math.max(...rows.map(r=>r[met])),lo=Math.min(...rows.map(r=>r[met]));
   const cell=(r,k,f)=>`<td class="right"${r[k]===hi&&k===met&&rows.length>1?' style="color:#3fb950;font-weight:700"':r[k]===lo&&k===met&&rows.length>1?' style="color:#f85149;font-weight:700"':''}>${f(r[k])}</td>`;
   const mk=[...new Set(rows.map(r=>r.d.slice(0,7)))];
