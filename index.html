@@ -5452,7 +5452,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
   <div id="mpNoData" class="insight-box" style="display:none"><span class="insight-icon">📊</span><div class="insight-text">Belum ada data sales. Upload data sales di Data Management.</div></div>
   <div id="mpMain" style="display:none">
     <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap">
-      <span class="filter-label">Bulan</span><select class="filter-select" id="mpMonth" onchange="_merPg.mp=1;renderMerchSharePrin()" style="min-width:140px"></select>
+      <span class="filter-label">Dari</span><select class="filter-select" id="mpFrom" onchange="_merPg.mp=1;renderMerchSharePrin()" style="min-width:110px"></select><span class="filter-label">s.d.</span><select class="filter-select" id="mpTo" onchange="_merPg.mp=1;renderMerchSharePrin()" style="min-width:110px"></select>
       <span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select" id="mpStore" onchange="_merPg.mp=1;renderMerchSharePrin()" style="min-width:130px"></select>
       <span class="filter-label" style="margin-left:8px">Kategori</span><select class="filter-select" id="mpCat" onchange="_merPg.mp=1;renderMerchSharePrin()" style="min-width:170px"></select>
       <span class="filter-label" style="margin-left:8px">Cari</span><input type="text" class="filter-select" id="mpSearch" oninput="_merPg.mp=1;renderMerchSharePrin()" placeholder="Nama prinsipal…" style="min-width:160px">
@@ -5468,7 +5468,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     <div class="chart-card">
       <div class="chart-header"><div><div class="chart-title">Share per Prinsipal</div><div class="chart-subtitle" id="mpSub">—</div></div></div>
       <div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px">
-        <thead><tr><th>Rank</th><th class="right">Δ Rank</th><th>Prinsipal</th><th id="mpCatHead">Kategori Utama</th><th class="right">Net Sales</th><th class="right">Share</th><th class="right">Share Bln Lalu</th><th class="right">Δ pp</th><th class="right">SKU</th></tr></thead>
+        <thead><tr><th>Rank</th><th class="right">Δ Rank</th><th>Prinsipal</th><th id="mpCatHead">Kategori Utama</th><th class="right">Net Sales</th><th class="right">Share</th><th class="right">Share Periode Lalu</th><th class="right">Δ pp</th><th class="right">SKU</th></tr></thead>
         <tbody id="mpBody"></tbody>
       </table></div>
       <div id="mpPager" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:12.5px"></div>
@@ -5485,7 +5485,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
   <div id="mbMain" style="display:none">
     <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap">
       <span class="filter-label">Kategori</span><select class="filter-select" id="mbCat" onchange="_merPg.mb=1;document.getElementById('mbPrin').value='ALL';renderMerchShareBrand()" style="min-width:190px"></select>
-      <span class="filter-label" style="margin-left:8px">Bulan</span><select class="filter-select" id="mbMonth" onchange="_merPg.mb=1;renderMerchShareBrand()" style="min-width:140px"></select>
+      <span class="filter-label" style="margin-left:8px">Dari</span><select class="filter-select" id="mbFrom" onchange="_merPg.mb=1;renderMerchShareBrand()" style="min-width:110px"></select><span class="filter-label">s.d.</span><select class="filter-select" id="mbTo" onchange="_merPg.mb=1;renderMerchShareBrand()" style="min-width:110px"></select>
       <span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select" id="mbStore" onchange="_merPg.mb=1;renderMerchShareBrand()" style="min-width:130px"></select>
       <span class="filter-label" style="margin-left:8px">Prinsipal</span><select class="filter-select" id="mbPrin" onchange="_merPg.mb=1;renderMerchShareBrand()" style="min-width:170px"></select>
       <span class="filter-label" style="margin-left:8px">Cari</span><input type="text" class="filter-select" id="mbSearch" oninput="_merPg.mb=1;renderMerchShareBrand()" placeholder="Nama merek…" style="min-width:150px">
@@ -5504,7 +5504,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     <div class="chart-card">
       <div class="chart-header"><div><div class="chart-title">Share per Merek</div><div class="chart-subtitle" id="mbSub">—</div></div></div>
       <div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px">
-        <thead><tr><th>Rank</th><th class="right">Δ Rank</th><th>Merek</th><th>Prinsipal</th><th id="mbCatHead">Kategori</th><th class="right">Net Sales</th><th class="right">Qty</th><th class="right">Share</th><th class="right">Share Bln Lalu</th><th class="right">Δ pp</th><th class="right">SKU</th></tr></thead>
+        <thead><tr><th>Rank</th><th class="right">Δ Rank</th><th>Merek</th><th>Prinsipal</th><th id="mbCatHead">Kategori</th><th class="right">Net Sales</th><th class="right">Qty</th><th class="right">Share</th><th class="right">Share Periode Lalu</th><th class="right">Δ pp</th><th class="right">SKU</th></tr></thead>
         <tbody id="mbBody"></tbody>
       </table></div>
       <div id="mbPager" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:12.5px"></div>
@@ -12465,6 +12465,15 @@ function merGroup(list,keyFn){
   list.forEach(a=>{const k=keyFn(a);let g=m.get(k);if(!g){g={key:k,cat:a.cat,prin:a.prin,net:0,qty:0,cogs:0,skus:new Set(),prins:new Set()};m.set(k,g);}g.net+=a.net;g.qty+=a.qty;g.cogs+=a.cogs;g.skus.add(a.plu);g.prins.add(a.prin);});
   return [...m.values()];
 }
+function merRangeSel(fromId,toId,months){
+  const fill=(id,def)=>{const s=document.getElementById(id);if(!s)return def;const sig=months.join('|');if(s.dataset.sig!==sig){const c=s.value;s.innerHTML=months.map(v=>`<option value="${v}">${merEsc(merYmLabel(v))}</option>`).join('');s.dataset.sig=sig;s.value=months.includes(c)?c:def;}return s.value||def;};
+  let f=fill(fromId,months[0]),t=fill(toId,months[months.length-1]);
+  if(f>t){const x=f;f=t;t=x;const a=document.getElementById(fromId),b=document.getElementById(toId);if(a)a.value=f;if(b)b.value=t;}
+  const i0=months.indexOf(f),i1=months.indexOf(t),n=i1-i0+1,all=i0===0&&i1===months.length-1;
+  const pr=!all&&i0-n>=0?months.slice(i0-n,i0):null;
+  const lab=(a,b)=>a===b?merYmLabel(a):merYmLabel(a)+' – '+merYmLabel(b);
+  return {all,inR:ym=>ym>=f&&ym<=t,prev:pr?new Set(pr):null,label:all?'semua bulan ('+lab(f,t)+')':lab(f,t),prevLabel:pr?lab(pr[0],pr[pr.length-1]):'',key:f===t?f:f+'_'+t};
+}
 function merPrevYm(months,ym){const i=months.indexOf(ym);return i>0?months[i-1]:null;}
 
 // Agregasi sales: toko × bulan × PLU (di-cache)
@@ -12719,16 +12728,16 @@ function renderMerchSharePrin(){
   const D=merSales();
   if(!merGate('mpMain','mpNoData',!!D))return;
   const w=document.getElementById('mpMasterWarn');if(w)w.style.display=D.hasMaster?'none':'flex';
-  const fm=merFillSel('mpMonth',D.months,merYmLabel,'Semua Bulan');
+  const RG=merRangeSel('mpFrom','mpTo',D.months);
   const fs=merFillSel('mpStore',D.stores,null,'Semua Toko');
   const fc=merFillSel('mpCat',[...new Set(D.list.map(a=>a.cat))].sort(),null,'Semua Kategori');
   const q=merQ('mpSearch');
   const base=D.list.filter(a=>(fs==='ALL'||a.st===fs)&&(fc==='ALL'||a.cat===fc));
-  const cur=base.filter(a=>fm==='ALL'||a.ym===fm);
+  const cur=base.filter(a=>RG.inR(a.ym));
   const tot=merSum(cur).net;
-  const prev=fm==='ALL'?null:merPrevYm(D.months,fm);
+  const prev=RG.prev;
   const pm={};let ptot=0;
-  if(prev)base.forEach(a=>{if(a.ym===prev){pm[a.prin]=(pm[a.prin]||0)+a.net;ptot+=a.net;}});
+  if(prev)base.forEach(a=>{if(prev.has(a.ym)){pm[a.prin]=(pm[a.prin]||0)+a.net;ptot+=a.net;}});
   const prevRank={};Object.entries(pm).sort((a,b)=>b[1]-a[1]).forEach((e,i)=>{prevRank[e[0]]=i+1;});
   const pc={};cur.forEach(a=>{const k=a.prin;(pc[k]=pc[k]||{})[a.cat]=(pc[k][a.cat]||0)+a.net;});
   let rows=merGroup(cur,a=>a.prin).sort((a,b)=>b.net-a.net).map((x,i)=>{
@@ -12741,7 +12750,7 @@ function renderMerchSharePrin(){
   merSet('mp-conc',rows.slice(0,5).reduce((s,r)=>s+r.sh,0).toFixed(1)+'%');
   const riser=prev?rows.filter(r=>typeof r.dr==='number'&&r.dr>0).sort((a,b)=>b.dr-a.dr)[0]:null;
   merSet('mp-rise',riser?merCut(riser.prin,20):'—');
-  merSet('mp-rise-sub',prev?(riser?`▲ ${riser.dr} peringkat → #${riser.rank} vs ${merYmLabel(prev)}`:'tidak ada kenaikan'):'pilih bulan untuk membandingkan',riser?'#3fb950':'');
+  merSet('mp-rise-sub',prev?(riser?`▲ ${riser.dr} peringkat → #${riser.rank} vs ${RG.prevLabel}`:'tidak ada kenaikan'):'pilih rentang bulan (bukan semua) untuk membandingkan',riser?'#3fb950':'');
   const top=rows.slice(0,10);
   const ct=document.getElementById('mpChartTitle');if(ct)ct.textContent=fc==='ALL'?'Top 10 Prinsipal — Share':'Top 10 Prinsipal di '+merCut(fc,30);
   merBarH('mpTopChart',top.map(r=>merCut(r.prin,24)),top.map(r=>+r.sh.toFixed(2)),'rgba(88,166,255,0.8)',c=>{const r=top[c.dataIndex];return ['Share '+r.sh.toFixed(2)+'%',_fmtTk(r.net),r.skus+' SKU'];},v=>v+'%');
@@ -12753,8 +12762,8 @@ function renderMerchSharePrin(){
   const body=document.getElementById('mpBody');
   if(body)body.innerHTML=rows.slice((pg-1)*PS,pg*PS).map(r=>`<tr><td style="font-family:var(--mono);color:var(--text3)">${r.rank}</td><td class="right">${drCell(r.dr)}</td><td style="font-weight:600">${merEsc(merCut(r.prin,34))}</td><td style="font-size:11.5px;color:var(--text2)">${merEsc(merCut(r.topCat,22))}${fc==='ALL'?` <span style="color:var(--text3)">(${r.topCatSh.toFixed(0)}%)</span>`:''}</td><td class="right">${_fmtTk(r.net)}</td><td class="right" style="color:#58a6ff;font-weight:600">${r.sh.toFixed(2)}%</td><td class="right" style="color:var(--text3)">${r.ps===null?'—':r.ps.toFixed(2)+'%'}</td><td class="right">${dCell(r.d)}</td><td class="right" style="color:var(--text3)">${r.skus}</td></tr>`).join('')||merEmpty(9);
   merPager('mpPager','mp',rows.length,PS,'renderMerchSharePrin');
-  const sub=document.getElementById('mpSub');if(sub)sub.textContent=`${rows.length} prinsipal · ${fm==='ALL'?'semua bulan':merYmLabel(fm)}${prev?' dibanding '+merYmLabel(prev):''} · 30/halaman`;
-  _merLast.prin={name:'Market_Share_Prinsipal_'+(fm==='ALL'?'All':fm),rows:[['Rank','Delta Rank','Prinsipal','Kategori Utama','Net Sales','Share %','Share Bln Lalu %','Delta pp','SKU']].concat(rows.map(r=>[r.rank,r.dr===null?'':r.dr,r.prin,r.topCat,Math.round(r.net),+r.sh.toFixed(2),r.ps===null?'':+r.ps.toFixed(2),r.d===null?'':+r.d.toFixed(2),r.skus]))};
+  const sub=document.getElementById('mpSub');if(sub)sub.textContent=`${rows.length} prinsipal · ${RG.label}${prev?' dibanding '+RG.prevLabel:''} · 30/halaman`;
+  _merLast.prin={name:'Market_Share_Prinsipal_'+(RG.all?'All':RG.key),rows:[['Rank','Delta Rank','Prinsipal','Kategori Utama','Net Sales','Share %','Share Periode Lalu %','Delta pp','SKU']].concat(rows.map(r=>[r.rank,r.dr===null?'':r.dr,r.prin,r.topCat,Math.round(r.net),+r.sh.toFixed(2),r.ps===null?'':+r.ps.toFixed(2),r.d===null?'':+r.d.toFixed(2),r.skus]))};
 }
 
 // ── 3b. Market Share by Brand ──
@@ -12769,16 +12778,16 @@ function renderMerchShareBrand(){
   const cs=document.getElementById('mbCat');
   if(cs&&!cs.dataset.init){cs.dataset.init='1';merFillSel('mbCat',cats,null,'Semua Kategori');const big=Object.entries(catNet).sort((a,b)=>b[1]-a[1])[0];if(big)cs.value=big[0];}
   const fc=merFillSel('mbCat',cats,null,'Semua Kategori');
-  const fm=merFillSel('mbMonth',D.months,merYmLabel,'Semua Bulan');
+  const RG=merRangeSel('mbFrom','mbTo',D.months);
   const fs=merFillSel('mbStore',D.stores,null,'Semua Toko');
   const inCat=D.list.filter(a=>(fc==='ALL'||a.cat===fc)&&(fs==='ALL'||a.st===fs));
   const fp=merFillSel('mbPrin',[...new Set(inCat.map(a=>a.prin))].sort(),null,'Semua Prinsipal');
   const q=merQ('mbSearch');
-  const cur=inCat.filter(a=>fm==='ALL'||a.ym===fm);
+  const cur=inCat.filter(a=>RG.inR(a.ym));
   const tot=merSum(cur).net;
-  const prev=fm==='ALL'?null:merPrevYm(D.months,fm);
+  const prev=RG.prev;
   const pm={};let ptot=0;
-  if(prev)inCat.forEach(a=>{if(a.ym===prev){pm[a.brand]=(pm[a.brand]||0)+a.net;ptot+=a.net;}});
+  if(prev)inCat.forEach(a=>{if(prev.has(a.ym)){pm[a.brand]=(pm[a.brand]||0)+a.net;ptot+=a.net;}});
   const prevRank={};Object.entries(pm).sort((a,b)=>b[1]-a[1]).forEach((e,i)=>{prevRank[e[0]]=i+1;});
   // Merek → prinsipal dominan & kategori dominan
   const bp={},bc={};
@@ -12795,7 +12804,7 @@ function renderMerchShareBrand(){
   merSet('mb-conc',rows.slice(0,3).reduce((s,r)=>s+r.sh,0).toFixed(1)+'%');
   const riser=prev?rows.filter(r=>typeof r.dr==='number'&&r.dr>0).sort((a,b)=>b.dr-a.dr)[0]:null;
   merSet('mb-rise',riser?merCut(riser.brand,20):'—');
-  merSet('mb-rise-sub',prev?(riser?`▲ ${riser.dr} peringkat → #${riser.rank} vs ${merYmLabel(prev)}`:'tidak ada kenaikan'):'pilih bulan untuk membandingkan',riser?'#3fb950':'');
+  merSet('mb-rise-sub',prev?(riser?`▲ ${riser.dr} peringkat → #${riser.rank} vs ${RG.prevLabel}`:'tidak ada kenaikan'):'pilih rentang bulan (bukan semua) untuk membandingkan',riser?'#3fb950':'');
   // Warna per prinsipal (konsisten di kedua chart)
   const prinTot={};cur.forEach(a=>{prinTot[a.prin]=(prinTot[a.prin]||0)+a.net;});
   const prinOrder=Object.entries(prinTot).sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
@@ -12814,8 +12823,8 @@ function renderMerchShareBrand(){
   const body=document.getElementById('mbBody');
   if(body)body.innerHTML=rows.slice((pg-1)*PS,pg*PS).map(r=>`<tr><td style="font-family:var(--mono);color:var(--text3)">${r.rank}</td><td class="right">${drCell(r.dr)}</td><td style="font-weight:600">${merEsc(merCut(r.brand,30))}</td><td style="font-size:11.5px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${pCol(r.prin)};margin-right:6px"></span>${merEsc(merCut(r.prin,26))}${r.nPrin>1?` <span style="color:var(--text3)">+${r.nPrin-1}</span>`:''}</td>${fc==='ALL'?`<td style="font-size:11.5px;color:var(--text2)">${merEsc(merCut(r.cat,20))}</td>`:''}<td class="right">${_fmtTk(r.net)}</td><td class="right" style="color:var(--text3)">${_fmtN(r.qty)}</td><td class="right" style="color:#58a6ff;font-weight:600">${r.sh.toFixed(2)}%</td><td class="right" style="color:var(--text3)">${r.ps===null?'—':r.ps.toFixed(2)+'%'}</td><td class="right">${dCell(r.d)}</td><td class="right" style="color:var(--text3)">${r.skus}</td></tr>`).join('')||merEmpty(fc==='ALL'?11:10);
   merPager('mbPager','mb',rows.length,PS,'renderMerchShareBrand');
-  const sub=document.getElementById('mbSub');if(sub)sub.textContent=`${rows.length} merek · share dihitung terhadap total ${fc==='ALL'?'semua kategori':'kategori '+fc} · ${fm==='ALL'?'semua bulan':merYmLabel(fm)}${prev?' vs '+merYmLabel(prev):''}`;
-  _merLast.brand={name:'Market_Share_Merek_'+(fc==='ALL'?'All':fc.replace(/[^A-Za-z0-9]+/g,'_').slice(0,20))+'_'+(fm==='ALL'?'All':fm),rows:[['Rank','Delta Rank','Merek','Prinsipal','Kategori','Net Sales','Qty','Share %','Share Bln Lalu %','Delta pp','SKU']].concat(rows.map(r=>[r.rank,r.dr===null?'':r.dr,r.brand,r.prin,r.cat,Math.round(r.net),Math.round(r.qty),+r.sh.toFixed(2),r.ps===null?'':+r.ps.toFixed(2),r.d===null?'':+r.d.toFixed(2),r.skus]))};
+  const sub=document.getElementById('mbSub');if(sub)sub.textContent=`${rows.length} merek · share dihitung terhadap total ${fc==='ALL'?'semua kategori':'kategori '+fc} · ${RG.label}${prev?' vs '+RG.prevLabel:''}`;
+  _merLast.brand={name:'Market_Share_Merek_'+(fc==='ALL'?'All':fc.replace(/[^A-Za-z0-9]+/g,'_').slice(0,20))+'_'+(RG.all?'All':RG.key),rows:[['Rank','Delta Rank','Merek','Prinsipal','Kategori','Net Sales','Qty','Share %','Share Periode Lalu %','Delta pp','SKU']].concat(rows.map(r=>[r.rank,r.dr===null?'':r.dr,r.brand,r.prin,r.cat,Math.round(r.net),Math.round(r.qty),+r.sh.toFixed(2),r.ps===null?'':+r.ps.toFixed(2),r.d===null?'':+r.d.toFixed(2),r.skus]))};
 }
 
 // ── 4. Store Receipt ──
