@@ -2745,7 +2745,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 <div class="chart-wrap" style="height:260px"><canvas id="ddChart"></canvas></div>
 </div>
 <div class="chart-card"><div id="ddPages" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div><div class="table-wrap">
-<table class="data-table" style="font-size:12.5px"><thead><tr><th>Tanggal</th><th>Hari</th><th class="right" id="ddStoresTh">Toko Aktif</th><th class="right">Net Sales (Tk)</th><th class="right">Struk</th><th class="right" title="SPD = Net Sales ÷ toko aktif hari itu">SPD (Tk)</th><th class="right" title="STD = Struk ÷ toko aktif hari itu">STD</th><th class="right" title="APC = Net Sales ÷ Struk">APC (Tk)</th></tr></thead>
+<table class="data-table" style="font-size:12.5px"><thead><tr><th>Tanggal</th><th>Hari</th><th class="right" id="ddStoresTh">Toko Aktif</th><th class="right">Net Sales (Tk)</th><th class="right">GM (Tk)</th><th class="right">GM %</th><th class="right">Struk</th><th class="right" title="SPD = Net Sales ÷ toko aktif hari itu">SPD (Tk)</th><th class="right" title="STD = Struk ÷ toko aktif hari itu">STD</th><th class="right" title="APC = Net Sales ÷ Struk">APC (Tk)</th></tr></thead>
 <tbody id="ddBody"></tbody><tfoot id="ddFoot"></tfoot></table></div>
 <div style="font-size:11px;color:var(--text3);margin-top:8px">Hijau = hari tertinggi, merah = terendah untuk metric yang dipilih. Baris berwarna = Sabtu/Minggu. Pilih bulan dengan tombol di atas tabel. Baris Total / Rata-rata = seluruh periode di grafik. Mengikuti filter Store Code &amp; Month.</div></div>
 </div>
@@ -7532,16 +7532,16 @@ function ddAgg(){
   if(_ddCache&&_ddCache.src===S&&_ddCache.n===S.length)return _ddCache;
   const sc=sColDetect(S);if(!sc.date||!sc.net)return null;
   const num=v=>{if(typeof v==='number')return v;const n=parseFloat(String(v??'').replace(/[^0-9.-]/g,''));return isNaN(n)?0:n;};
-  const bad=/void|return|retur|exchange|cancel|batal/i,map=new Map();
+  const bad=/void|return|retur|exchange|cancel|batal/i,map=new Map(),cu=sc.cogs&&/avg/i.test(sc.cogs);
   for(const r of S){
     const d=sdDay(r[sc.date]);if(!d)continue;
     const st=sc.store?String(r[sc.store]||'').trim()||'A001':'A001',k=d+'|'+st;
-    let o=map.get(k);if(!o){o={d,st,net:0,bills:new Set(),rows:0};map.set(k,o);}
-    o.net+=num(r[sc.net]);o.rows++;
+    let o=map.get(k);if(!o){o={d,st,net:0,cogs:0,bills:new Set(),rows:0};map.set(k,o);}
+    o.net+=num(r[sc.net]);o.rows++;if(sc.cogs)o.cogs+=cu?num(r[sc.cogs])*(sc.qty?num(r[sc.qty]):1):num(r[sc.cogs]);
     if(sc.bon&&!(sc.type&&bad.test(String(r[sc.type]||''))))o.bills.add(String(r[sc.bon]));
   }
-  const recs=[...map.values()].map(o=>({d:o.d,st:o.st,net:o.net,txn:sc.bon?o.bills.size:o.rows}));
-  _ddCache={src:S,n:S.length,recs};return _ddCache;
+  const recs=[...map.values()].map(o=>({d:o.d,st:o.st,net:o.net,cogs:o.cogs,txn:sc.bon?o.bills.size:o.rows}));
+  _ddCache={src:S,n:S.length,recs,hasGm:!!sc.cogs};return _ddCache;
 }
 const DD_MET={net:['Net Sales','Tk'],spd:['SPD','Tk'],std:['STD','struk'],apc:['APC','Tk']};
 function renderStoreDaily(){
@@ -7551,16 +7551,16 @@ function renderStoreDaily(){
   const sv=document.getElementById('storeCodeSelect').value,mv=document.getElementById('storeMonthSelect').value;
   const rec=A.recs.filter(r=>(sv==='ALL'||r.st===sv)&&(mv==='ALL'||+r.d.slice(5,7)===+mv));
   const by=new Map();
-  rec.forEach(r=>{let o=by.get(r.d);if(!o){o={d:r.d,net:0,txn:0,st:new Set()};by.set(r.d,o);}o.net+=r.net;o.txn+=r.txn;o.st.add(r.st);});
-  const rows=[...by.values()].sort((a,b)=>a.d.localeCompare(b.d)).map(o=>{const n=o.st.size||1;return {d:o.d,stores:o.st.size,net:o.net,txn:o.txn,spd:o.net/n,std:o.txn/n,apc:o.txn?o.net/o.txn:0};});
+  rec.forEach(r=>{let o=by.get(r.d);if(!o){o={d:r.d,net:0,cogs:0,txn:0,st:new Set()};by.set(r.d,o);}o.net+=r.net;o.cogs+=r.cogs||0;o.txn+=r.txn;o.st.add(r.st);});
+  const rows=[...by.values()].sort((a,b)=>a.d.localeCompare(b.d)).map(o=>{const n=o.st.size||1;const gm=A.hasGm?o.net-o.cogs:null;return {d:o.d,stores:o.st.size,net:o.net,gm,gmp:gm!=null&&o.net?gm/o.net*100:null,txn:o.txn,spd:o.net/n,std:o.txn/n,apc:o.txn?o.net/o.txn:0};});
   const DN=['Min','Sen','Sel','Rab','Kam','Jum','Sab'],MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
   const lab=d=>{const x=new Date(d+'T00:00:00');return x.getDate()+' '+MN[x.getMonth()];};
   const dow=d=>DN[new Date(d+'T00:00:00').getDay()];
   const f0=v=>Math.round(v).toLocaleString('en-US'),f1=v=>v.toLocaleString('en-US',{maximumFractionDigits:1});
   const met=document.getElementById('ddMet').value;
-  const tot=rows.reduce((s,r)=>({net:s.net+r.net,txn:s.txn+r.txn,spd:s.spd+r.spd,std:s.std+r.std}),{net:0,txn:0,spd:0,std:0});
-  const n=rows.length||1,avg={net:tot.net/n,spd:tot.spd/n,std:tot.std/n,apc:tot.txn?tot.net/tot.txn:0};
-  const multi=sv==='ALL';
+  const tot=rows.reduce((s,r)=>({net:s.net+r.net,gm:s.gm+(r.gm||0),txn:s.txn+r.txn,spd:s.spd+r.spd,std:s.std+r.std}),{net:0,gm:0,txn:0,spd:0,std:0});
+  const n=rows.length||1,avg={net:tot.net/n,spd:tot.spd/n,std:tot.std/n,apc:tot.txn?tot.net/tot.txn:0,gmp:A.hasGm&&tot.net?tot.gm/tot.net*100:null};
+  const multi=sv==='ALL';const gmc=r=>A.hasGm?`<td class="right">${f0(r.gm)}</td><td class="right" style="color:${r.gmp<0?'var(--red,#f85149)':'inherit'}">${r.gmp==null?'—':r.gmp.toFixed(2)+'%'}</td>`:'<td class="right">—</td><td class="right">—</td>';
   document.getElementById('ddSub').textContent=(rows.length?lab(rows[0].d)+' '+rows[0].d.slice(0,4)+' – '+lab(rows[rows.length-1].d)+' '+rows[rows.length-1].d.slice(0,4)+' · ':'')+`${rows.length} hari · ${sv==='ALL'?'semua toko':sv}${mv==='ALL'?'':' · '+(document.getElementById('storeMonthSelect').selectedOptions[0]||{}).text}`+(multi?' · SPD & STD = rata-rata per toko aktif':'');
   const vals=rows.map(r=>met==='std'?+r.std.toFixed(1):Math.round(r[met]));
   makeChart('ddChart',{type:'line',data:{labels:rows.map(r=>lab(r.d)),datasets:[
@@ -7576,18 +7576,18 @@ function renderStoreDaily(){
   if(!mk.includes(window._ddPage))window._ddPage=mk[mk.length-1];
   pg.innerHTML=mk.length>1?mk.map(m=>`<button class="filter-btn${m===window._ddPage?' primary':''}" style="padding:3px 10px;font-size:11.5px" onclick="window._ddPage='${m}';renderStoreDaily()">${MN[+m.slice(5,7)-1]} ${m.slice(2,4)}</button>`).join(''):'';
   const tRows=mk.length>1?rows.filter(r=>r.d.startsWith(window._ddPage)):rows;
-  document.getElementById('ddBody').innerHTML=tRows.map(r=>`<tr${['Sab','Min'].includes(dow(r.d))?' style="background:rgba(88,166,255,.04)"':''}><td style="font-family:var(--mono);white-space:nowrap">${r.d}</td><td>${dow(r.d)}</td>${multi?`<td class="right">${r.stores}</td>`:''}${cell(r,'net',f0)}<td class="right">${f0(r.txn)}</td>${cell(r,'spd',f0)}${cell(r,'std',f1)}${cell(r,'apc',f0)}</tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--text3)">Tidak ada data</td></tr>';
-  document.getElementById('ddFoot').innerHTML=rows.length?`<tr style="font-weight:700;background:var(--bg3)"><td colspan="${multi?3:2}">TOTAL / RATA-RATA</td><td class="right">${f0(tot.net)}</td><td class="right">${f0(tot.txn)}</td><td class="right">${f0(avg.spd)}</td><td class="right">${f1(avg.std)}</td><td class="right">${f0(avg.apc)}</td></tr>`:'';
+  document.getElementById('ddBody').innerHTML=tRows.map(r=>`<tr${['Sab','Min'].includes(dow(r.d))?' style="background:rgba(88,166,255,.04)"':''}><td style="font-family:var(--mono);white-space:nowrap">${r.d}</td><td>${dow(r.d)}</td>${multi?`<td class="right">${r.stores}</td>`:''}${cell(r,'net',f0)}${gmc(r)}<td class="right">${f0(r.txn)}</td>${cell(r,'spd',f0)}${cell(r,'std',f1)}${cell(r,'apc',f0)}</tr>`).join('')||'<tr><td colspan="10" style="text-align:center;color:var(--text3)">Tidak ada data</td></tr>';
+  document.getElementById('ddFoot').innerHTML=rows.length?`<tr style="font-weight:700;background:var(--bg3)"><td colspan="${multi?3:2}">TOTAL / RATA-RATA</td><td class="right">${f0(tot.net)}</td>${gmc({gm:tot.gm,gmp:avg.gmp})}<td class="right">${f0(tot.txn)}</td><td class="right">${f0(avg.spd)}</td><td class="right">${f1(avg.std)}</td><td class="right">${f0(avg.apc)}</td></tr>`:'';
   document.getElementById('ddStoresTh').style.display=multi?'':'none';
   _ddLast={rows,multi,sv,mv,tot,avg,dow};
 }
 function ddExport(){
   const L=_ddLast;if(!L||!L.rows.length){alert('Belum ada data harian.');return;}
   const go=()=>{
-    const H=['Tanggal','Hari'].concat(L.multi?['Toko Aktif']:[],['Net Sales (Tk)','Struk','SPD (Tk)','STD','APC (Tk)']);
+    const H=['Tanggal','Hari'].concat(L.multi?['Toko Aktif']:[],['Net Sales (Tk)','GM (Tk)','GM %','Struk','SPD (Tk)','STD','APC (Tk)']);
     const aoa=[['SALES DAY BY DAY — '+(L.sv==='ALL'?'Semua Toko':L.sv)],[],H];
-    L.rows.forEach(r=>aoa.push([r.d,L.dow(r.d)].concat(L.multi?[r.stores]:[],[Math.round(r.net),r.txn,Math.round(r.spd),Math.round(r.std*10)/10,Math.round(r.apc)])));
-    aoa.push(['TOTAL / RATA-RATA',''].concat(L.multi?['']:[],[Math.round(L.tot.net),L.tot.txn,Math.round(L.avg.spd),Math.round(L.avg.std*10)/10,Math.round(L.avg.apc)]));
+    L.rows.forEach(r=>aoa.push([r.d,L.dow(r.d)].concat(L.multi?[r.stores]:[],[Math.round(r.net),r.gm==null?'':Math.round(r.gm),r.gmp==null?'':Math.round(r.gmp*100)/100,r.txn,Math.round(r.spd),Math.round(r.std*10)/10,Math.round(r.apc)])));
+    aoa.push(['TOTAL / RATA-RATA',''].concat(L.multi?['']:[],[Math.round(L.tot.net),L.avg.gmp==null?'':Math.round(L.tot.gm),L.avg.gmp==null?'':Math.round(L.avg.gmp*100)/100,L.tot.txn,Math.round(L.avg.spd),Math.round(L.avg.std*10)/10,Math.round(L.avg.apc)]));
     const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=H.map((_,i)=>({wch:i?14:12}));
     XLSX.utils.book_append_sheet(wb,ws,'Day by Day');XLSX.writeFile(wb,'Sales_Day_by_Day.xlsx');
   };
