@@ -1819,6 +1819,43 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       </div>
     </div>
 
+    <!-- ── CAMPAIGN: DIGITAL STAMP ── -->
+    <div class="nav-group">
+      <button class="nav-group-header" onclick="toggleGroup('grp-stamp',this)">
+        <span class="nav-group-icon">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M5 8.2l2 2 4-4.2"/></svg>
+          Campaign: Digital Stamp
+        </span>
+        <svg class="nav-group-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>
+      </button>
+      <div class="nav-group-body" id="grp-stamp">
+        <button class="nav-item" onclick="showPanel('stamp-overview',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+          Overview
+        </button>
+        <button class="nav-item" onclick="showPanel('stamp-sales',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l3-4 3 2 3-5 3 3"/></svg>
+          Sales Performance
+        </button>
+        <button class="nav-item" onclick="showPanel('stamp-sponsor',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h8v4a4 4 0 01-8 0z"/><path d="M11 7h1.5a1.5 1.5 0 010 3H11"/><path d="M5 2v2M7 2v2M9 2v2"/></svg>
+          Item Sponsor (BeanSpot)
+        </button>
+        <button class="nav-item" onclick="showPanel('stamp-store',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14V6l6-4 6 4v8"/><path d="M6 14V9h4v5"/></svg>
+          Stamp Detail Store
+        </button>
+        <button class="nav-item" onclick="showPanel('stamp-reward',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="12" height="8" rx="1"/><path d="M1 6h14M8 6v8M8 6C6 2 3 3 5 6M8 6c2-4 5-3 3 0"/></svg>
+          Item Detail Store
+        </button>
+        <button class="nav-item" onclick="showPanel('stamp-member',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="3"/><path d="M1 14s1-4 5-4 5 4 5 4"/><path d="M12 4v4M10 6h4"/></svg>
+          Member Potensial
+        </button>
+      </div>
+    </div>
+
     <!-- ── MERCHANDISING ── -->
     <div class="nav-group">
       <button class="nav-group-header" onclick="toggleGroup('grp-merch',this)">
@@ -5608,6 +5645,69 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 <div class="chart-card"><div class="chart-header"><div><div class="chart-title">Data Sales per PLU</div><div class="chart-subtitle" id="sdSub">—</div></div></div><div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px"><thead><tr><th>PLU</th><th>DESCP</th><th>CATEGORY</th><th>SUBDEPT</th><th>PRINCIPAL</th><th style="text-align:center">TAG</th><th class="right">SALES QTY</th><th class="right">NET VALUE</th><th class="right">GM VALUE</th><th class="right">RECEIPT QTY</th><th class="right">SELLING STORE</th></tr></thead><tbody id="sdBody"></tbody><tfoot id="sdFoot"></tfoot></table></div><div id="sdPager" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:12.5px"></div></div>
 </div>
 </div>
+<div id="panel-stamp-overview" class="panel">
+  <div class="page-header"><div><div class="page-title">Digital Stamp — Overview</div><div class="page-subtitle">Stamp Get, Stamp Redeem & Redemption Rate · dihitung dari data sales</div></div><button class="btn-dl" onclick="merExport('stov')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button></div>
+  <div id="stovNoData" class="insight-box" style="display:none"><span class="insight-icon">🚫</span><div class="insight-text">Belum ada data sales dalam periode campaign (25 Okt 2026 – 15 Jan 2027).</div></div>
+  <div id="stovMain" style="display:none">
+    <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap"><span class="filter-label">Dari</span><input type="date" class="filter-select st-from" onchange="stSetF('from',this.value)"><span class="filter-label">s.d.</span><input type="date" class="filter-select st-to" onchange="stSetF('to',this.value)"><span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select st-store" onchange="stSetF('store',this.value)" style="min-width:190px"></select><span class="st-info" style="font-size:11.5px;color:var(--text3);margin-left:auto"></span></div>
+    <div class="insight-box" style="margin-bottom:14px"><span class="insight-icon">💡</span><div class="insight-text" style="font-size:12px" id="stovRule"></div></div>
+<div class="stats-grid" style="grid-template-columns:repeat(5,minmax(0,1fr));margin-bottom:16px"><div class="stat-card blue"><div class="stat-label">Stamp Get</div><div class="stat-value" id="stov-get">—</div><div class="stat-sub" id="stov-get-sub">—</div></div><div class="stat-card green"><div class="stat-label">Stamp Redeem</div><div class="stat-value" id="stov-red">—</div><div class="stat-sub" id="stov-red-sub">—</div></div><div class="stat-card amber"><div class="stat-label">Redemption Rate</div><div class="stat-value" id="stov-rate">—</div><div class="stat-sub" id="stov-rate-sub">Stamp Redeem ÷ Stamp Get</div></div><div class="stat-card purple"><div class="stat-label">Member Get Stamp</div><div class="stat-value" id="stov-mg">—</div><div class="stat-sub" id="stov-mg-sub">—</div></div><div class="stat-card red"><div class="stat-label">Member Redeem</div><div class="stat-value" id="stov-mr">—</div><div class="stat-sub" id="stov-mr-sub">—</div></div></div>
+<div class="charts-grid cols-2" style="margin-bottom:16px"><div class="chart-card"><div class="chart-header"><div><div class="chart-title">Stamp Get Trend</div><div class="chart-subtitle">Stamp yang didapat member per hari</div></div></div><div style="height:260px"><canvas id="stovGetChart"></canvas></div></div><div class="chart-card"><div class="chart-header"><div><div class="chart-title">Stamp Redeem Trend</div><div class="chart-subtitle">Stamp yang ditukar per hari (Tebus 15 ×15 + Tebus 30 ×30)</div></div></div><div style="height:260px"><canvas id="stovRedChart"></canvas></div></div></div>
+<div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Stamp per Toko</div><div class="chart-subtitle">Diurutkan dari Stamp Get terbesar</div></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Kode Toko</th><th>Nama Toko</th><th class="right">Stamp Get</th><th class="right">Stamp Redeem</th><th class="right">Redemption Rate</th><th class="right">Member Get</th><th class="right">Tebus 15</th><th class="right">Tebus 30</th></tr></thead><tbody id="stovBody"></tbody><tfoot id="stovBodyFoot"></tfoot></table></div><div id="stovPg" style="display:flex;gap:10px;align-items:center;justify-content:center;margin-top:10px;font-size:12px"></div></div>
+  </div>
+</div>
+<div id="panel-stamp-sales" class="panel">
+  <div class="page-header"><div><div class="page-title">Digital Stamp — Sales Performance</div><div class="page-subtitle">Exclude: minyak goreng, beras, susu bayi, rokok · dibandingkan dengan periode sebelum campaign (jumlah hari sama)</div></div><button class="btn-dl" onclick="merExport('stsp')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button></div>
+  <div id="stspNoData" class="insight-box" style="display:none"><span class="insight-icon">🚫</span><div class="insight-text">Belum ada data sales dalam periode campaign (25 Okt 2026 – 15 Jan 2027).</div></div>
+  <div id="stspMain" style="display:none">
+    <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap"><span class="filter-label">Dari</span><input type="date" class="filter-select st-from" onchange="stSetF('from',this.value)"><span class="filter-label">s.d.</span><input type="date" class="filter-select st-to" onchange="stSetF('to',this.value)"><span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select st-store" onchange="stSetF('store',this.value)" style="min-width:190px"></select><span class="st-info" style="font-size:11.5px;color:var(--text3);margin-left:auto"></span></div>
+    <div class="insight-box" style="margin-bottom:14px"><span class="insight-icon">📅</span><div class="insight-text" style="font-size:12px" id="stspCmp"></div></div>
+<div class="stats-grid" style="grid-template-columns:repeat(6,minmax(0,1fr));margin-bottom:16px"><div class="stat-card blue"><div class="stat-label">Sales</div><div class="stat-value" id="stsp-net">—</div><div class="stat-sub" id="stsp-net-sub">—</div></div><div class="stat-card green"><div class="stat-label">Gross Margin</div><div class="stat-value" id="stsp-gm">—</div><div class="stat-sub" id="stsp-gm-sub">—</div></div><div class="stat-card amber"><div class="stat-label">SPD</div><div class="stat-value" id="stsp-spd">—</div><div class="stat-sub" id="stsp-spd-sub">—</div></div><div class="stat-card purple"><div class="stat-label">Struk</div><div class="stat-value" id="stsp-str">—</div><div class="stat-sub" id="stsp-str-sub">—</div></div><div class="stat-card blue"><div class="stat-label">STD</div><div class="stat-value" id="stsp-std">—</div><div class="stat-sub" id="stsp-std-sub">—</div></div><div class="stat-card green"><div class="stat-label">APC</div><div class="stat-value" id="stsp-apc">—</div><div class="stat-sub" id="stsp-apc-sub">—</div></div></div>
+<div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Tren Harian — Actual vs Sebelum Campaign</div><div class="chart-subtitle" id="stspTrendSub">Hari ke-n campaign vs hari ke-n periode pembanding</div></div><select class="filter-select" id="stspMet" onchange="renderStampSales()"><option value="net">Sales</option><option value="spd">SPD</option><option value="str">Struk</option><option value="std">STD</option><option value="apc">APC</option></select></div><div style="height:260px"><canvas id="stspTrend"></canvas></div></div>
+<div class="charts-grid cols-2" style="margin-bottom:16px"><div class="chart-card"><div class="chart-header"><div><div class="chart-title">Struk Contribution by Sales Range</div><div class="chart-subtitle">Struk &lt; Tk 700 vs ≥ Tk 700 (belanja eligible)</div></div></div><div style="height:260px"><canvas id="stspDonut"></canvas></div></div><div class="chart-card"><div class="chart-header"><div><div class="chart-title">STD by Sales Range</div><div class="chart-subtitle">STD sebelum campaign vs actual</div></div></div><div style="height:260px"><canvas id="stspStdChart"></canvas></div></div></div>
+<div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Branch Detail</div><div class="chart-subtitle">Sales & struk ≥ Tk 700 per toko vs periode pembanding</div></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Kode Toko</th><th>Nama Toko</th><th class="right">Sales Actual</th><th class="right">Sales Pembanding</th><th class="right">Growth</th><th class="right">SPD Actual</th><th class="right">SPD Pembanding</th><th class="right">STD ≥700 Actual</th><th class="right">STD ≥700 Pembanding</th><th class="right">Growth STD ≥700</th></tr></thead><tbody id="stspBody"></tbody><tfoot id="stspBodyFoot"></tfoot></table></div><div id="stspPg" style="display:flex;gap:10px;align-items:center;justify-content:center;margin-top:10px;font-size:12px"></div></div>
+  </div>
+</div>
+<div id="panel-stamp-sponsor" class="panel">
+  <div class="page-header"><div><div class="page-title">Digital Stamp — Item Sponsor (BeanSpot)</div><div class="page-subtitle">Performa item kopi BeanSpot selama campaign · bonus +1 stamp di toko Gulshan</div></div><button class="btn-dl" onclick="merExport('stbs')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button></div>
+  <div id="stbsNoData" class="insight-box" style="display:none"><span class="insight-icon">🚫</span><div class="insight-text">Belum ada data sales dalam periode campaign (25 Okt 2026 – 15 Jan 2027).</div></div>
+  <div id="stbsMain" style="display:none">
+    <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap"><span class="filter-label">Dari</span><input type="date" class="filter-select st-from" onchange="stSetF('from',this.value)"><span class="filter-label">s.d.</span><input type="date" class="filter-select st-to" onchange="stSetF('to',this.value)"><span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select st-store" onchange="stSetF('store',this.value)" style="min-width:190px"></select><span class="st-info" style="font-size:11.5px;color:var(--text3);margin-left:auto"></span></div>
+    <div class="stats-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:16px"><div class="stat-card blue"><div class="stat-label">Sales Generated</div><div class="stat-value" id="stbs-net">—</div><div class="stat-sub" id="stbs-net-sub">—</div></div><div class="stat-card green"><div class="stat-label">Struk Generated</div><div class="stat-value" id="stbs-str">—</div><div class="stat-sub" id="stbs-str-sub">—</div></div><div class="stat-card amber"><div class="stat-label">Qty Generated</div><div class="stat-value" id="stbs-qty">—</div><div class="stat-sub" id="stbs-qty-sub">—</div></div><div class="stat-card purple"><div class="stat-label">Bonus Stamp (Gulshan)</div><div class="stat-value" id="stbs-bon">—</div><div class="stat-sub" id="stbs-bon-sub">—</div></div></div>
+<div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Top PLU BeanSpot</div><div class="chart-subtitle">Berdasarkan metrik terpilih</div></div><select class="filter-select" id="stbsMet" onchange="renderStampSponsor()"><option value="net">Sales</option><option value="str">Struk</option><option value="qty">Qty</option></select></div><div style="height:340px"><canvas id="stbsChart"></canvas></div></div>
+<div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Detail PLU</div><div class="chart-subtitle">Item sponsor BeanSpot</div></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>PLU</th><th>Deskripsi</th><th class="right">Qty</th><th class="right">Sales</th><th class="right">Struk</th><th class="right">% Sales</th></tr></thead><tbody id="stbsBody"></tbody><tfoot id="stbsBodyFoot"></tfoot></table></div></div>
+  </div>
+</div>
+<div id="panel-stamp-store" class="panel">
+  <div class="page-header"><div><div class="page-title">Digital Stamp — Stamp Detail Store</div><div class="page-subtitle">Stamp & sales dari struk yang mendapat stamp, per toko</div></div><button class="btn-dl" onclick="merExport('stst')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button></div>
+  <div id="ststNoData" class="insight-box" style="display:none"><span class="insight-icon">🚫</span><div class="insight-text">Belum ada data sales dalam periode campaign (25 Okt 2026 – 15 Jan 2027).</div></div>
+  <div id="ststMain" style="display:none">
+    <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap"><span class="filter-label">Dari</span><input type="date" class="filter-select st-from" onchange="stSetF('from',this.value)"><span class="filter-label">s.d.</span><input type="date" class="filter-select st-to" onchange="stSetF('to',this.value)"><span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select st-store" onchange="stSetF('store',this.value)" style="min-width:190px"></select><span class="st-info" style="font-size:11.5px;color:var(--text3);margin-left:auto"></span></div>
+    <div class="stats-grid" style="grid-template-columns:repeat(5,minmax(0,1fr));margin-bottom:16px"><div class="stat-card blue"><div class="stat-label">Stamp Get</div><div class="stat-value" id="stst-get">—</div><div class="stat-sub" id="stst-get-sub">—</div></div><div class="stat-card green"><div class="stat-label">Stamp Redeem</div><div class="stat-value" id="stst-red">—</div><div class="stat-sub" id="stst-red-sub">—</div></div><div class="stat-card amber"><div class="stat-label">Redemption Rate</div><div class="stat-value" id="stst-rate">—</div><div class="stat-sub" id="stst-rate-sub">—</div></div><div class="stat-card purple"><div class="stat-label">Sales from Stamp Get</div><div class="stat-value" id="stst-net">—</div><div class="stat-sub" id="stst-net-sub">Net Sales struk yang dapat ≥1 stamp</div></div><div class="stat-card green"><div class="stat-label">Margin from Stamp Get</div><div class="stat-value" id="stst-gm">—</div><div class="stat-sub" id="stst-gm-sub">—</div></div></div>
+<div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Stamp Performance Detail</div><div class="chart-subtitle">Diurutkan dari Stamp Get terbesar</div></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Kode Toko</th><th>Nama Toko</th><th class="right">Stamp Get</th><th class="right">Stamp Redeem</th><th class="right">Redemption Rate</th><th class="right">Struk Dapat Stamp</th><th class="right">Sales from Stamp Get</th><th class="right">Margin from Stamp Get</th><th class="right">GM %</th></tr></thead><tbody id="ststBody"></tbody><tfoot id="ststBodyFoot"></tfoot></table></div><div id="ststPg" style="display:flex;gap:10px;align-items:center;justify-content:center;margin-top:10px;font-size:12px"></div></div>
+  </div>
+</div>
+<div id="panel-stamp-reward" class="panel">
+  <div class="page-header"><div><div class="page-title">Digital Stamp — Item Detail Store</div><div class="page-subtitle">Hadiah yang ditebus per toko · PLU 800010 Box Set (15 stamp) & 800011 Cooking Ware (30 stamp)</div></div><button class="btn-dl" onclick="merExport('strw')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button></div>
+  <div id="strwNoData" class="insight-box" style="display:none"><span class="insight-icon">🚫</span><div class="insight-text">Belum ada data sales dalam periode campaign (25 Okt 2026 – 15 Jan 2027).</div></div>
+  <div id="strwMain" style="display:none">
+    <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap"><span class="filter-label">Dari</span><input type="date" class="filter-select st-from" onchange="stSetF('from',this.value)"><span class="filter-label">s.d.</span><input type="date" class="filter-select st-to" onchange="stSetF('to',this.value)"><span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select st-store" onchange="stSetF('store',this.value)" style="min-width:190px"></select><span class="st-info" style="font-size:11.5px;color:var(--text3);margin-left:auto"></span></div>
+    <div class="stats-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:16px"><div class="stat-card blue"><div class="stat-label">Total Qty Hadiah</div><div class="stat-value" id="strw-tot">—</div><div class="stat-sub" id="strw-tot-sub">—</div></div><div class="stat-card green"><div class="stat-label">Tebus 15 Stamp</div><div class="stat-value" id="strw-15">—</div><div class="stat-sub" id="strw-15-sub">800010 · Container Box Set</div></div><div class="stat-card amber"><div class="stat-label">Tebus 30 Stamp</div><div class="stat-value" id="strw-30">—</div><div class="stat-sub" id="strw-30-sub">800011 · Cooking Ware Set</div></div><div class="stat-card purple"><div class="stat-label">Stamp Terpakai</div><div class="stat-value" id="strw-st">—</div><div class="stat-sub" id="strw-st-sub">—</div></div></div>
+<div class="charts-grid cols-2" style="margin-bottom:16px"><div class="chart-card"><div class="chart-header"><div><div class="chart-title">Redemption Harian</div><div class="chart-subtitle">Qty hadiah ditebus per hari</div></div></div><div style="height:260px"><canvas id="strwChart"></canvas></div></div><div class="chart-card"><div class="chart-header"><div><div class="chart-title">Top 10 Toko</div><div class="chart-subtitle">Total qty hadiah ditebus</div></div></div><div style="height:260px"><canvas id="strwTop"></canvas></div></div></div>
+<div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Item Performance Detail</div><div class="chart-subtitle">Per toko</div></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Kode Toko</th><th>Nama Toko</th><th class="right">Tebus 15 Stamp</th><th class="right">Tebus 30 Stamp</th><th class="right">Total Qty</th><th class="right">Stamp Terpakai</th><th class="right">Member Redeem</th></tr></thead><tbody id="strwBody"></tbody><tfoot id="strwBodyFoot"></tfoot></table></div><div id="strwPg" style="display:flex;gap:10px;align-items:center;justify-content:center;margin-top:10px;font-size:12px"></div></div>
+  </div>
+</div>
+<div id="panel-stamp-member" class="panel">
+  <div class="page-header"><div><div class="page-title">Digital Stamp — Member Potensial</div><div class="page-subtitle">Member dengan saldo stamp cukup tapi belum menebus hadiah · saldo dihitung kumulatif sejak 25 Okt 2026</div></div><button class="btn-dl" onclick="merExport('stmb')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button></div>
+  <div id="stmbNoData" class="insight-box" style="display:none"><span class="insight-icon">🚫</span><div class="insight-text">Belum ada data sales dalam periode campaign (25 Okt 2026 – 15 Jan 2027).</div></div>
+  <div id="stmbMain" style="display:none">
+    <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap"><span class="filter-label">Saldo s.d.</span><input type="date" class="filter-select st-to" onchange="stSetF('to',this.value)"><span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select st-store" onchange="stSetF('store',this.value)" style="min-width:190px"></select><span class="st-info" style="font-size:11.5px;color:var(--text3);margin-left:auto"></span></div>
+    <div class="insight-box" style="margin-bottom:14px"><span class="insight-icon">📘</span><div class="insight-text" style="font-size:12px"><strong>Definisi:</strong> <b>Total Member Get Stamp</b> = member dengan ≥1 stamp · <b>Potensial Tebus 30</b> = saldo ≥30, belum redeem · <b>Potensial Tebus 15</b> = saldo 15–29, belum redeem · <b>Hampir Dapat</b> = saldo 10–14 atau 25–29, belum redeem (target push/upsell) · <b>% Member Potensial</b> = (Potensial 30 + Potensial 15) ÷ Total Member Get Stamp. Toko member = toko tempat member paling banyak mendapat stamp.</div></div>
+<div class="stats-grid" style="grid-template-columns:repeat(5,minmax(0,1fr));margin-bottom:16px"><div class="stat-card blue"><div class="stat-label">Total Member Get Stamp</div><div class="stat-value" id="stmb-tot">—</div><div class="stat-sub" id="stmb-tot-sub">—</div></div><div class="stat-card green"><div class="stat-label">Potensial Tebus 30</div><div class="stat-value" id="stmb-30">—</div><div class="stat-sub" id="stmb-30-sub">—</div></div><div class="stat-card amber"><div class="stat-label">Potensial Tebus 15</div><div class="stat-value" id="stmb-15">—</div><div class="stat-sub" id="stmb-15-sub">—</div></div><div class="stat-card purple"><div class="stat-label">% Member Potensial</div><div class="stat-value" id="stmb-pct">—</div><div class="stat-sub" id="stmb-pct-sub">—</div></div><div class="stat-card red"><div class="stat-label">Hampir Dapat</div><div class="stat-value" id="stmb-near">—</div><div class="stat-sub" id="stmb-near-sub">saldo 10–14 / 25–29</div></div></div>
+<div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Detail Toko</div><div class="chart-subtitle">Per toko member</div></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Kode Toko</th><th>Nama Toko</th><th class="right">Total Member Get Stamp</th><th class="right">Sudah Redeem</th><th class="right">Potensial Tebus 30</th><th class="right">Potensial Tebus 15</th><th class="right">Hampir Dapat</th><th class="right">% Member Potensial</th></tr></thead><tbody id="stmbBody"></tbody><tfoot id="stmbBodyFoot"></tfoot></table></div><div id="stmbPg" style="display:flex;gap:10px;align-items:center;justify-content:center;margin-top:10px;font-size:12px"></div></div>
+<div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Detail Member Potensial</div><div class="chart-subtitle">Member belum redeem, saldo terbesar dulu · Excel berisi semua member</div></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Member ID</th><th>Toko</th><th class="right">Total Stamp</th><th class="right">Struk Dapat Stamp</th><th class="right">Status</th><th class="right">Kurang ke Milestone Berikutnya</th></tr></thead><tbody id="stmbMem"></tbody><tfoot id="stmbMemFoot"></tfoot></table></div><div id="stmbMemPg" style="display:flex;gap:10px;align-items:center;justify-content:center;margin-top:10px;font-size:12px"></div></div>
+  </div>
+</div>
 <div id="panel-merch-zero" class="panel">
   <div class="page-header">
     <div><div class="page-title">Item Zero Sales</div><div class="page-subtitle">Item yang sama sekali belum terjual — dibandingkan dengan Product Master, Store Receipt &amp; PO</div></div>
@@ -7220,6 +7320,12 @@ function renderPanel(id) {
     case 'merch-receipt': renderMerchReceipt(); break;
     case 'merch-sellthrough': renderMerchSellThrough(); break;
     case 'merch-zero': renderMerchZero(); break;
+    case 'stamp-overview': renderStampOverview(); break;
+    case 'stamp-sales': renderStampSales(); break;
+    case 'stamp-sponsor': renderStampSponsor(); break;
+    case 'stamp-store': renderStampStore(); break;
+    case 'stamp-reward': renderStampReward(); break;
+    case 'stamp-member': renderStampMember(); break;
     case 'ma-pareto': renderMaPareto(); break;
     case 'ma-skuprod': renderMaSkuProd(); break;
     case 'ma-supmatrix': renderMaSupMatrix(); break;
@@ -13397,6 +13503,208 @@ function merMasterList(){
   prod.forEach(r=>{const p=mkPlu(r[cPlu]);if(!p||seen.has(p))return;seen.add(p);out.push({plu:p,desc:cDesc?String(r[cDesc]||'').trim():''});});
   return out;
 }
+
+// ══════════ CAMPAIGN: DIGITAL STAMP (25 Okt 2026 – 15 Jan 2027) ══════════
+const ST_CFG={start:'2026-10-25',end:'2027-01-15',min:700,g15:'800010',g30:'800011',
+  bspot:new Set(Array.from({length:23},(_,i)=>String(400000+i))),
+  exRe:/(cooking|edible|soybean|soyabean|soya|palm|mustard|sunflower|rice\s*bran|vegetable|canola|olive)\s*oil|minyak\s*goreng|beras|\brice\b|susu\s*bayi|baby\s*milk|infant|baby\s*formula|rokok|cigar|tobacco|kretek/i};
+let _stCache=null;const _stF={from:null,to:null,store:'ALL'};
+function stAdd(d,n){const x=new Date(d+'T00:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10);}
+function stDiff(a,b){return Math.round((new Date(b+'T00:00:00Z')-new Date(a+'T00:00:00Z'))/864e5);}
+function stDate(v){if(v instanceof Date&&!isNaN(v))return v.getFullYear()+'-'+String(v.getMonth()+1).padStart(2,'0')+'-'+String(v.getDate()).padStart(2,'0');
+  const s=String(v==null?'':v).trim();let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');
+  m=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})/);if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+  if(/^\d{5}(\.\d+)?$/.test(s)){const d=new Date(Math.round((+s-25569)*864e5));return d.toISOString().slice(0,10);}
+  const d=new Date(s);return isNaN(d)?null:stDate(d);}
+const stLbl=d=>{if(!d)return '—';const p=d.split('-');return +p[2]+' '+MER_MON[+p[1]-1].slice(0,3)+' '+p[0];};
+const stF0=v=>v==null||isNaN(v)?'—':Math.round(v).toLocaleString('en-US');
+const stP=(v,d)=>v==null||!isFinite(v)?'—':v.toFixed(d==null?2:d)+'%';
+const stG=(a,b)=>b?((a-b)/Math.abs(b))*100:null;
+const stGs=v=>v==null?'<span style="color:var(--text3)">—</span>':'<span style="color:'+(v>=0?'var(--green,#3fb950)':'var(--red,#f85149)')+';font-weight:600">'+(v>=0?'▲':'▼')+' '+Math.abs(v).toFixed(1)+'%</span>';
+function stBuild(){
+  const rows=(typeof uploads!=='undefined'&&Array.isArray(uploads.sales))?uploads.sales:[];
+  if(!rows.length)return null;
+  const am=typeof buildMasterAttrMap==='function'?buildMasterAttrMap():null;
+  const names=typeof merStoreNames==='function'?merStoreNames():{};
+  const sig=rows.length+'|'+(am?am.map.size:0)+'|'+Object.keys(names).length;
+  if(_stCache&&_stCache.src===rows&&_stCache.sig===sig)return _stCache;
+  const sc=sColDetect(rows),keys=Object.keys(rows[0]||{}),nrm=k=>String(k).toLowerCase().replace(/[^a-z0-9]/g,'');
+  const pick=c=>{for(const x of c){const f=keys.find(k=>nrm(k)===nrm(x));if(f)return f;}for(const x of c){const f=keys.find(k=>nrm(k).includes(nrm(x)));if(f)return f;}return null;};
+  const cMem=pick(['members','member_id','memberid','no_member','nomember','card_no','no_kartu','kode_member']);
+  const cDesc=keys.find(k=>/^(desc|descp|description|deskripsi|namabarang|itemname|productname|namaproduk|itemdesc)$/.test(nrm(k)));
+  const cCat=pick(['nama kategori','namakategori','nama_kategori','kategori','category']);
+  const cu=sc.cogs&&/avg/i.test(sc.cogs),lo=stAdd(ST_CFG.start,-90),hi=ST_CFG.end;
+  const okMem=v=>{if(v==null)return '';const s=String(v).trim().replace(/\.0+$/,'');return s&&s!=='0'&&s!=='-'&&!/^(null|nan|none)$/i.test(s)?s:'';};
+  const exC=new Map(),exCats=new Map(),desc=new Map(),T=new Map(),bs=new Map();
+  const isEx=(plu,r)=>{if(exC.has(plu))return exC.get(plu);const mi=am&&am.map.get(plu);let c=(mi&&mi.category)||(cCat?String(r[cCat]||''):'');c=String(c).trim();
+    const e=c?ST_CFG.exRe.test(c):(cDesc?ST_CFG.exRe.test(String(r[cDesc]||'')):false);exC.set(plu,e?(c||'(deskripsi item)'):false);return exC.get(plu);};
+  let lastD=null,firstD=null;
+  for(const r of rows){
+    if(sc.type){const t=String(r[sc.type]??'').trim().toUpperCase();if(/^(R|X|V|LX|LV|L X|L V)$/.test(t))continue;}
+    const d=stDate(r[sc.date]);if(!d||d<lo||d>hi)continue;
+    const plu=mkPlu(r[sc.plu]);if(!plu)continue;
+    const st=sc.store?merStore(r[sc.store]):'ALL',net=parseN(r[sc.net]),qty=sc.qty?parseN(r[sc.qty]):0;
+    const cg=sc.cogs?(cu?parseN(r[sc.cogs])*qty:parseN(r[sc.cogs])):0;
+    const k=st+'|'+(sc.bon?String(r[sc.bon]??'').trim():'')+'|'+d;
+    let t=T.get(k);if(!t){t={d,st,mem:'',net:0,gm:0,netX:0,gmX:0,elig:0,bs:0,g15:0,g30:0};T.set(k,t);}
+    if(!t.mem&&cMem)t.mem=okMem(r[cMem]);
+    t.net+=net;t.gm+=net-cg;
+    if(plu===ST_CFG.g15){t.g15+=qty;continue;}
+    if(plu===ST_CFG.g30){t.g30+=qty;continue;}
+    const ex=isEx(plu,r);
+    if(ex){exCats.set(ex,(exCats.get(ex)||0)+net);}else{t.netX+=net;t.gmX+=net-cg;t.elig+=net;}
+    if(ST_CFG.bspot.has(plu)){t.bs+=qty;const bk=d+'|'+st+'|'+plu;let b=bs.get(bk);if(!b){b={d,st,plu,net:0,qty:0,keys:new Set()};bs.set(bk,b);}b.net+=net;b.qty+=qty;b.keys.add(k);}
+    if(cDesc&&!desc.has(plu)){const ds=String(r[cDesc]||'').trim();if(ds)desc.set(plu,ds);}
+    if(d>=ST_CFG.start){if(!lastD||d>lastD)lastD=d;}else if(!firstD||d<firstD)firstD=d;
+  }
+  const gul=new Set(Object.keys(names).filter(c=>/gulshan/i.test(names[c]||'')));
+  const txns=[...T.values()];
+  txns.forEach(t=>{t.inC=t.d>=ST_CFG.start&&t.d<=ST_CFG.end;t.base=t.inC&&t.mem?Math.max(0,Math.floor(t.elig/ST_CFG.min)):0;
+    t.bonus=t.inC&&t.mem&&gul.has(t.st)&&t.elig>=ST_CFG.min&&t.bs>=2?1:0;t.stamp=t.base+t.bonus;t.red=t.g15*15+t.g30*30;});
+  const stores=[...new Set(txns.filter(t=>t.inC).map(t=>t.st))].sort();
+  _stCache={src:rows,sig,txns,bs:[...bs.values()],desc,exCats,stores,names,gul,lastD,firstD,hasMem:!!cMem,hasBon:!!sc.bon,hasCogs:!!sc.cogs,hasMaster:!!am};
+  return _stCache;
+}
+function stSel(B){
+  const maxTo=B.lastD&&B.lastD<ST_CFG.end?B.lastD:ST_CFG.end;
+  if(!_stF.from||_stF.from<ST_CFG.start||_stF.from>maxTo)_stF.from=ST_CFG.start;
+  if(!_stF.to||_stF.to>maxTo||_stF.to<ST_CFG.start)_stF.to=maxTo;
+  if(_stF.from>_stF.to){const x=_stF.from;_stF.from=_stF.to;_stF.to=x;}
+  if(_stF.store!=='ALL'&&!B.stores.includes(_stF.store))_stF.store='ALL';
+  const {from,to,store}=_stF,okS=t=>store==='ALL'||t.st===store;
+  document.querySelectorAll('.st-from,.st-to').forEach(e=>{e.min=ST_CFG.start;e.max=maxTo;e.value=e.classList.contains('st-from')?from:to;});
+  const sig=B.stores.join('|');
+  document.querySelectorAll('.st-store').forEach(s=>{if(s.dataset.sig!==sig){s.innerHTML='<option value="ALL">Semua Toko</option>'+B.stores.map(c=>'<option value="'+merEsc(c)+'">'+merEsc(c)+(B.names[c]?' — '+merEsc(B.names[c]):'')+'</option>').join('');s.dataset.sig=sig;}s.value=store;});
+  document.querySelectorAll('.st-info').forEach(e=>e.textContent='Data terakhir: '+stLbl(B.lastD)+' · Campaign 25 Okt 2026 – 15 Jan 2027');
+  return {from,to,store,okS,inR:t=>t.inC&&t.d>=from&&t.d<=to&&okS(t),upTo:t=>t.inC&&t.d<=to,sLbl:store==='ALL'?'Semua Toko':store+(B.names[store]?' '+B.names[store]:''),pLbl:stLbl(from)+' – '+stLbl(to)};
+}
+function stSetF(k,v){_stF[k]=v;['stov','stsp','stst','strw','stmb','stmbm'].forEach(x=>_merPg[x]=1);const a=document.querySelector('.panel.active');const id=a&&a.id.replace('panel-','');
+  ({'stamp-overview':renderStampOverview,'stamp-sales':renderStampSales,'stamp-sponsor':renderStampSponsor,'stamp-store':renderStampStore,'stamp-reward':renderStampReward,'stamp-member':renderStampMember}[id]||(()=>{}))();}
+function stGate(k){const B=stBuild();const ok=!!(B&&B.hasBon&&B.txns.some(t=>t.inC));
+  merGate(k+'Main',k+'NoData',ok,!B?'Belum ada data sales. Upload data sales di Data Management.':!B.hasBon?'Kolom nomor struk (no_bon / receipt) tidak ditemukan di data sales — stamp dihitung per struk.':'Belum ada data sales dalam periode campaign (25 Okt 2026 – 15 Jan 2027). Data sales terakhir: '+stLbl(B.firstD)+'.');return ok?B:null;}
+const stNm=(B,c)=>B.names[c]||'';
+const stSlice=(arr,k,ps)=>{const p=merPage(k,arr.length,ps);return arr.slice((p-1)*ps,p*ps);};
+function stLine(id,labels,data,color,label){makeChart(id,{type:'line',data:{labels,datasets:[{label,data,borderColor:color,backgroundColor:color+'22',fill:true,tension:.3,pointRadius:labels.length>40?0:2,borderWidth:2}]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:false}},scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,ticks:{...chartDefaults.scales.x.ticks,maxTicksLimit:12}},y:{...chartDefaults.scales.y,beginAtZero:true,ticks:{...chartDefaults.scales.y.ticks,callback:v=>stF0(v)}}}}});}
+function stDays(from,to){const a=[];for(let d=from;d<=to;d=stAdd(d,1))a.push(d);return a;}
+
+function renderStampOverview(){
+  const B=stGate('stov');if(!B)return;const S=stSel(B),T=B.txns.filter(S.inR);
+  let get=0,red=0;const mg=new Set(),mr=new Set(),day=new Map(),ps=new Map();
+  T.forEach(t=>{get+=t.stamp;red+=t.red;if(t.stamp>0)mg.add(t.mem);if(t.red>0&&t.mem)mr.add(t.mem);
+    const dd=day.get(t.d)||{g:0,r:0};dd.g+=t.stamp;dd.r+=t.red;day.set(t.d,dd);
+    let p=ps.get(t.st);if(!p){p={st:t.st,get:0,red:0,mg:new Set(),g15:0,g30:0};ps.set(t.st,p);}p.get+=t.stamp;p.red+=t.red;p.g15+=t.g15;p.g30+=t.g30;if(t.stamp>0)p.mg.add(t.mem);});
+  merSet('stov-get',stF0(get));merSet('stov-get-sub',S.pLbl);merSet('stov-red',stF0(red));merSet('stov-red-sub','≈ '+stF0(red/15)+' setara tebus 15');
+  merSet('stov-rate',stP(get?red/get*100:null));merSet('stov-mg',stF0(mg.size));merSet('stov-mg-sub','member unik dapat ≥1 stamp');merSet('stov-mr',stF0(mr.size));merSet('stov-mr-sub',mg.size?stP(mr.size/mg.size*100,1)+' dari member get':'—');
+  const ex=[...B.exCats.entries()].sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+  document.getElementById('stovRule').innerHTML='<strong>Rumus:</strong> Stamp per struk = FLOOR(belanja eligible ÷ Tk 700), hanya struk member · Bonus +1 di toko Gulshan bila struk ≥ Tk 700 berisi ≥2 item BeanSpot'+(B.gul.size?' ('+[...B.gul].map(merEsc).join(', ')+')':' <span style="color:#d29922">(toko Gulshan tidak ditemukan di Store Master)</span>')+' · Stamp Redeem = Qty 800010 ×15 + Qty 800011 ×30 · Void/retur tidak dihitung.<br><strong>Item dikecualikan terdeteksi:</strong> '+(ex.length?ex.slice(0,12).map(merEsc).join(', ')+(ex.length>12?' … (+'+(ex.length-12)+')':''):'<span style="color:#d29922">tidak ada — cek nama kategori di Product Master</span>')+(B.hasMem?'':' <br><span style="color:#f85149">Kolom Member ID tidak ditemukan di data sales.</span>');
+  const days=stDays(S.from,S.to),lab=days.map(d=>stLbl(d).replace(/ \d{4}$/,''));
+  stLine('stovGetChart',lab,days.map(d=>(day.get(d)||{}).g||0),'#58a6ff','Stamp Get');
+  stLine('stovRedChart',lab,days.map(d=>(day.get(d)||{}).r||0),'#3fb950','Stamp Redeem');
+  const rows=[...ps.values()].sort((a,b)=>b.get-a.get);
+  document.getElementById('stovBody').innerHTML=stSlice(rows,'stov',30).map(p=>'<tr><td><b>'+merEsc(p.st)+'</b></td><td>'+merEsc(stNm(B,p.st))+'</td><td class="right">'+stF0(p.get)+'</td><td class="right">'+stF0(p.red)+'</td><td class="right">'+stP(p.get?p.red/p.get*100:null)+'</td><td class="right">'+stF0(p.mg.size)+'</td><td class="right">'+stF0(p.g15)+'</td><td class="right">'+stF0(p.g30)+'</td></tr>').join('')||merEmpty(8);
+  const tg15=rows.reduce((s,p)=>s+p.g15,0),tg30=rows.reduce((s,p)=>s+p.g30,0);
+  document.getElementById('stovBodyFoot').innerHTML='<tr style="font-weight:700"><td colspan="2">TOTAL</td><td class="right">'+stF0(get)+'</td><td class="right">'+stF0(red)+'</td><td class="right">'+stP(get?red/get*100:null)+'</td><td class="right">'+stF0(mg.size)+'</td><td class="right">'+stF0(tg15)+'</td><td class="right">'+stF0(tg30)+'</td></tr>';
+  merPager('stovPg','stov',rows.length,30,'renderStampOverview');
+  _merLast.stov={name:'Stamp_Overview_'+S.from+'_'+S.to,rows:[['Periode',S.pLbl,'Toko',S.sLbl],[],['Kode Toko','Nama Toko','Stamp Get','Stamp Redeem','Redemption Rate %','Member Get','Tebus 15','Tebus 30']].concat(rows.map(p=>[p.st,stNm(B,p.st),p.get,p.red,p.get?Math.round(p.red/p.get*10000)/100:'',p.mg.size,p.g15,p.g30]),[['TOTAL','',get,red,get?Math.round(red/get*10000)/100:'',mg.size,tg15,tg30]])};
+}
+
+function stAgg(list){const o={net:0,gm:0,str:0,sd:new Set(),lo:0,hi:0,sdLo:0};list.forEach(t=>{if(t.netX<=0)return;o.net+=t.netX;o.gm+=t.gmX;o.str++;o.sd.add(t.st+'|'+t.d);if(t.elig>=ST_CFG.min)o.hi++;else o.lo++;});
+  const n=o.sd.size;return {...o,days:n,spd:n?o.net/n:null,std:n?o.str/n:null,apc:o.str?o.net/o.str:null,gmp:o.net?o.gm/o.net*100:null,stdLo:n?o.lo/n:null,stdHi:n?o.hi/n:null};}
+function renderStampSales(){
+  const B=stGate('stsp');if(!B)return;const S=stSel(B);
+  const n=stDiff(S.from,S.to)+1,pTo=stAdd(ST_CFG.start,-1),pFrom=stAdd(ST_CFG.start,-n);
+  const A=B.txns.filter(S.inR),Pp=B.txns.filter(t=>t.d>=pFrom&&t.d<=pTo&&S.okS(t));
+  const a=stAgg(A),p=stAgg(Pp),hasP=Pp.length>0;
+  document.getElementById('stspCmp').innerHTML='<strong>Actual:</strong> '+S.pLbl+' ('+n+' hari) · <strong>Pembanding:</strong> '+stLbl(pFrom)+' – '+stLbl(pTo)+' ('+n+' hari sebelum campaign)'+(hasP?'':' <span style="color:#d29922">— data periode pembanding tidak tersedia</span>')+' · SPD/STD = rata-rata per toko per hari.';
+  const cmp=(id,v,pv,fmt,pp)=>{merSet(id,fmt(v));const e=document.getElementById(id+'-sub');if(e)e.innerHTML=hasP?(pp?(v!=null&&pv!=null?'<span style="color:'+(v-pv>=0?'var(--green,#3fb950)':'var(--red,#f85149)')+'">'+(v-pv>=0?'▲':'▼')+' '+Math.abs(v-pv).toFixed(2)+' pp</span>':'—'):stGs(stG(v,pv)))+' vs '+fmt(pv):'—';};
+  const big=v=>v==null?'—':'Tk '+(Math.abs(v)>=1e6?(v/1e6).toFixed(2)+' M':stF0(v));
+  cmp('stsp-net',a.net,p.net,big);cmp('stsp-gm',a.gmp,p.gmp,v=>stP(v),true);cmp('stsp-spd',a.spd,p.spd,v=>'Tk '+stF0(v));cmp('stsp-str',a.str,p.str,stF0);cmp('stsp-std',a.std,p.std,v=>v==null?'—':v.toFixed(1));cmp('stsp-apc',a.apc,p.apc,v=>'Tk '+stF0(v));
+  const met=document.getElementById('stspMet').value,dA=stDays(S.from,S.to),dP=stDays(pFrom,pTo);
+  const byD=(list)=>{const m=new Map();list.forEach(t=>{const k=t.d;let o=m.get(k);if(!o){o=[];m.set(k,o);}o.push(t);});return m;};
+  const mA=byD(A),mP=byD(Pp),mv=l=>{const g=stAgg(l||[]);return met==='net'?g.net:met==='str'?g.str:g[met];};
+  makeChart('stspTrend',{type:'line',data:{labels:dA.map(d=>stLbl(d).replace(/ \d{4}$/,'')),datasets:[{label:'Actual',data:dA.map(d=>mv(mA.get(d))),borderColor:'#58a6ff',backgroundColor:'#58a6ff',tension:.3,borderWidth:2,pointRadius:2},{label:'Sebelum campaign',data:dP.map(d=>mv(mP.get(d))),borderColor:'#8b949e',backgroundColor:'#8b949e',borderDash:[5,4],tension:.3,borderWidth:2,pointRadius:2}]},
+    options:{...chartDefaults,plugins:{...chartDefaults.plugins,tooltip:{...chartDefaults.plugins.tooltip,callbacks:{title:it=>{const i=it[0].dataIndex;return 'Hari ke-'+(i+1)+': '+stLbl(dA[i])+' vs '+stLbl(dP[i]);},label:c=>c.dataset.label+': '+(met==='std'?(c.parsed.y||0).toFixed(1):stF0(c.parsed.y))}}},scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>stF0(v)}}}}});
+  const tot=a.lo+a.hi;
+  makeChart('stspDonut',{type:'doughnut',data:{labels:['< Tk 700','≥ Tk 700'],datasets:[{data:[a.lo,a.hi],backgroundColor:['#76b7b2','#f28e2b'],borderWidth:0}]},options:{...chartDefaults,scales:{},cutout:'62%',plugins:{...chartDefaults.plugins,legend:{position:'bottom',labels:{color:'#c9d1d9'}},tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>c.label+': '+stF0(c.parsed)+' struk ('+stP(tot?c.parsed/tot*100:null,1)+')'}}}}});
+  makeChart('stspStdChart',{type:'bar',data:{labels:['< Tk 700  ('+(hasP&&p.stdLo?(stG(a.stdLo,p.stdLo)>=0?'+':'')+stG(a.stdLo,p.stdLo).toFixed(1)+'%':'—')+')','≥ Tk 700  ('+(hasP&&p.stdHi?(stG(a.stdHi,p.stdHi)>=0?'+':'')+stG(a.stdHi,p.stdHi).toFixed(1)+'%':'—')+')'],datasets:[{label:'Sebelum campaign',data:[p.stdLo,p.stdHi],backgroundColor:'#8b949e',borderRadius:4},{label:'Actual',data:[a.stdLo,a.stdHi],backgroundColor:'#58a6ff',borderRadius:4}]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y==null?'—':c.parsed.y.toFixed(1))+' struk/hari/toko'}}}}});
+  const gs=(list)=>{const m=new Map();list.forEach(t=>{let o=m.get(t.st);if(!o){o=[];m.set(t.st,o);}o.push(t);});return m;};
+  const gA=gs(A),gP=gs(Pp),sts=[...new Set([...gA.keys(),...gP.keys()])];
+  const rows=sts.map(st=>{const x=stAgg(gA.get(st)||[]),y=stAgg(gP.get(st)||[]);return {st,a:x,p:y};}).sort((q,w)=>w.a.net-q.a.net);
+  document.getElementById('stspBody').innerHTML=stSlice(rows,'stsp',30).map(r=>'<tr><td><b>'+merEsc(r.st)+'</b></td><td>'+merEsc(stNm(B,r.st))+'</td><td class="right">'+stF0(r.a.net)+'</td><td class="right">'+stF0(r.p.net)+'</td><td class="right">'+stGs(stG(r.a.net,r.p.net))+'</td><td class="right">'+stF0(r.a.spd)+'</td><td class="right">'+stF0(r.p.spd)+'</td><td class="right">'+(r.a.stdHi==null?'—':r.a.stdHi.toFixed(1))+'</td><td class="right">'+(r.p.stdHi==null?'—':r.p.stdHi.toFixed(1))+'</td><td class="right">'+stGs(stG(r.a.stdHi,r.p.stdHi))+'</td></tr>').join('')||merEmpty(10);
+  document.getElementById('stspBodyFoot').innerHTML='<tr style="font-weight:700"><td colspan="2">TOTAL / RATA-RATA</td><td class="right">'+stF0(a.net)+'</td><td class="right">'+stF0(p.net)+'</td><td class="right">'+stGs(stG(a.net,p.net))+'</td><td class="right">'+stF0(a.spd)+'</td><td class="right">'+stF0(p.spd)+'</td><td class="right">'+(a.stdHi==null?'—':a.stdHi.toFixed(1))+'</td><td class="right">'+(p.stdHi==null?'—':p.stdHi.toFixed(1))+'</td><td class="right">'+stGs(stG(a.stdHi,p.stdHi))+'</td></tr>';
+  merPager('stspPg','stsp',rows.length,30,'renderStampSales');
+  const r1=v=>v==null?'':Math.round(v*10)/10,r0=v=>v==null?'':Math.round(v);
+  _merLast.stsp={name:'Stamp_SalesPerformance_'+S.from+'_'+S.to,rows:[['Actual',S.pLbl,'Pembanding',stLbl(pFrom)+' – '+stLbl(pTo),'Toko',S.sLbl],['Exclude: minyak goreng, beras, susu bayi, rokok'],[],
+    ['Indikator','Actual','Pembanding','Growth %'],['Sales',r0(a.net),r0(p.net),r1(stG(a.net,p.net))],['GM %',r1(a.gmp),r1(p.gmp),''],['SPD',r0(a.spd),r0(p.spd),r1(stG(a.spd,p.spd))],['Struk',a.str,p.str,r1(stG(a.str,p.str))],['STD',r1(a.std),r1(p.std),r1(stG(a.std,p.std))],['APC',r0(a.apc),r0(p.apc),r1(stG(a.apc,p.apc))],['Struk < 700',a.lo,p.lo,r1(stG(a.lo,p.lo))],['Struk ≥ 700',a.hi,p.hi,r1(stG(a.hi,p.hi))],[],
+    ['Kode Toko','Nama Toko','Sales Actual','Sales Pembanding','Growth %','SPD Actual','SPD Pembanding','STD ≥700 Actual','STD ≥700 Pembanding','Growth STD ≥700 %']].concat(rows.map(r=>[r.st,stNm(B,r.st),r0(r.a.net),r0(r.p.net),r1(stG(r.a.net,r.p.net)),r0(r.a.spd),r0(r.p.spd),r1(r.a.stdHi),r1(r.p.stdHi),r1(stG(r.a.stdHi,r.p.stdHi))]))};
+}
+
+function renderStampSponsor(){
+  const B=stGate('stbs');if(!B)return;const S=stSel(B);
+  const L=B.bs.filter(b=>b.d>=S.from&&b.d<=S.to&&S.okS(b)),pm=new Map(),all=new Set();let net=0,qty=0;
+  L.forEach(b=>{let o=pm.get(b.plu);if(!o){o={plu:b.plu,net:0,qty:0,keys:new Set()};pm.set(b.plu,o);}o.net+=b.net;o.qty+=b.qty;b.keys.forEach(k=>{o.keys.add(k);all.add(k);});net+=b.net;qty+=b.qty;});
+  const bon=B.txns.filter(S.inR).reduce((s,t)=>s+t.bonus,0);
+  merSet('stbs-net','Tk '+stF0(net));merSet('stbs-net-sub',S.pLbl);merSet('stbs-str',stF0(all.size));merSet('stbs-str-sub','struk berisi item BeanSpot');merSet('stbs-qty',stF0(qty));merSet('stbs-qty-sub',pm.size+' PLU terjual');
+  merSet('stbs-bon',stF0(bon));merSet('stbs-bon-sub',B.gul.size?'toko: '+[...B.gul].join(', '):'toko Gulshan tidak ditemukan di Store Master');
+  const met=document.getElementById('stbsMet').value,val=o=>met==='net'?o.net:met==='qty'?o.qty:o.keys.size;
+  const rows=[...pm.values()].sort((a,b)=>val(b)-val(a)),dn=p=>B.desc.get(p)||p;
+  merBarH('stbsChart',rows.slice(0,15).map(o=>merCut(dn(o.plu),26)),rows.slice(0,15).map(val),'#2f6690',c=>(met==='net'?'Tk ':'')+stF0(c.parsed.x),v=>met==='net'?merTkTick(v):stF0(v));
+  document.getElementById('stbsBody').innerHTML=rows.map(o=>'<tr><td><b>'+merEsc(o.plu)+'</b></td><td>'+merEsc(dn(o.plu))+'</td><td class="right">'+stF0(o.qty)+'</td><td class="right">'+stF0(o.net)+'</td><td class="right">'+stF0(o.keys.size)+'</td><td class="right">'+stP(net?o.net/net*100:null,1)+'</td></tr>').join('')||merEmpty(6,'Belum ada penjualan BeanSpot pada periode ini.');
+  document.getElementById('stbsBodyFoot').innerHTML='<tr style="font-weight:700"><td colspan="2">TOTAL</td><td class="right">'+stF0(qty)+'</td><td class="right">'+stF0(net)+'</td><td class="right">'+stF0(all.size)+'</td><td class="right">100%</td></tr>';
+  _merLast.stbs={name:'Stamp_ItemSponsor_BeanSpot_'+S.from+'_'+S.to,rows:[['Periode',S.pLbl,'Toko',S.sLbl],['Sales',Math.round(net),'Struk',all.size,'Qty',qty,'Bonus Stamp',bon],[],['PLU','Deskripsi','Qty','Sales','Struk','% Sales']].concat(rows.map(o=>[o.plu,dn(o.plu),o.qty,Math.round(o.net),o.keys.size,net?Math.round(o.net/net*1000)/10:'']))};
+}
+
+function renderStampStore(){
+  const B=stGate('stst');if(!B)return;const S=stSel(B),T=B.txns.filter(S.inR),ps=new Map();let get=0,red=0,net=0,gm=0,ns=0;
+  T.forEach(t=>{let p=ps.get(t.st);if(!p){p={st:t.st,get:0,red:0,n:0,net:0,gm:0};ps.set(t.st,p);}p.get+=t.stamp;p.red+=t.red;get+=t.stamp;red+=t.red;if(t.stamp>0){p.n++;p.net+=t.net;p.gm+=t.gm;net+=t.net;gm+=t.gm;ns++;}});
+  merSet('stst-get',stF0(get));merSet('stst-get-sub',S.pLbl);merSet('stst-red',stF0(red));merSet('stst-red-sub',S.sLbl);merSet('stst-rate',stP(get?red/get*100:null));merSet('stst-rate-sub','Stamp Redeem ÷ Stamp Get');
+  merSet('stst-net','Tk '+stF0(net));merSet('stst-gm',B.hasCogs?'Tk '+stF0(gm):'—');merSet('stst-gm-sub',B.hasCogs&&net?'GM '+stP(gm/net*100):'kolom cost tidak ada');
+  const rows=[...ps.values()].sort((a,b)=>b.get-a.get);
+  const tr=p=>'<td class="right">'+stF0(p.get)+'</td><td class="right">'+stF0(p.red)+'</td><td class="right">'+stP(p.get?p.red/p.get*100:null)+'</td><td class="right">'+stF0(p.n)+'</td><td class="right">'+stF0(p.net)+'</td><td class="right">'+(B.hasCogs?stF0(p.gm):'—')+'</td><td class="right">'+(B.hasCogs?stP(p.net?p.gm/p.net*100:null):'—')+'</td>';
+  document.getElementById('ststBody').innerHTML=stSlice(rows,'stst',30).map(p=>'<tr><td><b>'+merEsc(p.st)+'</b></td><td>'+merEsc(stNm(B,p.st))+'</td>'+tr(p)+'</tr>').join('')||merEmpty(9);
+  document.getElementById('ststBodyFoot').innerHTML='<tr style="font-weight:700"><td colspan="2">TOTAL</td>'+tr({get,red,n:ns,net,gm})+'</tr>';
+  merPager('ststPg','stst',rows.length,30,'renderStampStore');
+  _merLast.stst={name:'Stamp_DetailStore_'+S.from+'_'+S.to,rows:[['Periode',S.pLbl,'Toko',S.sLbl],[],['Kode Toko','Nama Toko','Stamp Get','Stamp Redeem','Redemption Rate %','Struk Dapat Stamp','Sales from Stamp Get','Margin from Stamp Get','GM %']].concat(rows.map(p=>[p.st,stNm(B,p.st),p.get,p.red,p.get?Math.round(p.red/p.get*10000)/100:'',p.n,Math.round(p.net),B.hasCogs?Math.round(p.gm):'',B.hasCogs&&p.net?Math.round(p.gm/p.net*10000)/100:'']),[['TOTAL','',get,red,get?Math.round(red/get*10000)/100:'',ns,Math.round(net),B.hasCogs?Math.round(gm):'',B.hasCogs&&net?Math.round(gm/net*10000)/100:'']])};
+}
+
+function renderStampReward(){
+  const B=stGate('strw');if(!B)return;const S=stSel(B),T=B.txns.filter(t=>S.inR(t)&&(t.g15||t.g30)),ps=new Map(),day=new Map();let g15=0,g30=0;const mr=new Set();
+  T.forEach(t=>{let p=ps.get(t.st);if(!p){p={st:t.st,g15:0,g30:0,m:new Set()};ps.set(t.st,p);}p.g15+=t.g15;p.g30+=t.g30;if(t.mem){p.m.add(t.mem);mr.add(t.mem);}g15+=t.g15;g30+=t.g30;const dd=day.get(t.d)||[0,0];dd[0]+=t.g15;dd[1]+=t.g30;day.set(t.d,dd);});
+  merSet('strw-tot',stF0(g15+g30));merSet('strw-tot-sub',S.pLbl+' · '+mr.size+' member');merSet('strw-15',stF0(g15));merSet('strw-30',stF0(g30));merSet('strw-st',stF0(g15*15+g30*30));merSet('strw-st-sub','stamp ditukar');
+  const days=stDays(S.from,S.to);
+  makeChart('strwChart',{type:'bar',data:{labels:days.map(d=>stLbl(d).replace(/ \d{4}$/,'')),datasets:[{label:'Tebus 15',data:days.map(d=>(day.get(d)||[0])[0]),backgroundColor:'#58a6ff',stack:'a'},{label:'Tebus 30',data:days.map(d=>(day.get(d)||[0,0])[1]),backgroundColor:'#f28e2b',stack:'a'}]},options:{...chartDefaults,scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,stacked:true,ticks:{...chartDefaults.scales.x.ticks,maxTicksLimit:12}},y:{...chartDefaults.scales.y,stacked:true,beginAtZero:true}}}});
+  const rows=[...ps.values()].sort((a,b)=>(b.g15+b.g30)-(a.g15+a.g30));
+  merBarH('strwTop',rows.slice(0,10).map(p=>p.st+(stNm(B,p.st)?' '+merCut(stNm(B,p.st),16):'')),rows.slice(0,10).map(p=>p.g15+p.g30),'#3fb950',c=>stF0(c.parsed.x)+' pcs',v=>stF0(v));
+  const tr=p=>'<td class="right">'+stF0(p.g15)+'</td><td class="right">'+stF0(p.g30)+'</td><td class="right">'+stF0(p.g15+p.g30)+'</td><td class="right">'+stF0(p.g15*15+p.g30*30)+'</td><td class="right">'+stF0(p.m.size)+'</td>';
+  document.getElementById('strwBody').innerHTML=stSlice(rows,'strw',30).map(p=>'<tr><td><b>'+merEsc(p.st)+'</b></td><td>'+merEsc(stNm(B,p.st))+'</td>'+tr(p)+'</tr>').join('')||merEmpty(7,'Belum ada penukaran hadiah (PLU 800010 / 800011) pada periode ini.');
+  document.getElementById('strwBodyFoot').innerHTML='<tr style="font-weight:700"><td colspan="2">TOTAL</td>'+tr({g15,g30,m:mr})+'</tr>';
+  merPager('strwPg','strw',rows.length,30,'renderStampReward');
+  _merLast.strw={name:'Stamp_ItemDetailStore_'+S.from+'_'+S.to,rows:[['Periode',S.pLbl,'Toko',S.sLbl],[],['Kode Toko','Nama Toko','Tebus 15 Stamp (800010)','Tebus 30 Stamp (800011)','Total Qty','Stamp Terpakai','Member Redeem']].concat(rows.map(p=>[p.st,stNm(B,p.st),p.g15,p.g30,p.g15+p.g30,p.g15*15+p.g30*30,p.m.size]),[['TOTAL','',g15,g30,g15+g30,g15*15+g30*30,mr.size]])};
+}
+
+function renderStampMember(){
+  const B=stGate('stmb');if(!B)return;const S=stSel(B),M=new Map();
+  B.txns.forEach(t=>{if(!S.upTo(t)||!t.mem)return;if(!t.stamp&&!t.red)return;let m=M.get(t.mem);if(!m){m={id:t.mem,get:0,red:0,n:0,by:new Map()};M.set(t.mem,m);}m.get+=t.stamp;m.red+=t.red;if(t.stamp>0){m.n++;m.by.set(t.st,(m.by.get(t.st)||0)+t.stamp);}});
+  const mem=[];M.forEach(m=>{if(m.get<=0)return;let hs='',hv=-1;m.by.forEach((v,k)=>{if(v>hv){hv=v;hs=k;}});m.st=hs;
+    m.done=m.red>0;m.cls=m.done?'redeem':m.get>=30?'p30':m.get>=15?'p15':'';m.near=!m.done&&((m.get>=10&&m.get<15)||(m.get>=25&&m.get<30));
+    if(S.store==='ALL'||m.st===S.store)mem.push(m);});
+  const ps=new Map(),z=()=>({tot:0,done:0,p30:0,p15:0,near:0});const T=z();
+  mem.forEach(m=>{let p=ps.get(m.st);if(!p){p={st:m.st,...z()};ps.set(m.st,p);}[p,T].forEach(o=>{o.tot++;if(m.done)o.done++;if(m.cls==='p30')o.p30++;if(m.cls==='p15')o.p15++;if(m.near)o.near++;});});
+  const pct=o=>o.tot?(o.p30+o.p15)/o.tot*100:null;
+  merSet('stmb-tot',stF0(T.tot));merSet('stmb-tot-sub','saldo s.d. '+stLbl(S.to)+' · '+stF0(T.done)+' sudah redeem');merSet('stmb-30',stF0(T.p30));merSet('stmb-30-sub','saldo ≥30 · Cooking Ware');merSet('stmb-15',stF0(T.p15));merSet('stmb-15-sub','saldo 15–29 · Box Set');merSet('stmb-pct',stP(pct(T),1));merSet('stmb-pct-sub','(Pot.30 + Pot.15) ÷ Member Get');merSet('stmb-near',stF0(T.near));
+  const rows=[...ps.values()].sort((a,b)=>b.tot-a.tot);
+  const tr=o=>'<td class="right">'+stF0(o.tot)+'</td><td class="right">'+stF0(o.done)+'</td><td class="right">'+stF0(o.p30)+'</td><td class="right">'+stF0(o.p15)+'</td><td class="right">'+stF0(o.near)+'</td><td class="right">'+stP(pct(o),1)+'</td>';
+  document.getElementById('stmbBody').innerHTML=stSlice(rows,'stmb',30).map(p=>'<tr><td><b>'+merEsc(p.st)+'</b></td><td>'+merEsc(stNm(B,p.st))+'</td>'+tr(p)+'</tr>').join('')||merEmpty(8);
+  document.getElementById('stmbBodyFoot').innerHTML='<tr style="font-weight:700"><td colspan="2">TOTAL</td>'+tr(T)+'</tr>';
+  merPager('stmbPg','stmb',rows.length,30,'renderStampMember');
+  const stat=m=>m.done?'Sudah Redeem':m.cls==='p30'?'Potensial Tebus 30':m.cls==='p15'?'Potensial Tebus 15':m.near?'Hampir Dapat':'Belum Cukup';
+  const gap=m=>m.done?'':m.get>=30?'—':m.get>=15?(30-m.get)+' stamp ke 30':(15-m.get)+' stamp ke 15';
+  const ml=mem.filter(m=>!m.done).sort((a,b)=>b.get-a.get);
+  document.getElementById('stmbMem').innerHTML=stSlice(ml,'stmbm',30).map(m=>'<tr><td><b>'+merEsc(m.id)+'</b></td><td>'+merEsc(m.st)+(stNm(B,m.st)?' '+merEsc(stNm(B,m.st)):'')+'</td><td class="right">'+stF0(m.get)+'</td><td class="right">'+stF0(m.n)+'</td><td class="right">'+stat(m)+'</td><td class="right">'+gap(m)+'</td></tr>').join('')||merEmpty(6);
+  document.getElementById('stmbMemFoot').innerHTML='';
+  merPager('stmbMemPg','stmbm',ml.length,30,'renderStampMember');
+  _merLast.stmb={name:'Stamp_MemberPotensial_sd_'+S.to,rows:[['Saldo s.d.',stLbl(S.to),'Toko',S.sLbl],[],['DETAIL TOKO'],['Kode Toko','Nama Toko','Total Member Get Stamp','Sudah Redeem','Potensial Tebus 30','Potensial Tebus 15','Hampir Dapat','% Member Potensial']].concat(rows.map(p=>[p.st,stNm(B,p.st),p.tot,p.done,p.p30,p.p15,p.near,pct(p)==null?'':Math.round(pct(p)*10)/10]),[['TOTAL','',T.tot,T.done,T.p30,T.p15,T.near,pct(T)==null?'':Math.round(pct(T)*10)/10],[],['DETAIL MEMBER'],['Member ID','Kode Toko','Nama Toko','Total Stamp','Stamp Ditukar','Struk Dapat Stamp','Status','Kurang ke Milestone']],mem.sort((a,b)=>b.get-a.get).map(m=>[m.id,m.st,stNm(B,m.st),m.get,m.red,m.n,stat(m),gap(m)]))};
+}
 function renderMerchZero(){
   const D=merSales();
   const master=merMasterList(),R=recRows(),PO=poLines();
@@ -16566,6 +16874,7 @@ function downloadChurn() {
 
 // ── PANEL GROUP MAP (auto-open sidebar group) ─────────────────
 const PANEL_GROUP_MAP = {
+  'stamp-overview':'grp-stamp','stamp-sales':'grp-stamp','stamp-sponsor':'grp-stamp','stamp-store':'grp-stamp','stamp-reward':'grp-stamp','stamp-member':'grp-stamp',
   'sales':'grp-sales','exec-summary':'grp-sales','daily-sales':'grp-sales',
   'store-sales':'grp-sales','store-growth':'grp-sales','target-actuals':'grp-sales','report-all':'grp-sales',
   'churn-risk':'grp-members','mem-detail':'grp-members','mem-contribution':'grp-members',
