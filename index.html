@@ -13581,7 +13581,7 @@ function stSel(B){
 function stSetF(k,v){_stF[k]=v;['stov','stsp','stst','strw','stmb','stmbm'].forEach(x=>_merPg[x]=1);const a=document.querySelector('.panel.active');const id=a&&a.id.replace('panel-','');
   ({'stamp-overview':renderStampOverview,'stamp-sales':renderStampSales,'stamp-sponsor':renderStampSponsor,'stamp-store':renderStampStore,'stamp-reward':renderStampReward,'stamp-member':renderStampMember}[id]||(()=>{}))();}
 function stGate(k){const B=stBuild();const ok=!!(B&&B.hasBon&&B.txns.some(t=>t.inC));
-  merGate(k+'Main',k+'NoData',ok,!B?'Belum ada data sales. Upload data sales di Data Management.':!B.hasBon?'Kolom nomor struk (no_bon / receipt) tidak ditemukan di data sales — stamp dihitung per struk.':'Belum ada data sales dalam periode campaign (25 Okt 2026 – 15 Jan 2027). Data sales terakhir: '+stLbl(B.firstD)+'.');return ok?B:null;}
+  merGate(k+'Main',k+'NoData',ok,!B?'Data sales belum termuat di browser. Tunggu proses sinkron dari server selesai (halaman akan terisi otomatis), atau refresh. Jika tetap kosong, upload data sales di Data Management.':!B.hasBon?'Kolom nomor struk (no_bon / receipt) tidak ditemukan di data sales — stamp dihitung per struk.':'Belum ada data sales dalam periode campaign (25 Okt 2026 – 15 Jan 2027). Data sales terakhir: '+stLbl(B.firstD)+'.');return ok?B:null;}
 const stNm=(B,c)=>B.names[c]||'';
 const stSlice=(arr,k,ps)=>{const p=merPage(k,arr.length,ps);return arr.slice((p-1)*ps,p*ps);};
 function stLine(id,labels,data,color,label){makeChart(id,{type:'line',data:{labels,datasets:[{label,data,borderColor:color,backgroundColor:color+'22',fill:true,tension:.3,pointRadius:labels.length>40?0:2,borderWidth:2}]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:false}},scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,ticks:{...chartDefaults.scales.x.ticks,maxTicksLimit:12}},y:{...chartDefaults.scales.y,beginAtZero:true,ticks:{...chartDefaults.scales.y.ticks,callback:v=>stF0(v)}}}}});}
@@ -21713,6 +21713,7 @@ async function downloadMcKinseyPPTX(){
           }
         }
         if(meta.some(d=>d.kind==='po'||d.kind==='receipt')){ try{ renderLeadTime(); renderMerchReceipt(); renderMerchSellThrough(); }catch(_){} }
+        if(got){ try{ _stCache=null; setTimeout(()=>{ try{ stSetF('store',_stF.store); }catch(_){} },300); }catch(_){} }
         const sales=meta.filter(d=>d.kind==='sales'||/^sales@/.test(d.kind)).sort((a,b)=>new Date(b.updated_at)-new Date(a.updated_at))[0];
         if(sales){ try{ localStorage.setItem('pf_data_updated', String(new Date(sales.updated_at).getTime())); localStorage.removeItem('pf_demo'); }catch(_){ } }
       }
