@@ -21673,6 +21673,9 @@ async function downloadMcKinseyPPTX(){
     return all;
   }
 
+  // Cache hasil tarik server di IndexedDB — dipakai ulang selama data server belum berubah (updated_at sama)
+  async function pfCacheGet(kind,sig){try{const r=await dbLoadUpload('srvcache_'+kind);return r&&r.filename===sig&&Array.isArray(r.rows)&&r.rows.length?r.rows:null;}catch(_){return null;}}
+  function pfCacheSet(kind,sig,rows){try{dbSaveUpload('srvcache_'+kind,rows,sig);}catch(_){}}
   async function sbPullAllDatasets(){
     if(!SUPA_ON) return false;
     let got=false;
@@ -21683,10 +21686,14 @@ async function downloadMcKinseyPPTX(){
         if(_salesParts.length){
           const all=[];let okAll=true;
           const failed=[];
-          for(const d of _salesParts){ let part=d.chunk_count>0?await sbPullChunks(d.kind,d.chunk_count):(Array.isArray(d.rows)?d.rows:[]);
+          const _sSig=_salesParts.map(d=>d.kind+':'+d.row_count+':'+d.updated_at).join('|');
+          const _sC=await pfCacheGet('sales',_sSig);
+          if(_sC){ for(let i=0;i<_sC.length;i++)all.push(_sC[i]); console.log('[Sync] sales dari cache browser (server tidak berubah):',all.length); }
+          else for(const d of _salesParts){ let part=d.chunk_count>0?await sbPullChunks(d.kind,d.chunk_count):(Array.isArray(d.rows)?d.rows:[]);
             if(!part){ await new Promise(r=>setTimeout(r,1500)); part=d.chunk_count>0?await sbPullChunks(d.kind,d.chunk_count):null; }
             if(!part){okAll=false;failed.push(d.kind);continue;} for(let i=0;i<part.length;i++)all.push(part[i]); }
           if(failed.length) console.warn('[Sync] bulan sales gagal ditarik:', failed.join(', '));
+          if(!_sC && okAll && all.length) pfCacheSet('sales',_sSig,all);
           const _loc=pfKindRows('sales');
           if(all.length && !pfIsDirty('sales') && (okAll || !(_loc&&_loc.length>all.length))){ pfKindSet('sales',all); got=true;
             if(!okAll && typeof toast==='function') try{toast('Sebagian bulan sales gagal dimuat dari server ('+failed.join(', ')+') — refresh untuk coba lagi');}catch(_){}
@@ -21713,7 +21720,9 @@ async function downloadMcKinseyPPTX(){
           if(!DATA_KINDS.includes(d.kind)) continue;
           if(pfIsDirty(d.kind)) { console.log('[Sync] '+d.kind+' lokal belum di-publish — dilewati'); continue; }
           if(d.chunk_count && d.chunk_count>0){
-            const all = await sbPullChunks(d.kind, d.chunk_count);
+            const _sg=d.kind+':'+d.row_count+':'+d.updated_at;
+            let all = await pfCacheGet(d.kind,_sg);
+            if(!all){ all = await sbPullChunks(d.kind, d.chunk_count); if(all && all.length) pfCacheSet(d.kind,_sg,all); }
             if(all && all.length){ pfKindSet(d.kind,all); got=true; }
           } else if(Array.isArray(d.rows) && d.rows.length){
             // legacy single-blob format
