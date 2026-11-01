@@ -1994,6 +1994,10 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 4h14M1 8h10M1 12h6"/><circle cx="13" cy="12" r="2.5"/><path d="M15 14l1.5 1.5"/></svg>
           Category Detail
         </button>
+        <button class="nav-item" onclick="showPanel('cat-section',this)">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="2" width="4" height="12" rx="1"/><rect x="6.5" y="2" width="4" height="12" rx="1"/><rect x="11.5" y="2" width="3" height="12" rx="1"/><path d="M1.5 6h4M6.5 9h4M11.5 5h3"/></svg>
+          Section Analytics
+        </button>
       </div>
     </div>
 
@@ -5755,6 +5759,18 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 <div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Detail Member Potensial</div><div class="chart-subtitle">Member belum redeem, saldo terbesar dulu · Excel berisi semua member</div></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Member ID</th><th>Toko</th><th class="right">Total Stamp</th><th class="right">Struk Dapat Stamp</th><th class="right">Status</th><th class="right">Kurang ke Milestone Berikutnya</th></tr></thead><tbody id="stmbMem"></tbody><tfoot id="stmbMemFoot"></tfoot></table></div><div id="stmbMemPg" style="display:flex;gap:10px;align-items:center;justify-content:center;margin-top:10px;font-size:12px"></div></div>
   </div>
 </div>
+<div id="panel-cat-section" class="panel">
+  <div class="page-header"><div><div class="page-title">Section Analytics</div><div class="page-subtitle">Performa per Section (dari kolom SECTION di Product Master / Oramas) · tanpa denah</div></div><button class="btn-dl" onclick="merExport('csx')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button></div>
+  <div id="csxNoData" class="insight-box" style="display:none"><span class="insight-icon">🚫</span><div class="insight-text">Belum ada data.</div></div>
+  <div id="csxMain" style="display:none">
+    <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap"><span class="filter-label">Dari</span><select class="filter-select" id="csxFrom" onchange="_merPg.csx=1;renderCatSection()" style="min-width:110px"></select><span class="filter-label">s.d.</span><select class="filter-select" id="csxTo" onchange="_merPg.csx=1;renderCatSection()" style="min-width:110px"></select><span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select" id="csxStore" onchange="_merPg.csx=1;renderCatSection()" style="min-width:190px"></select><span id="csxInfo" style="font-size:11.5px;color:var(--text3);margin-left:auto"></span></div>
+    <div class="stats-grid" style="grid-template-columns:repeat(5,minmax(0,1fr));margin-bottom:16px"><div class="stat-card blue"><div class="stat-label">Jumlah Section</div><div class="stat-value" id="csx-n">—</div><div class="stat-sub" id="csx-n-sub">—</div></div><div class="stat-card green"><div class="stat-label">Section #1 (Sales)</div><div class="stat-value" id="csx-top">—</div><div class="stat-sub" id="csx-top-sub">—</div></div><div class="stat-card amber"><div class="stat-label">GM % Tertinggi</div><div class="stat-value" id="csx-gm">—</div><div class="stat-sub" id="csx-gm-sub">—</div></div><div class="stat-card purple"><div class="stat-label">Growth Tertinggi</div><div class="stat-value" id="csx-up">—</div><div class="stat-sub" id="csx-up-sub">—</div></div><div class="stat-card red"><div class="stat-label">Section Turun</div><div class="stat-value" id="csx-dn">—</div><div class="stat-sub" id="csx-dn-sub">—</div></div></div>
+    <div class="charts-grid cols-2" style="margin-bottom:16px"><div class="chart-card"><div class="chart-header"><div><div class="chart-title">Sales Share vs GM Share</div><div class="chart-subtitle">Section dengan GM share &gt; sales share = penyumbang margin</div></div></div><div style="height:340px"><canvas id="csxShare"></canvas></div></div><div class="chart-card"><div class="chart-header"><div><div class="chart-title">Tren Bulanan Top 6 Section</div><div class="chart-subtitle">Net Sales per bulan</div></div></div><div style="height:340px"><canvas id="csxTrend"></canvas></div></div></div>
+    <div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Section Scorecard</div><div class="chart-subtitle">Diurutkan dari Net Sales terbesar · Penetrasi = % struk yang berisi item section ini</div></div></div><div class="table-wrap"><table class="data-table"><thead id="csxBodyHead"><tr><th>Section</th><th class="right">Net Sales</th><th class="right">Share</th><th class="right">GM</th><th class="right">GM %</th><th class="right">Growth</th><th class="right">SKU Aktif</th><th class="right">SKU Zero Sales</th><th class="right">Sales / SKU / Toko / Bln</th><th class="right">Struk</th><th class="right">Penetrasi Struk</th><th class="right">APC Section</th></tr></thead><tbody id="csxBody"></tbody><tfoot id="csxBodyFoot"></tfoot></table></div></div>
+    <div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Store × Section Index</div><div class="chart-subtitle">Index = share section di toko ÷ share section semua toko × 100 · &gt;115 kuat (hijau), &lt;85 lemah (merah) · Top 15 section</div></div></div><div class="table-wrap"><table class="data-table"><thead id="csxHeatHead"><tr></tr></thead><tbody id="csxHeat"></tbody><tfoot id="csxHeatFoot"></tfoot></table></div><div id="csxHeatPg" style="display:flex;gap:10px;align-items:center;justify-content:center;margin-top:10px;font-size:12px"></div></div>
+    <div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Section Affinity (Cross-Section)</div><div class="chart-subtitle">Pasangan section yang sering dibeli dalam 1 struk · Lift &gt; 1 = lebih sering bersama dari kebetulan → kandidat penempatan berdekatan / bundling</div></div></div><div class="table-wrap"><table class="data-table"><thead id="csxAffHead"><tr><th>Section A</th><th>Section B</th><th class="right">Struk Bersama</th><th class="right">% dari Struk A</th><th class="right">% dari Struk B</th><th class="right">Lift</th></tr></thead><tbody id="csxAff"></tbody><tfoot id="csxAffFoot"></tfoot></table></div><div id="csxAffPg" style="display:flex;gap:10px;align-items:center;justify-content:center;margin-top:10px;font-size:12px"></div></div>
+  </div>
+</div>
 <div id="panel-merch-zero" class="panel">
   <div class="page-header">
     <div><div class="page-title">Item Zero Sales</div><div class="page-subtitle">Item yang sama sekali belum terjual — dibandingkan dengan Product Master, Store Receipt &amp; PO</div></div>
@@ -7404,6 +7420,7 @@ function renderPanel(id) {
     case 'cat-trend': renderCatTrend(); break;
     case 'cat-time': renderCatTime(); break;
     case 'cat-detail': renderCatDetail(); break;
+    case 'cat-section': renderCatSection(); break;
     case 'data-mgmt': renderDataMgmt(); (function(){const s=document.getElementById('promoDefSel');if(s)s.value=localStorage.getItem('pfPromoDef')||'type';})(); break;
     case 'store-map': renderStoreMap(); break;
     case 'target-actuals': renderTargetActuals(); break;
@@ -13873,6 +13890,76 @@ function renderStampWeekly(){
   const ex=x=>[x.get,x.red,x.get?Math.round(x.red/x.get*10000)/100:'',x.g15,x.g30,x.mg.size,x.mr.size,Math.round(x.net)];
   _merLast.stwk={name:'Stamp_LaporanMingguan_'+S.from+'_'+S.to,rows:[['Periode',S.pLbl,'Toko',S.sLbl],[],['REKAP PER MINGGU'],['Minggu','Periode','Stamp Get','Stamp Redeem','Redemption Rate %','Tebus 15','Tebus 30','Member Get','Member Redeem','Sales from Stamp Get']].concat(ws.map(w=>{const r=wRange(w);return ['Minggu '+w,stLbl(r[0])+' – '+stLbl(r[1])].concat(ex(W.get(w)));}),[[],['DETAIL TOKO PER MINGGU'],['Minggu','Kode Toko','Nama Toko','Stamp Get','Stamp Redeem','Redemption Rate %','Tebus 15','Tebus 30','Member Get','Member Redeem','Sales from Stamp Get']],[...WS.values()].sort((a,b)=>a.w-b.w||b.get-a.get).map(x=>['Minggu '+x.w,x.st,stNm(B,x.st)].concat(ex(x))))};
 }
+
+let _csxC=null;
+function csxBuild(){
+  const rows=(typeof uploads!=='undefined'&&Array.isArray(uploads.sales))?uploads.sales:[];if(!rows.length)return {err:'Belum ada data sales.'};
+  const am=buildMasterAttrMap();if(!am)return {err:'Product Master (Oramas) belum diunggah.'};if(!am.has.section)return {err:'Kolom SECTION tidak ditemukan di Product Master. Kolom yang ada: '+am.allCols.join(', ')};
+  const sig=rows.length+'|'+am.map.size;if(_csxC&&_csxC.src===rows&&_csxC.sig===sig)return _csxC;
+  const sc=sColDetect(rows),cu=sc.cogs&&/avg/i.test(sc.cogs);
+  const A=new Map(),T=new Map(),plus=new Map(),allPlu=new Map(),months=new Set(),stores=new Set();
+  am.map.forEach((v,k)=>{const s=merBad(v.section)?'':v.section;if(s){if(!allPlu.has(s))allPlu.set(s,new Set());allPlu.get(s).add(k);}});
+  for(const r of rows){
+    if(sc.type){const t=String(r[sc.type]??'').trim().toUpperCase();if(/^(R|X|V|LX|LV|L X|L V)$/.test(t))continue;}
+    const d=stDate(r[sc.date]);if(!d)continue;const ym=d.slice(0,7),plu=mkPlu(r[sc.plu]);if(!plu)continue;
+    const mi=am.map.get(plu),sec=mi&&!merBad(mi.section)?mi.section:'(Tanpa Section)';
+    const st=sc.store?merStore(r[sc.store]):'ALL',net=parseN(r[sc.net]),qty=sc.qty?parseN(r[sc.qty]):0,cg=sc.cogs?(cu?parseN(r[sc.cogs])*qty:parseN(r[sc.cogs])):0;
+    months.add(ym);stores.add(st);
+    const k=ym+'|'+st+'|'+sec;let a=A.get(k);if(!a){a={ym,st,sec,net:0,gm:0};A.set(k,a);}a.net+=net;a.gm+=net-cg;
+    const pk=ym+'|'+st+'|'+sec;let p=plus.get(pk);if(!p){p=new Set();plus.set(pk,p);}if(net>0)p.add(plu);
+    if(sc.bon){const tk=st+'|'+String(r[sc.bon]??'').trim()+'|'+d;let t=T.get(tk);if(!t){t={ym,st,net:0,s:new Map()};T.set(tk,t);}t.net+=net;t.s.set(sec,(t.s.get(sec)||0)+net);}
+  }
+  _csxC={src:rows,sig,agg:[...A.values()],plus,allPlu,tx:[...T.values()],months:[...months].sort(),stores:[...stores].sort(),hasBon:!!sc.bon,hasCogs:!!sc.cogs};return _csxC;
+}
+function renderCatSection(){
+  const B=csxBuild();if(!merGate('csxMain','csxNoData',!B.err,B.err))return;
+  const RG=merRangeSel('csxFrom','csxTo',B.months),names=merStoreNames();
+  const ss=document.getElementById('csxStore'),sg=B.stores.join('|');if(ss.dataset.sig!==sg){const c=ss.value;ss.innerHTML='<option value="ALL">Semua Toko</option>'+B.stores.map(s=>'<option value="'+merEsc(s)+'">'+merEsc(s)+(names[s]?' — '+merEsc(names[s]):'')+'</option>').join('');ss.dataset.sig=sg;ss.value=B.stores.includes(c)?c:'ALL';}
+  const st=ss.value,okS=s=>st==='ALL'||s===st,inMs=B.months.filter(RG.inR),nM=inMs.length;
+  document.getElementById('csxInfo').textContent=RG.label+(RG.prev?' · growth vs '+RG.prevLabel:' · pilih rentang (bukan semua bulan) untuk growth');
+  const S=new Map(),get=s=>{let o=S.get(s);if(!o){o={sec:s,net:0,gm:0,pn:0,sku:new Set(),stM:new Set(),str:0,sNet:0};S.set(s,o);}return o;};
+  let tot=0,totGm=0;
+  B.agg.forEach(a=>{if(!okS(a.st))return;if(RG.inR(a.ym)){const o=get(a.sec);o.net+=a.net;o.gm+=a.gm;o.stM.add(a.st+'|'+a.ym);tot+=a.net;totGm+=a.gm;const p=B.plus.get(a.ym+'|'+a.st+'|'+a.sec);if(p)p.forEach(x=>o.sku.add(x));}else if(RG.prev&&RG.prev.has(a.ym))get(a.sec).pn+=a.net;});
+  let nTx=0;const pair=new Map(),cnt=new Map();
+  B.tx.forEach(t=>{if(!okS(t.st)||!RG.inR(t.ym))return;nTx++;const ks=[...t.s.keys()].filter(k=>k!=='(Tanpa Section)').sort();t.s.forEach((v,k)=>{const o=S.get(k);if(o){o.str++;o.sNet+=t.net;}});ks.forEach(k=>cnt.set(k,(cnt.get(k)||0)+1));
+    for(let i=0;i<ks.length;i++)for(let j=i+1;j<ks.length;j++){const pk=ks[i]+'||'+ks[j];pair.set(pk,(pair.get(pk)||0)+1);}});
+  const rows=[...S.values()].filter(o=>o.net||o.pn).map(o=>{const all=B.allPlu.get(o.sec);const zero=all?[...all].filter(p=>!o.sku.has(p)).length:null;
+    return {...o,sh:tot?o.net/tot*100:null,gmp:o.net?o.gm/o.net*100:null,gsh:totGm?o.gm/totGm*100:null,g:RG.prev?stG(o.net,o.pn):null,skuN:o.sku.size,zero,spsku:o.sku.size&&o.stM.size?o.net/o.sku.size/o.stM.size:null,pen:nTx?o.str/nTx*100:null,apc:o.str?o.sNet/o.str:null};}).sort((a,b)=>b.net-a.net);
+  const named=rows.filter(r=>r.sec!=='(Tanpa Section)');
+  merSet('csx-n',stF0(named.length));merSet('csx-n-sub',rows.length-named.length?'+ (Tanpa Section) '+stP(rows.find(r=>r.sec==='(Tanpa Section)').sh,1)+' sales':'semua PLU punya section');
+  const t1=named[0];merSet('csx-top',t1?merCut(t1.sec,18):'—');merSet('csx-top-sub',t1?stP(t1.sh,1)+' sales · Tk '+stF0(t1.net):'—');
+  const big=named.filter(r=>r.sh>=1);const gm=[...big].sort((a,b)=>b.gmp-a.gmp)[0];merSet('csx-gm',gm&&B.hasCogs?merCut(gm.sec,18):'—');merSet('csx-gm-sub',gm&&B.hasCogs?'GM '+stP(gm.gmp,1)+' (section share ≥1%)':'kolom cost tidak ada');
+  const gr=big.filter(r=>r.g!=null).sort((a,b)=>b.g-a.g);merSet('csx-up',gr[0]?merCut(gr[0].sec,18):'—');document.getElementById('csx-up-sub').innerHTML=gr[0]?stGs(gr[0].g)+' vs '+RG.prevLabel:'—';
+  const dn=named.filter(r=>r.g!=null&&r.g<0);merSet('csx-dn',RG.prev?stF0(dn.length):'—');merSet('csx-dn-sub',RG.prev?'dari '+named.filter(r=>r.g!=null).length+' section':'pilih rentang untuk growth');
+  const top=named.slice(0,15);
+  makeChart('csxShare',{type:'bar',data:{labels:top.map(r=>merCut(r.sec,20)),datasets:[{label:'Sales Share %',data:top.map(r=>r.sh),backgroundColor:'#58a6ff',borderRadius:3},{label:'GM Share %',data:top.map(r=>r.gsh),backgroundColor:'#3fb950',borderRadius:3}]},options:{...chartDefaults,indexAxis:'y',plugins:{...chartDefaults.plugins,tooltip:{...chartDefaults.plugins.tooltip,callbacks:{label:c=>c.dataset.label+': '+(c.parsed.x||0).toFixed(1)+'%'}}},scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,ticks:{...chartDefaults.scales.x.ticks,callback:v=>v+'%'}}}}});
+  const t6=named.slice(0,6).map(r=>r.sec),pal=['#58a6ff','#3fb950','#f28e2b','#f778ba','#a371f7','#d29922'],mv=new Map();
+  B.agg.forEach(a=>{if(!okS(a.st)||!RG.inR(a.ym)||!t6.includes(a.sec))return;const k=a.sec+'|'+a.ym;mv.set(k,(mv.get(k)||0)+a.net);});
+  makeChart('csxTrend',{type:'line',data:{labels:inMs.map(merYmLabel),datasets:t6.map((s,i)=>({label:merCut(s,18),data:inMs.map(m=>mv.get(s+'|'+m)||0),borderColor:pal[i],backgroundColor:pal[i],tension:.3,borderWidth:2,pointRadius:3}))},options:{...chartDefaults,scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:merTkTick}}}}});
+  const f1=v=>v==null?'—':v.toFixed(1);
+  document.getElementById('csxBody').innerHTML=rows.map(r=>'<tr><td><b>'+merEsc(r.sec)+'</b></td><td class="right">'+stF0(r.net)+'</td><td class="right">'+stP(r.sh,1)+'</td><td class="right">'+(B.hasCogs?stF0(r.gm):'—')+'</td><td class="right">'+(B.hasCogs?stP(r.gmp,1):'—')+'</td><td class="right">'+stGs(r.g)+'</td><td class="right">'+stF0(r.skuN)+'</td><td class="right">'+(r.zero==null?'—':stF0(r.zero))+'</td><td class="right">'+stF0(r.spsku)+'</td><td class="right">'+(B.hasBon?stF0(r.str):'—')+'</td><td class="right">'+(B.hasBon?stP(r.pen,1):'—')+'</td><td class="right">'+(B.hasBon?stF0(r.apc):'—')+'</td></tr>').join('')||merEmpty(12);
+  document.getElementById('csxBodyFoot').innerHTML='<tr style="font-weight:700"><td>TOTAL</td><td class="right">'+stF0(tot)+'</td><td class="right">100%</td><td class="right">'+(B.hasCogs?stF0(totGm):'—')+'</td><td class="right">'+(B.hasCogs&&tot?stP(totGm/tot*100,1):'—')+'</td><td class="right">'+(RG.prev?stGs(stG(tot,rows.reduce((s,r)=>s+r.pn,0))):'—')+'</td><td colspan="3"></td><td class="right">'+(B.hasBon?stF0(nTx):'—')+'</td><td colspan="2"></td></tr>';
+  // heatmap
+  const hs=named.slice(0,15).map(r=>r.sec),SM=new Map(),stT=new Map(),secT=new Map();let gT=0;
+  B.agg.forEach(a=>{if(!RG.inR(a.ym)||!hs.includes(a.sec))return;SM.set(a.st+'|'+a.sec,(SM.get(a.st+'|'+a.sec)||0)+a.net);stT.set(a.st,(stT.get(a.st)||0)+a.net);secT.set(a.sec,(secT.get(a.sec)||0)+a.net);gT+=a.net;});
+  const stl=[...stT.keys()].sort(),hp=merPage('csxh',stl.length,25),hsl=stl.slice((hp-1)*25,hp*25);
+  const idx=(s,c)=>{const v=SM.get(s+'|'+c)||0,a=stT.get(s),b=secT.get(c);return a&&b&&gT?(v/a)/(b/gT)*100:null;};
+  const col=v=>v==null?'transparent':v>=115?'rgba(63,185,80,'+Math.min(.85,.25+(v-115)/150)+')':v<85?'rgba(248,81,73,'+Math.min(.85,.25+(85-v)/80)+')':'rgba(139,148,158,.12)';
+  document.getElementById('csxHeatHead').innerHTML='<tr><th>Toko</th>'+hs.map(s=>'<th class="right" style="font-size:10px;white-space:normal;min-width:70px">'+merEsc(merCut(s,16))+'</th>').join('')+'</tr>';
+  document.getElementById('csxHeat').innerHTML=hsl.map(s=>'<tr><td style="white-space:nowrap"><b>'+merEsc(s)+'</b> '+merEsc(names[s]||'')+'</td>'+hs.map(c=>{const v=idx(s,c);return '<td class="right" style="background:'+col(v)+';font-family:var(--mono,monospace)">'+(v==null?'—':Math.round(v))+'</td>';}).join('')+'</tr>').join('')||merEmpty(hs.length+1);
+  document.getElementById('csxHeatFoot').innerHTML='';
+  merPager('csxHeatPg','csxh',stl.length,25,'renderCatSection');
+  // affinity
+  const aff=[...pair.entries()].map(([k,n])=>{const [a,b]=k.split('||'),na=cnt.get(a),nb=cnt.get(b);return {a,b,n,pa:na?n/na*100:null,pb:nb?n/nb*100:null,lift:na&&nb&&nTx?(n/nTx)/((na/nTx)*(nb/nTx)):null};}).filter(x=>x.n>=Math.max(20,nTx*0.002)).sort((x,y)=>y.lift-x.lift);
+  const ap=merPage('csxa',aff.length,20);
+  document.getElementById('csxAff').innerHTML=!B.hasBon?merEmpty(6,'Kolom nomor struk tidak ditemukan di data sales.'):aff.slice((ap-1)*20,ap*20).map(x=>'<tr><td><b>'+merEsc(x.a)+'</b></td><td><b>'+merEsc(x.b)+'</b></td><td class="right">'+stF0(x.n)+'</td><td class="right">'+stP(x.pa,1)+'</td><td class="right">'+stP(x.pb,1)+'</td><td class="right" style="color:'+(x.lift>=1.5?'var(--green,#3fb950)':x.lift<1?'var(--text3)':'inherit')+';font-weight:600">'+(x.lift==null?'—':x.lift.toFixed(2))+'</td></tr>').join('')||merEmpty(6);
+  document.getElementById('csxAffFoot').innerHTML='';
+  merPager('csxAffPg','csxa',aff.length,20,'renderCatSection');
+  const r1=v=>v==null?'':Math.round(v*10)/10,r0=v=>v==null?'':Math.round(v);
+  _merLast.csx={name:'Section_Analytics_'+RG.key+(st==='ALL'?'':'_'+st),rows:[['Periode',RG.label,'Toko',st==='ALL'?'Semua Toko':st+' '+(names[st]||''),'Growth vs',RG.prevLabel||'-'],[],['SECTION SCORECARD'],['Section','Net Sales','Share %','GM','GM %','Growth %','SKU Aktif','SKU Zero Sales','Sales/SKU/Toko/Bln','Struk','Penetrasi Struk %','APC Section']].concat(rows.map(r=>[r.sec,r0(r.net),r1(r.sh),B.hasCogs?r0(r.gm):'',B.hasCogs?r1(r.gmp):'',r1(r.g),r.skuN,r.zero==null?'':r.zero,r0(r.spsku),r.str,r1(r.pen),r0(r.apc)]),
+    [[],['STORE × SECTION INDEX (100 = rata-rata semua toko)'],['Kode Toko','Nama Toko'].concat(hs)],stl.map(s=>[s,names[s]||''].concat(hs.map(c=>r0(idx(s,c))))),
+    [[],['SECTION AFFINITY'],['Section A','Section B','Struk Bersama','% dari Struk A','% dari Struk B','Lift']],aff.map(x=>[x.a,x.b,x.n,r1(x.pa),r1(x.pb),x.lift==null?'':Math.round(x.lift*100)/100]))};
+}
 function renderMerchZero(){
   const D=merSales();
   const master=merMasterList(),R=recRows(),PO=poLines();
@@ -17053,7 +17140,7 @@ const PANEL_GROUP_MAP = {
   'promo-categories':'grp-marketing','basket':'grp-marketing','brand-perf':'grp-marketing','principal-perf':'grp-sales','sales-pivot':'grp-sales','section-contribution':'grp-marketing','promo-discount':'grp-marketing','promo-mechanic':'grp-marketing',
   'merch-sales':'grp-merch','merch-salesdata':'grp-merch','merch-share-cat':'grp-merch','merch-share-prin':'grp-merch','merch-share-brand':'grp-merch','merch-receipt':'grp-merch','merch-sellthrough':'grp-merch','merch-zero':'grp-merch','ma-pareto':'grp-merch','ma-skuprod':'grp-merch','ma-supmatrix':'grp-merch','ma-marginmix':'grp-merch','ma-brandgm':'grp-merch','ma-priceband':'grp-merch','ma-growth':'grp-merch','ma-heatmap':'grp-merch','oos-leadtime':'grp-merch',
   'sku-pareto':'grp-catmgmt','cat-overview':'grp-catmgmt','cat-promo-potential':'grp-catmgmt',
-  'cat-member':'grp-catmgmt','cat-trend':'grp-catmgmt','cat-time':'grp-catmgmt','cat-detail':'grp-catmgmt',
+  'cat-member':'grp-catmgmt','cat-trend':'grp-catmgmt','cat-time':'grp-catmgmt','cat-detail':'grp-catmgmt','cat-section':'grp-catmgmt',
   'revenue-drivers':'grp-analytics','peak-hours':'grp-analytics','void-return':'grp-analytics','ai-strategy':'grp-analytics','ai-chat':'grp-analytics',
   'cohort-analysis':'grp-analytics','sales-forecast':'grp-analytics','price-elasticity':'grp-analytics',
   'data-mgmt':'grp-data',
