@@ -12126,8 +12126,11 @@ let _rawSalesRows = [];
 
 // Peta ID → nama dari file member (dicocokkan via nomor kartu / member id)
 let _memNameMap=null;
+let _memNameSrc=null,_memNameLen=-1;
 function pfMemberNameMap(){
-  if(_memNameMap) return _memNameMap;
+  const _src=(typeof uploads!=='undefined'&&Array.isArray(uploads.member))?uploads.member:null;
+  if(_memNameMap&&_memNameSrc===_src&&_memNameLen===(_src?_src.length:0)) return _memNameMap;
+  _memNameSrc=_src;_memNameLen=_src?_src.length:0;
   const map={};
   try{
     const rows=(typeof uploads!=='undefined'&&Array.isArray(uploads.member))?uploads.member:[];
@@ -12141,8 +12144,9 @@ function pfMemberNameMap(){
         rows.forEach(r=>{
           const nm=String(r[cName]??'').trim(); if(!nm)return;
           cIds.forEach(c=>{
-            const dig=String(r[c]??'').trim().replace(/\.0+$/,'').replace(/\D/g,'');
-            if(dig.length>=4) map[dig]=nm;
+            const v=r[c];
+            const dig=(typeof v==='number'?v.toLocaleString('fullwide',{useGrouping:false,maximumFractionDigits:0}):String(v??'').trim().replace(/\.0+$/,'')).replace(/\D/g,'');
+            if(dig){map[dig]=nm;const z=dig.replace(/^0+/,'');if(z)map['#'+z]=nm;}
           });
         });
       }
@@ -12151,8 +12155,12 @@ function pfMemberNameMap(){
   return (_memNameMap=map);
 }
 function pfMemberName(id){
-  const dig=String(id??'').replace(/\D/g,'');
-  return pfMemberNameMap()[dig]||null;
+  const dig=String(id??'').replace(/\.0+$/,'').replace(/\D/g,'');if(!dig)return null;
+  const M=pfMemberNameMap();if(M[dig])return M[dig];
+  const z=dig.replace(/^0+/,'');if(M['#'+z])return M['#'+z];
+  // kartu 9991000000130816 → member id 130816
+  if(dig.length>=12){const t=dig.slice(4).replace(/^0+/,'');if(t&&M['#'+t])return M['#'+t];}
+  return null;
 }
 
 let _memberDetailAll = [];  // [{id, name, stores, totalSpend, visits, favCat, txns:[{date,store,bon,net,gp,items:[]}]}]
@@ -12285,7 +12293,8 @@ function buildMemberDetail(salesRows) {
     txns.forEach(t => t.items.forEach(it => { catAcc[it.cat] = (catAcc[it.cat]||0)+it.net; }));
     const favCat = Object.entries(catAcc).sort((a,b)=>b[1]-a[1])[0]?.[0] || '—';
     const stores = [...data.stores].sort().join(', ');
-    const label = mid.length > 10 ? 'Member …'+mid.slice(-8) : 'Member '+mid;
+    const _nmL = pfMemberName(mid);
+    const label = _nmL ? _nmL : (mid.length > 10 ? 'Member …'+mid.slice(-8) : 'Member '+mid);
     return { id:mid, label, stores, totalSpend, visits, favCat, txns };
   });
 
