@@ -12146,7 +12146,8 @@ function pfMemberNameMap(){
           cIds.forEach(c=>{
             const v=r[c];
             const dig=(typeof v==='number'?v.toLocaleString('fullwide',{useGrouping:false,maximumFractionDigits:0}):String(v??'').trim().replace(/\.0+$/,'')).replace(/\D/g,'');
-            if(dig){map[dig]=nm;const z=dig.replace(/^0+/,'');if(z)map['#'+z]=nm;}
+            if(dig){map[dig]=nm;const z=dig.replace(/^0+/,'');if(z)map['#'+z]=nm;
+              if(dig.length>=15){try{const b=BigInt(dig);['-2','-1','1','2'].forEach(o=>{const k='~'+(b+BigInt(o)).toString();if(!map[k])map[k]=nm;});}catch(_){}}}
           });
         });
       }
@@ -12160,6 +12161,8 @@ function pfMemberName(id){
   const z=dig.replace(/^0+/,'');if(M['#'+z])return M['#'+z];
   // kartu 9991000000130816 → member id 130816
   if(dig.length>=12){const t=dig.slice(4).replace(/^0+/,'');if(t&&M['#'+t])return M['#'+t];}
+  // nomor > 16 digit bisa bergeser ±1–2 karena dibaca sebagai angka di Excel/JS
+  if(M['~'+dig])return M['~'+dig];
   return null;
 }
 
@@ -12390,7 +12393,7 @@ function selectMember(mid) {
   document.getElementById('memDetailHeader').innerHTML = `
     <div class="mid">MEMBER ID</div>
     <div class="mval">${m.id}</div>
-    ${(function(){const nm=pfMemberName(m.id);return nm?`<div style=\"font-size:15px;font-weight:700;color:rgba(255,255,255,0.92);margin-top:2px\">${nm.replace(/</g,'&lt;')}</div>`:''})()}
+    ${(function(){const nm=pfMemberName(m.id);const has=Array.isArray(uploads.member)&&uploads.member.length;return `<div class=\"mid\" style=\"margin-top:8px\">MEMBER NAME</div><div style=\"font-size:17px;font-weight:700;color:#fff;margin-top:2px\">${nm?nm.replace(/</g,'&lt;'):`<span style=\"opacity:.7;font-size:12.5px;font-weight:500\">${has?'Nama tidak ditemukan di data member':'Data member belum termuat — upload/sinkron data member'}</span>`}</div>`;})()}
     <div class="mem-detail-stats">
       <div class="mem-detail-stat"><div class="mem-detail-stat-label">Total Belanja</div><div class="mem-detail-stat-val">৳ ${fmtFull(Math.round(m.totalSpend))}</div></div>
       <div class="mem-detail-stat"><div class="mem-detail-stat-label">Kunjungan</div><div class="mem-detail-stat-val">${m.visits}×</div></div>
