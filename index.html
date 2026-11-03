@@ -12147,6 +12147,7 @@ function pfMemberNameMap(){
             const v=r[c];
             const dig=(typeof v==='number'?v.toLocaleString('fullwide',{useGrouping:false,maximumFractionDigits:0}):String(v??'').trim().replace(/\.0+$/,'')).replace(/\D/g,'');
             if(dig){map[dig]=nm;const z=dig.replace(/^0+/,'');if(z)map['#'+z]=nm;
+              if(dig.length>=16){const p='P'+dig.slice(0,15);map[p]=(p in map&&map[p]!==nm)?null:nm;}
               if(dig.length>=15){try{const b=BigInt(dig);['-2','-1','1','2'].forEach(o=>{const k='~'+(b+BigInt(o)).toString();if(!map[k])map[k]=nm;});}catch(_){}}}
           });
         });
@@ -12163,6 +12164,8 @@ function pfMemberName(id){
   if(dig.length>=12){const t=dig.slice(4).replace(/^0+/,'');if(t&&M['#'+t])return M['#'+t];}
   // nomor > 16 digit bisa bergeser ±1–2 karena dibaca sebagai angka di Excel/JS
   if(M['~'+dig])return M['~'+dig];
+  // Excel memotong digit ke-16 jadi 0 → cocokkan 15 digit pertama (jika unik)
+  if(dig.length>=16&&M['P'+dig.slice(0,15)])return M['P'+dig.slice(0,15)];
   return null;
 }
 
@@ -13972,6 +13975,25 @@ function renderCatSection(){
     [[],['STORE × SECTION INDEX (100 = rata-rata semua toko)'],['Kode Toko','Nama Toko'].concat(hs)],stl.map(s=>[s,names[s]||''].concat(hs.map(c=>r0(idx(s,c))))),
     [[],['SECTION AFFINITY'],['Section A','Section B','Struk Bersama','% dari Struk A','% dari Struk B','Lift']],aff.map(x=>[x.a,x.b,x.n,r1(x.pa),r1(x.pb),x.lift==null?'':Math.round(x.lift*100)/100]))};
 }
+
+// ── Tambah nama toko di semua dropdown kode toko ──
+(function(){
+  let busy=false,tm=null;
+  function deco(){
+    if(busy||typeof merStoreNames!=='function')return;let N;try{N=merStoreNames()||{};}catch(_){return;}
+    if(!Object.keys(N).length)return;busy=true;
+    try{document.querySelectorAll('select option').forEach(o=>{
+      if(o.dataset.stDeco)return;const v=String(o.value||'').trim(),t=String(o.textContent||'').trim();
+      if(!v||v==='ALL'||t!==v)return;const nm=N[v]||N[v.toUpperCase()];
+      if(nm){o.textContent=v+' — '+nm;o.dataset.stDeco='1';}
+    });}catch(_){}
+    busy=false;
+  }
+  window.stDecoStoreSelects=deco;
+  const mo=new MutationObserver(()=>{if(busy)return;clearTimeout(tm);tm=setTimeout(deco,60);});
+  const start=()=>{mo.observe(document.body,{childList:true,subtree:true});deco();};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+})();
 function renderMerchZero(){
   const D=merSales();
   const master=merMasterList(),R=recRows(),PO=poLines();
