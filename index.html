@@ -6678,6 +6678,10 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="1" width="10" height="14" rx="1"/><path d="M5 5h6M5 8h6M5 11h4"/></svg>
         Generate PDF Report
       </button>
+      <button class="filter-btn" onclick="atblPdf()" style="gap:8px;padding:9px 18px;font-size:13px" title="7 halaman: Alfabangla Performance, Member Performance, Member Contribution, Member vs Promo, Promo vs Sales">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="2" width="14" height="10" rx="1"/><path d="M5 15h6M8 12v3M4 9l3-3 2 2 3-3"/></svg>
+        Commercial Report (PDF)
+      </button>
     </div>
   </div>
 
@@ -13345,6 +13349,56 @@ function sgExport(){
   if(typeof XLSX==='undefined')ensureLib('xlsx').then(go).catch(()=>alert('Gagal memuat pustaka Excel.'));else go();
 }
 
+
+// ── Commercial Report PDF (format ATBL slide 10–16) ──
+const ATBL_CSS="@page{size:A4 landscape;margin:8mm}html,body{background:#fff!important;height:auto!important;overflow:visible!important}body{margin:0;display:block!important}.apg{width:1280px;box-sizing:border-box;padding:18px 26px;break-after:page;page-break-after:always;zoom:.83;background:var(--bg,#f5f7fb)}.apg:last-child{break-after:auto;page-break-after:auto}.apt{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #c8102e;padding-bottom:8px;margin-bottom:14px}.apt h1{font-size:26px;margin:0;color:#13294b;font-weight:800}.apt span{font-size:12px;color:#667}.apg .panel{display:block!important;opacity:1!important;transform:none!important;animation:none!important;padding:0!important;margin:0!important}.apg *{animation:none!important;transition:none!important}.apg .table-wrap{overflow:visible!important;max-height:none!important}.apg th,.apg td{position:static!important}.akick{letter-spacing:.35em;color:#c8102e;font-size:13px;font-weight:600;margin:6px 0}.ahead{font-size:28px;font-weight:800;color:#13294b;line-height:1.25;max-width:1150px;margin-bottom:28px}.akg{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:18px}.ak{background:#fff;border:1px solid #d9dee7;padding:20px 22px}.akl{font-size:12px;letter-spacing:.15em;font-weight:700}.akv{font-size:40px;font-weight:700;color:#13294b;margin:22px 0 14px}.aks{font-size:12px;color:#556}.aline{background:#f6f7f9;border:1px solid #e3e6ea;border-radius:10px;padding:10px}.aline img{width:100%;display:block}.abar{position:fixed;top:0;left:0;right:0;background:#13294b;color:#fff;padding:9px 16px;display:flex;gap:12px;align-items:center;font:13px sans-serif;z-index:99}.abar button{padding:7px 16px;border:0;border-radius:4px;background:#c8102e;color:#fff;font-weight:700;cursor:pointer}@media screen{body{padding-top:52px;background:#e9ecf1!important}.apg{margin:0 auto 18px;box-shadow:0 2px 10px rgba(0,0,0,.12)}}@media print{.abar{display:none}}";
+async function atblPdf(){
+  const w=window.open('','_blank');if(!w){alert('Pop-up diblokir browser. Izinkan pop-up untuk situs ini.');return;}
+  w.document.write('<html><body style="font-family:sans-serif;padding:40px;color:#333">Menyiapkan Commercial Report… (±10 detik, jangan tutup tab ini)</body></html>');
+  const back=(document.querySelector('.panel.active')||{}).id,backBtn=document.querySelector('.nav-item.active');
+  const anim=Chart.defaults.animation;Chart.defaults.animation=false;
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  const grab=async(panel,sel,opt)=>{opt=opt||{};
+    if(typeof rendered!=='undefined'&&rendered.delete)rendered.delete(panel);
+    showPanel(panel,null);await wait(opt.wait||1200);
+    Object.values(chartInstances).forEach(c=>{try{c.options.animation=false;c.update('none');}catch(_){}});await wait(150);
+    const P=document.getElementById('panel-'+panel);if(!P)return '<div>Panel '+panel+' tidak ditemukan</div>';
+    const srcs=sel?sel.map(s=>P.querySelector(s)).filter(Boolean):[P];
+    return srcs.map(src=>{const cl=src.cloneNode(true),oc=src.querySelectorAll('canvas'),cc=cl.querySelectorAll('canvas');
+      cc.forEach((c,i)=>{const o=oc[i];if(!o)return;let u='';try{u=o.toDataURL('image/png');}catch(_){}const im=document.createElement('img');im.src=u;im.style.cssText='width:100%;height:100%;object-fit:contain;display:block';c.replaceWith(im);});
+      cl.querySelectorAll('.mkt-sync-bar,.store-filter-bar,button,select').forEach(e=>e.remove());
+      cl.classList.add('active');cl.style.display='block';cl.removeAttribute('id');return cl.outerHTML;}).join('');};
+  const pages=[];
+  try{
+    pages.push(['Alfabangla Performance',await grab('mem-demo',['#demoPivotWrap'])]);
+    pages.push(['Alfabangla Performance',await grab('mem-database')]);
+    pages.push(['Alfabangla Performance',await grab('mem-retention')]);
+    const contrib=await grab('mem-contribution');
+    const tx=id=>(document.getElementById(id)||{}).textContent||'—';
+    const pct=(tx('mc-msales-sub').match(/[\d.]+%/)||['—'])[0],up=(tx('mc-basket-sub').match(/[+\-]?[\d.]+%/)||[''])[0];
+    let mLbl=[],mVal=[];const ci=chartInstances.memContribMonthly;
+    if(ci){mLbl=ci.data.labels.map(String);const ds=ci.data.datasets.find(d=>/^member/i.test(d.label||''))||ci.data.datasets[ci.data.datasets.length-1];mVal=(ds&&ds.data||[]).map(v=>+v||0);}
+    const cv=document.createElement('canvas');cv.width=1800;cv.height=520;cv.style.cssText='position:fixed;left:-99999px;width:1200px;height:347px';document.body.appendChild(cv);
+    const lc=new Chart(cv,{type:'line',data:{labels:mLbl.map(l=>l.slice(0,3)),datasets:[{data:mVal,borderColor:'#c8102e',backgroundColor:'#c8102e',tension:.4,borderWidth:3,pointRadius:5}]},options:{responsive:false,animation:false,devicePixelRatio:1.5,plugins:{legend:{display:false},title:{display:true,text:'Member sales trajectory',color:'#222',font:{size:16,weight:'normal'}}},scales:{x:{grid:{display:false},ticks:{color:'#444'}},y:{beginAtZero:true,ticks:{color:'#444',callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':v}}}}});
+    const line=cv.toDataURL('image/png');lc.destroy();cv.remove();
+    const kp=(c,l,v,s)=>'<div class="ak" style="border-top:8px solid '+c+'"><div class="akl" style="color:'+c+'">'+l+'</div><div class="akv">'+v+'</div><div class="aks">'+s+'</div></div>';
+    const reg=(tx('mc-active-sub').match(/of ([\d,]+)/)||['',''])[1];
+    pages.push(['Member Performance','<div class="akick">MEMBER PERFORMANCE</div><div class="ahead">Members contribute '+pct+' of revenue'+(up?' and spend '+up.replace(/^[+\-]/,'')+(up.charAt(0)==='-'?' less':' more')+' per basket than non-members':'')+' — loyalty channel is a strategic asset</div><div class="akg">'+kp('#13294b','ACTIVE MEMBERS',tx('mc-active'),reg?'of '+reg+' in database':tx('mc-active-sub'))+kp('#c8102e','MEMBER SALES',tx('mc-msales'),pct+' of total revenue')+kp('#2e7d4f','APC',tx('mc-basket'),up?up+' vs non-member':tx('mc-basket-sub'))+'</div><div class="aline"><img src="'+line+'"></div>']);
+    pages.push(['Member Contribution',contrib]);
+    pages.push(['Member Sales Contribution vs Net Sales All',await grab('mem-vs-promo')]);
+    pages.push(['Net Sales Promotion contribution vs Net Sales All',await grab('promo-contribution',null,{wait:1500})]);
+  }catch(e){console.error('atblPdf',e);}
+  Chart.defaults.animation=anim;
+  if(back)showPanel(back.replace('panel-',''),backBtn);
+  const css=[...document.querySelectorAll('style')].filter(s=>s.id!=='__om-edit-overrides').map(s=>s.textContent).join('\n');
+  const links=[...document.querySelectorAll('link[rel="stylesheet"]')].map(l=>l.outerHTML).join('');
+  const theme=document.documentElement.getAttribute('data-theme');
+  const dt=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  const html='<!doctype html><html'+(theme?' data-theme="'+theme+'"':'')+'><head><meta charset="utf-8"><title>Commercial Report — '+dt+'</title>'+links+'<style>'+css+ATBL_CSS+'</style></head><body><div class="abar"><button onclick="print()">Simpan sebagai PDF / Print</button><span>Pilih "Save as PDF" · Landscape · centang "Background graphics"</span></div>'+
+    pages.map((p,i)=>'<section class="apg"><div class="apt"><h1>'+p[0]+'</h1><span>'+(i+1)+' / '+pages.length+' · '+dt+'</span></div>'+p[1]+'</section>').join('')+
+    '<scr'+'ipt>window.onload=function(){setTimeout(function(){print()},900)}</scr'+'ipt></body></html>';
+  w.document.open();w.document.write(html);w.document.close();
+}
 // ── Ringkasan Bulanan untuk Meeting (Excel / PDF) ──
 function mrData(k,st){
   const B=sgBuild();if(!B)return null;
