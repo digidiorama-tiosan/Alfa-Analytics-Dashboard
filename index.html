@@ -5662,7 +5662,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 </div>
 </div>
 <div id="panel-stamp-overview" class="panel">
-  <div class="page-header"><div><div class="page-title">Digital Stamp — Overview</div><div class="page-subtitle">Stamp Get, Stamp Redeem & Redemption Rate · dihitung dari data sales</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-dl" onclick="stExportStruk()" title="Semua struk member yang dapat stamp pada filter tanggal & toko"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Detail Struk Member</button><button class="btn-dl" onclick="merExport('stov')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button></div></div>
+  <div class="page-header"><div><div class="page-title">Digital Stamp — Overview</div><div class="page-subtitle">Stamp Get, Stamp Redeem & Redemption Rate · dihitung dari data sales</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-dl" onclick="stampPdf()" title="Laporan PDF semua sub menu Digital Stamp"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="1.5" width="12" height="13" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h3"/></svg> Report PDF</button><button class="btn-dl" onclick="stExportStruk()" title="Semua struk member yang dapat stamp pada filter tanggal & toko"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Detail Struk Member</button><button class="btn-dl" onclick="merExport('stov')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button></div></div>
   <div id="stovNoData" class="insight-box" style="display:none"><span class="insight-icon">🚫</span><div class="insight-text">Belum ada data sales dalam periode campaign (25 Okt 2026 – 15 Jan 2027).</div></div>
   <div id="stovMain" style="display:none">
     <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap"><span class="filter-label">Dari</span><input type="date" class="filter-select st-from" onchange="stSetF('from',this.value)"><span class="filter-label">s.d.</span><input type="date" class="filter-select st-to" onchange="stSetF('to',this.value)"><span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select st-store" onchange="stSetF('store',this.value)" style="min-width:190px"></select><span class="st-info" style="font-size:11.5px;color:var(--text3);margin-left:auto"></span></div>
@@ -6681,6 +6681,10 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
       <button class="filter-btn" onclick="atblPdf()" style="gap:8px;padding:9px 18px;font-size:13px" title="7 halaman: Alfabangla Performance, Member Performance, Member Contribution, Member vs Promo, Promo vs Sales">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="2" width="14" height="10" rx="1"/><path d="M5 15h6M8 12v3M4 9l3-3 2 2 3-3"/></svg>
         Commercial Report (PDF)
+      </button>
+      <button class="filter-btn" onclick="stampPdf()" style="gap:8px;padding:9px 18px;font-size:13px" title="Semua menu Campaign: Digital Stamp sesuai filter tanggal & toko yang aktif">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="6.5"/><path d="M5 8.2l2 2 4-4.2"/></svg>
+        Digital Stamp Report (PDF)
       </button>
     </div>
   </div>
@@ -13399,6 +13403,44 @@ async function atblPdf(){
     '<scr'+'ipt>window.onload=function(){setTimeout(function(){print()},900)}</scr'+'ipt></body></html>';
   w.document.open();w.document.write(html);w.document.close();
 }
+
+// ── Digital Stamp Report PDF ──
+async function stampPdf(){
+  const B=typeof stBuild==='function'?stBuild():null;
+  if(!B||!B.txns||!B.txns.some(t=>t.inC)){alert('Belum ada data sales dalam periode campaign Digital Stamp.');return;}
+  const w=window.open('','_blank');if(!w){alert('Pop-up diblokir browser. Izinkan pop-up untuk situs ini.');return;}
+  w.document.write('<html><body style="font-family:sans-serif;padding:40px;color:#333">Menyiapkan Digital Stamp Report… (±15 detik, jangan tutup tab ini)</body></html>');
+  const back=(document.querySelector('.panel.active')||{}).id,backBtn=document.querySelector('.nav-item.active');
+  const anim=Chart.defaults.animation;Chart.defaults.animation=false;window._pdfAll=150;
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  const grab=async panel=>{
+    if(typeof rendered!=='undefined'&&rendered.delete)rendered.delete(panel);
+    showPanel(panel,null);await wait(1100);
+    Object.values(chartInstances).forEach(c=>{try{c.options.animation=false;c.update('none');}catch(_){}});await wait(150);
+    const P=document.getElementById('panel-'+panel);if(!P)return '';
+    const cl=P.cloneNode(true),oc=P.querySelectorAll('canvas'),cc=cl.querySelectorAll('canvas');
+    cc.forEach((c,i)=>{const o=oc[i];if(!o)return;let u='';try{u=o.toDataURL('image/png');}catch(_){}const im=document.createElement('img');im.src=u;im.style.cssText='width:100%;height:100%;object-fit:contain;display:block';c.replaceWith(im);});
+    cl.querySelectorAll('.store-filter-bar,button,select,input,.page-header').forEach(e=>e.remove());
+    cl.querySelectorAll('[id$="Pg"],[id$="PgBar"]').forEach(e=>e.remove());
+    cl.querySelectorAll('[id$="NoData"]').forEach(e=>e.remove());
+    cl.classList.add('active');cl.style.display='block';cl.removeAttribute('id');return cl.outerHTML;};
+  const list=[['stamp-overview','Overview'],['stamp-sales','Sales Performance'],['stamp-sponsor','Item Sponsor (BeanSpot)'],['stamp-store','Stamp Detail Store'],['stamp-reward','Item Detail Store (Hadiah)'],['stamp-category','Kategori & Item Driver'],['stamp-behavior','Perilaku Belanja Member'],['stamp-weekly','Laporan Mingguan'],['stamp-member','Member Potensial']];
+  const pages=[];
+  try{for(const [id,t] of list){if(!document.getElementById('panel-'+id))continue;const x=await grab(id);if(x)pages.push([t,x]);}}catch(e){console.error('stampPdf',e);}
+  window._pdfAll=0;Chart.defaults.animation=anim;
+  const S=stSel(B);
+  if(back)showPanel(back.replace('panel-',''),backBtn);
+  const css=[...document.querySelectorAll('style')].filter(s=>s.id!=='__om-edit-overrides').map(s=>s.textContent).join('\n');
+  const links=[...document.querySelectorAll('link[rel="stylesheet"]')].map(l=>l.outerHTML).join('');
+  const theme=document.documentElement.getAttribute('data-theme');
+  const dt=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  const cover='<section class="apg"><div style="padding:120px 40px"><div class="akick">CAMPAIGN REPORT</div><div class="ahead" style="font-size:44px">Digital Stamp</div><div style="font-size:18px;color:#334;line-height:1.8">Periode laporan: <b>'+S.pLbl+'</b><br>Toko: <b>'+S.sLbl+'</b><br>Campaign: 25 Okt 2026 – 15 Jan 2027 · Data terakhir: '+stLbl(B.lastD)+'<br>Dicetak: '+dt+'</div><div style="margin-top:30px;font-size:13px;color:#556;max-width:900px">Isi: '+pages.map((p,i)=>(i+1)+'. '+p[0]).join(' · ')+'</div><div style="margin-top:16px;font-size:12px;color:#778">Tabel per toko/member menampilkan maks. 150 baris teratas. Data lengkap tersedia via tombol Download Excel di tiap menu.</div></div></section>';
+  const html='<!doctype html><html'+(theme?' data-theme="'+theme+'"':'')+'><head><meta charset="utf-8"><title>Digital Stamp Report — '+S.pLbl+'</title>'+links+'<style>'+css+ATBL_CSS+'.apg{break-inside:auto}</style></head><body><div class="abar"><button onclick="print()">Simpan sebagai PDF / Print</button><span>Pilih "Save as PDF" · Landscape · centang "Background graphics"</span></div>'+cover+
+    pages.map((p,i)=>'<section class="apg"><div class="apt"><h1>Digital Stamp — '+p[0]+'</h1><span>'+(i+1)+' / '+pages.length+' · '+S.pLbl+' · '+S.sLbl+'</span></div>'+p[1]+'</section>').join('')+
+    '<scr'+'ipt>window.onload=function(){setTimeout(function(){print()},900)}</scr'+'ipt></body></html>';
+  w.document.open();w.document.write(html);w.document.close();
+}
+
 // ── Ringkasan Bulanan untuk Meeting (Excel / PDF) ──
 function mrData(k,st){
   const B=sgBuild();if(!B)return null;
@@ -13727,7 +13769,7 @@ function stSetF(k,v){if(!v&&k!=='store')return;_stF[k]=v;if(k==='to')_stF.toUser
 function stGate(k){const B=stBuild();const ok=!!(B&&B.hasBon&&B.txns.some(t=>t.inC));
   merGate(k+'Main',k+'NoData',ok,!B?'Data sales belum termuat di browser. Tunggu proses sinkron dari server selesai (halaman akan terisi otomatis), atau refresh. Jika tetap kosong, upload data sales di Data Management.':!B.hasBon?'Kolom nomor struk (no_bon / receipt) tidak ditemukan di data sales — stamp dihitung per struk.':'Belum ada data sales dalam periode campaign (25 Okt 2026 – 15 Jan 2027). Data sales terakhir: '+stLbl(B.firstD)+'.');return ok?B:null;}
 const stNm=(B,c)=>B.names[c]||'';
-const stSlice=(arr,k,ps)=>{const p=merPage(k,arr.length,ps);return arr.slice((p-1)*ps,p*ps);};
+const stSlice=(arr,k,ps)=>{if(window._pdfAll)return arr.slice(0,window._pdfAll);const p=merPage(k,arr.length,ps);return arr.slice((p-1)*ps,p*ps);};
 function stLine(id,labels,data,color,label){makeChart(id,{type:'line',data:{labels,datasets:[{label,data,borderColor:color,backgroundColor:color+'22',fill:true,tension:.3,pointRadius:labels.length>40?0:2,borderWidth:2}]},options:{...chartDefaults,plugins:{...chartDefaults.plugins,legend:{display:false}},scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,ticks:{...chartDefaults.scales.x.ticks,maxTicksLimit:12}},y:{...chartDefaults.scales.y,beginAtZero:true,ticks:{...chartDefaults.scales.y.ticks,callback:v=>stF0(v)}}}}});}
 let _stOm=null;
 function stDescFn(){
