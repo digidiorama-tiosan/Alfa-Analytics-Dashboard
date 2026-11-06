@@ -7330,6 +7330,7 @@ function showPanel(id, btn) {
   if (panelEl) panelEl.classList.add('active');
   if (btn) btn.classList.add('active');
 
+  if(/^stamp-/.test(id))rendered.delete(id);
   if (!rendered.has(id)) {
     rendered.add(id);
     const layout = PANEL_SKELETON[id];
@@ -13657,7 +13658,7 @@ function stBuild(){
 function stSel(B){
   const maxTo=B.lastD&&B.lastD<ST_CFG.end?B.lastD:ST_CFG.end;
   if(!_stF.from||_stF.from<ST_CFG.start||_stF.from>maxTo)_stF.from=ST_CFG.start;
-  if(!_stF.to||_stF.to>maxTo||_stF.to<ST_CFG.start)_stF.to=maxTo;
+  if(!_stF.toUser||!_stF.to||_stF.to>maxTo||_stF.to<ST_CFG.start)_stF.to=maxTo;
   if(_stF.from>_stF.to){const x=_stF.from;_stF.from=_stF.to;_stF.to=x;}
   if(_stF.store!=='ALL'&&!B.stores.includes(_stF.store))_stF.store='ALL';
   const {from,to,store}=_stF,okS=t=>store==='ALL'||t.st===store;
@@ -13667,7 +13668,7 @@ function stSel(B){
   document.querySelectorAll('.st-info').forEach(e=>e.textContent='Data terakhir: '+stLbl(B.lastD)+' · Campaign 25 Okt 2026 – 15 Jan 2027');
   return {from,to,store,okS,inR:t=>t.inC&&t.d>=from&&t.d<=to&&okS(t),upTo:t=>t.inC&&t.d<=to,sLbl:store==='ALL'?'Semua Toko':store+(B.names[store]?' '+B.names[store]:''),pLbl:stLbl(from)+' – '+stLbl(to)};
 }
-function stSetF(k,v){_stF[k]=v;['stov','stsp','stst','strw','stmb','stmbm','stct','stcti','stbh','stwk'].forEach(x=>_merPg[x]=1);const a=document.querySelector('.panel.active');const id=a&&a.id.replace('panel-','');
+function stSetF(k,v){if(!v&&k!=='store')return;_stF[k]=v;if(k==='to')_stF.toUser=true;['stov','stsp','stst','strw','stmb','stmbm','stct','stcti','stbh','stwk'].forEach(x=>_merPg[x]=1);const a=[...document.querySelectorAll('.panel.active')].find(p=>/^panel-stamp-/.test(p.id))||document.querySelector('.panel.active');const id=a&&a.id.replace('panel-','');
   ({'stamp-overview':renderStampOverview,'stamp-sales':renderStampSales,'stamp-sponsor':renderStampSponsor,'stamp-store':renderStampStore,'stamp-reward':renderStampReward,'stamp-member':renderStampMember,'stamp-category':renderStampCategory,'stamp-behavior':renderStampBehavior,'stamp-weekly':renderStampWeekly}[id]||(()=>{}))();}
 function stGate(k){const B=stBuild();const ok=!!(B&&B.hasBon&&B.txns.some(t=>t.inC));
   merGate(k+'Main',k+'NoData',ok,!B?'Data sales belum termuat di browser. Tunggu proses sinkron dari server selesai (halaman akan terisi otomatis), atau refresh. Jika tetap kosong, upload data sales di Data Management.':!B.hasBon?'Kolom nomor struk (no_bon / receipt) tidak ditemukan di data sales — stamp dihitung per struk.':'Belum ada data sales dalam periode campaign (25 Okt 2026 – 15 Jan 2027). Data sales terakhir: '+stLbl(B.firstD)+'.');return ok?B:null;}
