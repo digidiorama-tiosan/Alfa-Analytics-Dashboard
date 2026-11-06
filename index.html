@@ -5652,13 +5652,13 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
 <span class="filter-label">Toko</span><select class="filter-select" id="sdStore" onchange="_merPg.sd=1;renderSalesData()" style="min-width:180px"></select>
 <span class="filter-label">Prinsipal</span><select class="filter-select" id="sdPrin" onchange="_merPg.sd=1;renderSalesData()" style="min-width:200px;max-width:280px"></select>
 <span class="filter-label">Tag</span><select class="filter-select" id="sdTag" onchange="_merPg.sd=1;renderSalesData()" style="min-width:90px"></select>
-<span class="filter-label">Urut</span><select class="filter-select" id="sdSort" onchange="_merPg.sd=1;renderSalesData()" style="min-width:120px"><option value="plu">PLU</option><option value="net">Net Value terbesar</option><option value="qty">Qty terbesar</option></select>
+<span class="filter-label">Urut</span><select class="filter-select" id="sdSort" onchange="_merPg.sd=1;renderSalesData()" style="min-width:120px"><option value="plu">PLU</option><option value="qty">Sales Qty ↓</option><option value="qty_a">Sales Qty ↑</option><option value="net">Net Value ↓</option><option value="net_a">Net Value ↑</option><option value="gmv">GM Value ↓</option><option value="gmv_a">GM Value ↑</option><option value="gmp">GM % ↓</option><option value="gmp_a">GM % ↑</option></select>
 <span class="filter-label">Cari</span><input type="text" class="filter-select" id="sdSearch" oninput="_merPg.sd=1;renderSalesData()" placeholder="PLU / deskripsi / kategori…" style="min-width:170px">
 </div>
 <div id="sdWarn" class="alert-box amber" style="display:none;margin-bottom:14px"><span style="font-size:16px">⚠️</span><div></div></div>
 <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px"><div class="stat-card blue"><div class="stat-label">Net Value</div><div class="stat-value" id="sd-net">—</div><div class="stat-sub" id="sd-net-sub">—</div></div><div class="stat-card green"><div class="stat-label">GM Value</div><div class="stat-value" id="sd-gm">—</div><div class="stat-sub" id="sd-gm-sub">—</div></div><div class="stat-card purple"><div class="stat-label">Sales Qty</div><div class="stat-value" id="sd-qty">—</div><div class="stat-sub" id="sd-qty-sub">—</div></div><div class="stat-card amber"><div class="stat-label">PLU Terjual</div><div class="stat-value" id="sd-plu">—</div><div class="stat-sub" id="sd-plu-sub">—</div></div></div>
 <div class="chart-card" style="margin-bottom:16px"><div class="chart-header"><div><div class="chart-title">Tren Penjualan</div><div class="chart-subtitle" id="sdChartSub">—</div></div></div><div style="height:240px"><canvas id="sdChart"></canvas></div></div>
-<div class="chart-card"><div class="chart-header"><div><div class="chart-title">Data Sales per PLU</div><div class="chart-subtitle" id="sdSub">—</div></div></div><div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px"><thead><tr><th>PLU</th><th>DESCP</th><th>CATEGORY</th><th>SUBDEPT</th><th>PRINCIPAL</th><th style="text-align:center">TAG</th><th class="right">SALES QTY</th><th class="right">NET VALUE</th><th class="right">GM VALUE</th><th class="right">RECEIPT QTY</th><th class="right">SELLING STORE</th></tr></thead><tbody id="sdBody"></tbody><tfoot id="sdFoot"></tfoot></table></div><div id="sdPager" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:12.5px"></div></div>
+<div class="chart-card"><div class="chart-header"><div><div class="chart-title">Data Sales per PLU</div><div class="chart-subtitle" id="sdSub">—</div></div></div><div style="overflow-x:auto"><table class="data-table" style="width:100%;font-size:12.5px"><thead><tr><th>PLU</th><th>DESCP</th><th>CATEGORY</th><th>SUBDEPT</th><th>PRINCIPAL</th><th style="text-align:center">TAG</th><th class="right sd-sort" data-k="qty" onclick="sdSortClick('qty')" style="cursor:pointer;user-select:none;white-space:nowrap" title="Klik untuk urutkan">SALES QTY <span class="sd-ar"></span></th><th class="right sd-sort" data-k="net" onclick="sdSortClick('net')" style="cursor:pointer;user-select:none;white-space:nowrap" title="Klik untuk urutkan">NET VALUE <span class="sd-ar"></span></th><th class="right sd-sort" data-k="gmv" onclick="sdSortClick('gmv')" style="cursor:pointer;user-select:none;white-space:nowrap" title="Klik untuk urutkan">GM VALUE <span class="sd-ar"></span></th><th class="right sd-sort" data-k="gmp" onclick="sdSortClick('gmp')" style="cursor:pointer;user-select:none;white-space:nowrap" title="Klik untuk urutkan">GM % <span class="sd-ar"></span></th><th class="right">RECEIPT QTY</th><th class="right">SELLING STORE</th></tr></thead><tbody id="sdBody"></tbody><tfoot id="sdFoot"></tfoot></table></div><div id="sdPager" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:12.5px"></div></div>
 </div>
 </div>
 <div id="panel-stamp-overview" class="panel">
@@ -13186,6 +13186,7 @@ function sdBase(){
 const sdFmtD=d=>d?d.slice(8,10)+'-'+d.slice(5,7)+'-'+d.slice(0,4):'';
 function sdMode(m){document.querySelectorAll('#sdModeBtns button').forEach(b=>b.classList.toggle('primary',b.dataset.m===m));document.getElementById('sdModeBtns').dataset.m=m;
   document.getElementById('sdDayBox').style.display=m==='day'?'flex':'none';document.getElementById('sdMonBox').style.display=m==='mon'?'flex':'none';_merPg.sd=1;renderSalesData();}
+function sdSortClick(k){const s=document.getElementById('sdSort');if(!s)return;s.value=s.value===k?k+'_a':k;_merPg.sd=1;renderSalesData();}
 function renderSalesData(){
   const B=sdBase();
   if(!merGate('sdMain','sdNoData',!!B,'Butuh <strong>data sales</strong>. Upload di Data Management.'))return;
@@ -13218,10 +13219,12 @@ function renderSalesData(){
   const ms=new Set();for(const r of f1)ms.add(r.ym);if(!ms.size){ms.add(a.slice(0,7));ms.add(b.slice(0,7));}
   recRows().forEach(r=>{if(!ms.has(r.ym)||(st!=='ALL'&&r.st!==st))return;const o=m.get(r.plu);if(o)o.rq+=r.qty;});
   const q=merQ('sdSearch');
-  let rows=[...m.values()].map(o=>{const t=B.A(o.plu);return {...o,...t,gmv:o.net-o.cogs,ns:o.sts.size};})
+  let rows=[...m.values()].map(o=>{const t=B.A(o.plu);return {...o,...t,gmv:o.net-o.cogs,gmp:o.net?(o.net-o.cogs)/o.net*100:null,ns:o.sts.size};})
     .filter(o=>!q||(o.plu+' '+o.desc+' '+o.cat+' '+o.sub+' '+o.prin).toLowerCase().includes(q));
   const sortBy=(document.getElementById('sdSort')||{}).value||'plu';
-  rows.sort(sortBy==='net'?(x,y)=>y.net-x.net:sortBy==='qty'?(x,y)=>y.qty-x.qty:(x,y)=>(+x.plu||0)-(+y.plu||0)||String(x.plu).localeCompare(String(y.plu)));
+  {const sk=sortBy.replace('_a',''),asc=/_a$/.test(sortBy),v=o=>o[sk]==null?(asc?Infinity:-Infinity):o[sk];
+  rows.sort(sk==='plu'?(x,y)=>(+x.plu||0)-(+y.plu||0)||String(x.plu).localeCompare(String(y.plu)):(x,y)=>asc?v(x)-v(y):v(y)-v(x));
+  document.querySelectorAll('#panel-merch-sales .sd-sort,.sd-sort').forEach(e=>{const on=e.dataset.k===sk;e.style.color=on?'var(--accent,#58a6ff)':'';e.querySelector('.sd-ar').textContent=on?(asc?'▲':'▼'):'⇅';});}
   const T=rows.reduce((s,o)=>{s.qty+=o.qty;s.net+=o.net;s.gmv+=o.gmv;s.rq+=o.rq;return s;},{qty:0,net:0,gmv:0,rq:0});
   const nSt=new Set(f1.filter(r=>r.qty>0).map(r=>r.st)).size,nDays=new Set(f1.map(r=>r.d)).size;
   merSet('sd-net',_fmtTk(T.net));merSet('sd-net-sub',`${sdFmtD(a)} s/d ${sdFmtD(b>dmax?dmax:b)}`);
@@ -13241,8 +13244,8 @@ function renderSalesData(){
       scales:{x:chartDefaults.scales.x,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>merTkTick(v)}},y1:{position:'right',grid:{display:false},ticks:{color:'#8b949e',callback:v=>v+'%'}}}}});
   merSet('sdChartSub',mode==='day'?'Net value & %GM per hari':'Net value & %GM per bulan');
   const PS=30,pg=merPage('sd',rows.length,PS),nf=v=>v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-  document.getElementById('sdBody').innerHTML=rows.slice((pg-1)*PS,pg*PS).map(o=>`<tr><td style="font-family:var(--mono)">${o.plu}</td><td>${merEsc(merCut(o.desc,34))||'—'}</td><td style="font-size:11.5px">${merEsc(merCut(o.cat,26))||'—'}</td><td style="font-size:11.5px">${merEsc(merCut(o.sub,26))||'—'}</td><td style="font-size:11.5px">${merEsc(merCut(o.prin,30))||'—'}</td><td style="text-align:center">${merEsc(o.tag)||'—'}</td><td class="right">${_fmtN(o.qty)}</td><td class="right" style="font-weight:600">${nf(o.net)}</td><td class="right" style="color:${o.gmv<0?'#f85149':'inherit'}">${nf(o.gmv)}</td><td class="right">${_fmtN(o.rq)}</td><td class="right">${o.ns}</td></tr>`).join('')||merEmpty(11);
-  document.getElementById('sdFoot').innerHTML=rows.length?`<tr style="font-weight:700;background:var(--bg3)"><td colspan="6">GRAND TOTAL (${rows.length.toLocaleString('en-US')} PLU)</td><td class="right">${_fmtN(T.qty)}</td><td class="right">${nf(T.net)}</td><td class="right">${nf(T.gmv)}</td><td class="right">${_fmtN(T.rq)}</td><td class="right">${nSt}</td></tr>`:'';
+  document.getElementById('sdBody').innerHTML=rows.slice((pg-1)*PS,pg*PS).map(o=>`<tr><td style="font-family:var(--mono)">${o.plu}</td><td>${merEsc(merCut(o.desc,34))||'—'}</td><td style="font-size:11.5px">${merEsc(merCut(o.cat,26))||'—'}</td><td style="font-size:11.5px">${merEsc(merCut(o.sub,26))||'—'}</td><td style="font-size:11.5px">${merEsc(merCut(o.prin,30))||'—'}</td><td style="text-align:center">${merEsc(o.tag)||'—'}</td><td class="right">${_fmtN(o.qty)}</td><td class="right" style="font-weight:600">${nf(o.net)}</td><td class="right" style="color:${o.gmv<0?'#f85149':'inherit'}">${nf(o.gmv)}</td><td class="right" style="color:${o.gmp!=null&&o.gmp<0?'#f85149':'inherit'}">${o.gmp==null?'—':o.gmp.toFixed(2)+'%'}</td><td class="right">${_fmtN(o.rq)}</td><td class="right">${o.ns}</td></tr>`).join('')||merEmpty(12);
+  document.getElementById('sdFoot').innerHTML=rows.length?`<tr style="font-weight:700;background:var(--bg3)"><td colspan="6">GRAND TOTAL (${rows.length.toLocaleString('en-US')} PLU)</td><td class="right">${_fmtN(T.qty)}</td><td class="right">${nf(T.net)}</td><td class="right">${nf(T.gmv)}</td><td class="right">${T.net?(T.gmv/T.net*100).toFixed(2)+'%':'—'}</td><td class="right">${_fmtN(T.rq)}</td><td class="right">${nSt}</td></tr>`:'';
   merPager('sdPager','sd',rows.length,PS,'renderSalesData');
   merSet('sdSub',`${rows.length.toLocaleString('en-US')} PLU · 30/halaman · NUMBER OF SELLING STORE = jumlah toko dengan qty terjual > 0`);
   _sdLast={a,b:b>dmax?dmax:b,st,stName:st==='ALL'?'NATIONAL':st+(names[st]?' - '+names[st]:''),pr,tg,rows,T,nSt,mode};
@@ -13251,10 +13254,10 @@ function sdExport(){
   const L=_sdLast;if(!L||!L.rows.length){alert('Belum ada data untuk diexport.');return;}
   const go=()=>{
     const r2=v=>Math.round(v*100)/100;
-    const H=['PLU','DESCP','CATEGORY','SUBDEPT','PRINCIPAL','TAG','SALES QTY','NET VALUE','GM VALUE','RECEIPT QTY','NUMBER OF SELLING STORE'];
+    const H=['PLU','DESCP','CATEGORY','SUBDEPT','PRINCIPAL','TAG','SALES QTY','NET VALUE','GM VALUE','GM %','RECEIPT QTY','NUMBER OF SELLING STORE'];
     const aoa=[['ALFAMART TRADING BANGLADESH LTD'],['MONTHLY SALES GROWTH RETAIL EXCLUDE DC PER PLU'],[`PERIOD : ${sdFmtD(L.a)} to ${sdFmtD(L.b)}`],[`BRANCH : ${L.stName}`],[`PRINCIPAL : ${L.pr==='ALL'?'ALL':(String(L.pr).split(' - ')[0])}`+(L.tg!=='ALL'?`   TAG : ${L.tg}`:'')],[],H];
-    L.rows.forEach(o=>aoa.push([/^\d+$/.test(o.plu)?+o.plu:o.plu,o.desc,o.cat,o.sub,o.prin,o.tag,r2(o.qty),r2(o.net),r2(o.gmv),r2(o.rq),o.ns]));
-    aoa.push(['GRAND TOTAL','','','','','',r2(L.T.qty),r2(L.T.net),r2(L.T.gmv),r2(L.T.rq),L.nSt]);
+    L.rows.forEach(o=>aoa.push([/^\d+$/.test(o.plu)?+o.plu:o.plu,o.desc,o.cat,o.sub,o.prin,o.tag,r2(o.qty),r2(o.net),r2(o.gmv),o.gmp==null?'':r2(o.gmp),r2(o.rq),o.ns]));
+    aoa.push(['GRAND TOTAL','','','','','',r2(L.T.qty),r2(L.T.net),r2(L.T.gmv),L.T.net?r2(L.T.gmv/L.T.net*100):'',r2(L.T.rq),L.nSt]);
     const ws=XLSX.utils.aoa_to_sheet(aoa);
     ws['!cols']=[{wch:10},{wch:38},{wch:30},{wch:32},{wch:40},{wch:6},{wch:11},{wch:13},{wch:12},{wch:12},{wch:14}];
     const rg=XLSX.utils.decode_range(ws['!ref']);
