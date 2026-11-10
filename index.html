@@ -2104,7 +2104,8 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg>
     <input placeholder="Search panels, SKUs, members…">
   </label>
-  <div class="pf-theme" onclick="pfToggleTheme()" title="Toggle theme">
+  <select id="pfSkinSel" class="filter-select" title="Pilih tema tampilan (v2026-11-10)" onchange="pfApplySkin(this.value);try{localStorage.setItem('pf_theme_v1',this.value)}catch(_){}" style="flex-shrink:0;min-width:120px"><option value="dark">🌙 Dark</option><option value="light">☀️ Light</option><option value="mint">🟢 Glass Mint</option><option value="blue">🔵 Glass Blue</option></select>
+  <div class="pf-theme" onclick="pfToggleTheme()" title="Toggle theme" style="display:none">
     <span class="knob">
       <svg id="pfThemeIcon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 9.5A5.5 5.5 0 116.5 3 4.5 4.5 0 0013 9.5z" fill="currentColor"/></svg>
     </span>
@@ -21546,6 +21547,8 @@ async function downloadMcKinseyPPTX(){
   window.pfApplySkin = function(t,boot){
     const H=document.documentElement;H.setAttribute('data-theme',t==='dark'?'dark':'light');
     if(t==='mint'||t==='blue')H.setAttribute('data-skin',t);else H.removeAttribute('data-skin');
+    const ss=document.getElementById('pfSkinSel');if(ss)ss.value=t;
+    const ic=document.getElementById('pfThemeIcon');if(ic)ic.innerHTML=t==='dark'?'<path d="M13 9.5A5.5 5.5 0 116.5 3 4.5 4.5 0 0013 9.5z" fill="currentColor"/>':'<circle cx="8" cy="8" r="3.2" fill="currentColor"/>';
     const tg=document.querySelector('.pf-theme');if(tg)tg.title='Tema: '+({dark:'Dark',light:'Light',mint:'Glass Mint',blue:'Glass Blue'}[t]||t)+' — klik untuk ganti';
     pfSkinCharts(t);
     if(!boot){try{const a=document.querySelector('.panel.active');if(a&&typeof rendered!=='undefined'&&rendered.clear){rendered.clear();const id=a.id.replace('panel-','');showPanel(id,document.querySelector('.nav-item.active'));}}catch(_){}}
