@@ -6138,7 +6138,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
           Publishing pushes your loaded data to the server so Commercial users see the same reports.
         </div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="filter-btn" onclick="pfServerDiag()" style="white-space:nowrap;font-weight:600">🔍 Cek Data Server</button><button class="filter-btn primary" id="syncPublishBtn" onclick="pfPublishNow()" style="white-space:nowrap;font-weight:600">📤 Publish all data to server</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="filter-btn" onclick="pfServerDiag()" style="white-space:nowrap;font-weight:600">🔍 Cek Data Server</button><button class="filter-btn" id="driveSyncBtn" onclick="pfDriveSync()" style="white-space:nowrap;font-weight:600" title="Ambil file dari folder Inbox di Google Drive → proses → Rebuild → Publish">📥 Sync dari Drive</button><button class="filter-btn primary" id="syncPublishBtn" onclick="pfPublishNow()" style="white-space:nowrap;font-weight:600">📤 Publish all data to server</button></div>
     </div>
     <div id="syncResult" style="margin-top:10px;font-family:var(--mono);font-size:11.5px;line-height:1.7;color:var(--text2);display:none"></div>
   </div>
@@ -13452,6 +13452,59 @@ async function stampPdf(){
   w.document.open();w.document.write(html);w.document.close();
 }
 
+
+// ── Sync dari Google Drive Inbox (Apps Script backend) ──
+const DRIVE_ORDER=['storemaster','product','promo','member','po','receipt','sales'];
+const DRIVE_LABEL={sales:'Sales',member:'Member',promo:'Juklak',product:'Oramas',po:'PO',receipt:'Receipt',storemaster:'StoreMaster'};
+const DRIVE_STATUS={po:'status-po',receipt:'status-receipt',storemaster:'status-storemaster'};
+async function pfDriveSync(){
+  const out=document.getElementById('syncResult'),btn=document.getElementById('driveSyncBtn');
+  const log=(m)=>{out.style.display='block';out.innerHTML+=m+'<br>';};
+  out.innerHTML='';out.style.display='block';
+  if(typeof sbc==='undefined'||!sbc){log('❌ Server belum terhubung.');return;}
+  if(!(typeof pfSession!=='undefined'&&pfSession&&pfSession.role==='admin')){log('❌ Hanya admin yang bisa Sync dari Drive.');return;}
+  btn.disabled=true;const t0=Date.now();
+  try{
+    log('🔎 Mengecek folder Inbox di Google Drive…');
+    const L=await sbc.from('drive_inbox').select('*');
+    if(L.error){log('❌ '+merEsc(L.error.message||L.error)+(/Unknown table/i.test(L.error.message||'')?'<br>→ Code.gs di Apps Script belum diperbarui. Tempel Code.gs terbaru lalu Deploy → Manage deployments → Edit → Version: New version.':''));return;}
+    const files=(L.data||[]).sort((a,b)=>DRIVE_ORDER.indexOf(a.kind)-DRIVE_ORDER.indexOf(b.kind)||(a.updated<b.updated?-1:1));
+    if(L.inboxUrl)log('📁 <a href="'+L.inboxUrl+'" target="_blank">Buka folder Inbox</a>');
+    if(!files.length){log('ℹ️ Tidak ada file baru di Inbox. Taruh file di subfolder Sales / Member / Juklak / Oramas / PO / Receipt / StoreMaster.');return;}
+    log('📄 '+files.length+' file ditemukan: '+files.map(f=>merEsc(f.folder+'/'+f.name)+' ('+(f.size/1048576).toFixed(1)+' MB)').join(', '));
+    if(typeof XLSX==='undefined')await ensureLib('xlsx');
+    const done=[];
+    for(const f of files){
+      log('⬇️ Mengambil <b>'+merEsc(f.name)+'</b> …');
+      const parts=[];let off=0,size=f.size;
+      while(true){const r=await sbc.from('drive_inbox').select('*').eq('id',f.id).eq('off',off);
+        if(r.error)throw new Error('Gagal membaca '+f.name+': '+(r.error.message||r.error));
+        const bin=atob(r.data.b64),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);parts.push(u);
+        size=r.data.size;off=r.data.next;out.lastChild&&0;
+        if(r.data.done)break;}
+      const file=new File(parts,f.name);
+      log('⚙️ Memproses sebagai <b>'+DRIVE_LABEL[f.kind]+'</b> …');
+      const sid=DRIVE_STATUS[f.kind]||('status-'+f.kind),st=document.getElementById(sid);if(st)st.innerHTML='';
+      const ev={target:{files:[file],value:''}};
+      if(f.kind==='po')handlePoFile(ev);else if(f.kind==='receipt')handleReceiptFile(ev);else if(f.kind==='storemaster')handleStoreMasterFile(ev);else processFile(file,f.kind);
+      const res=await new Promise(res=>{const s0=Date.now();const iv=setInterval(()=>{const e=document.getElementById(sid),x=e?e.innerHTML:'';
+        if(x&&!/⏳|pending/.test(x)){clearInterval(iv);res(/❌|class="upload-status error/.test(x)?'err':'ok');}
+        else if(Date.now()-s0>900000){clearInterval(iv);res('timeout');}},700);});
+      const txt=(document.getElementById(sid)||{}).textContent||'';
+      if(res==='ok'){log('✅ '+merEsc(f.name)+' — '+merEsc(txt.slice(0,160)));done.push(f);}
+      else log('❌ '+merEsc(f.name)+' gagal ('+res+'): '+merEsc(txt.slice(0,200))+' — file tetap di Inbox.');
+    }
+    if(!done.length){log('⚠️ Tidak ada file yang berhasil diproses.');return;}
+    log('🔄 Rebuild Dashboard …');await pfEnsurePromoThenRebuild();
+    log('📤 Publish ke server …');const keep=out.innerHTML;await pfPublishNow();const pub=out.innerHTML;out.innerHTML=keep;
+    const failed=/❌/.test(pub.replace(keep,''));
+    out.innerHTML+='<div style="margin:6px 0;padding:6px 8px;border:1px solid var(--border2);border-radius:6px">'+pub.replace(keep,'')+'</div>';
+    if(failed){log('⚠️ Publish ada error — file TIDAK dipindah, silakan cek lalu Sync ulang.');return;}
+    for(const f of done){const r=await sbc.from('drive_inbox').update({processed:true}).eq('id',f.id);log(r.error?'⚠️ Gagal memindah '+merEsc(f.name)+': '+merEsc(r.error.message):'📦 '+merEsc(f.name)+' → Processed/'+f.folder);}
+    log('🎉 <b>Selesai</b> dalam '+Math.round((Date.now()-t0)/1000)+' detik.');
+  }catch(e){log('❌ '+merEsc(e.message||e));console.error(e);}
+  finally{btn.disabled=false;}
+}
 // ── Ringkasan Bulanan untuk Meeting (Excel / PDF) ──
 function mrData(k,st){
   const B=sgBuild();if(!B)return null;
