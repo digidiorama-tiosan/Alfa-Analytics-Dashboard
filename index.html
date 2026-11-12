@@ -13461,8 +13461,8 @@ async function pfDriveSync(){
   const out=document.getElementById('syncResult'),btn=document.getElementById('driveSyncBtn');
   const log=(m)=>{out.style.display='block';out.innerHTML+=m+'<br>';};
   out.innerHTML='';out.style.display='block';
-  if(typeof sbc==='undefined'||!sbc){log('❌ Server belum terhubung.');return;}
-  if(!(typeof pfSession!=='undefined'&&pfSession&&pfSession.role==='admin')){log('❌ Hanya admin yang bisa Sync dari Drive.');return;}
+  const sbc=window.__pfSbc;
+  if(!sbc){log('❌ Server belum terhubung.');return;}
   btn.disabled=true;const t0=Date.now();
   try{
     log('🔎 Mengecek folder Inbox di Google Drive…');
@@ -21249,6 +21249,7 @@ async function downloadMcKinseyPPTX(){
   // Tangkap flag recovery SEBELUM klien Supabase sempat memproses & menghapus hash URL
   try{ if(/type=recovery/.test(location.hash)||/type=recovery/.test(location.search)) sessionStorage.setItem('pf_recovery','1'); }catch(_){}
   const sbc = SUPA_ON ? supabase.createClient(SUPA_URL, SUPA_KEY) : null;
+  window.__pfSbc = sbc;
   let pfUid = null, _sbUsers = [];
   async function sbProfile(){
     try{ const { data:{ user } } = await sbc.auth.getUser(); if(!user) return null;
