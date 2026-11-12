@@ -8134,7 +8134,14 @@ function pfMergeKeyed(key,newRows,old){
     el.appendChild(d);},400);
   return out;
 }
+function pfDropBlankRows(rows){
+  // Buang baris kosong (mis. file hasil Google Sheets: ribuan baris berisi sel '' di bawah data). In-place agar referensi pemanggil ikut bersih.
+  if(!Array.isArray(rows))return rows;let w=0;
+  for(let i=0;i<rows.length;i++){const r=rows[i];let ok=false;if(r)for(const k in r){const v=r[k];if(v!=null&&String(v).trim()!==''){ok=true;break;}}if(ok)rows[w++]=r;}
+  if(w<rows.length){console.log('[Upload] baris kosong dibuang:',rows.length-w);rows.length=w;}return rows;
+}
 function pfMergeUpload(key,rows){
+  pfDropBlankRows(rows);
   if(key==='sales')return pfMergeSalesUpload(rows);
   if(key==='promo')return pfMergeKeyed('promo',rows,uploads.promo);
   if(key==='product'){const prev=uploads.product;
@@ -13475,14 +13482,16 @@ async function pfDriveSync(){
     if(typeof XLSX==='undefined')await ensureLib('xlsx');
     const done=[];
     for(const f of files){
-      log('⬇️ Mengambil <b>'+merEsc(f.name)+'</b> …');
+      const isG=/google-apps.spreadsheet/.test(f.mime||'');
+      let fname=f.name;if(isG||!/.(xlsx|xls|csv)$/i.test(fname))fname=fname.replace(/.[^.]{1,5}$/,'')+'.xlsx';
+      log('⬇️ Mengambil <b>'+merEsc(f.name)+'</b>'+(isG?' (Google Sheets → diekspor ke .xlsx)':'')+' …');
       const parts=[];let off=0,size=f.size;
-      while(true){const r=await sbc.from('drive_inbox').select('*').eq('id',f.id).eq('off',off);
+      while(true){const r=await Promise.race([sbc.from('drive_inbox').select('*').eq('id',f.id).eq('off',off),new Promise(res=>setTimeout(()=>res({error:{message:'tidak ada respon dari server dalam 4 menit. Cek Apps Script → Executions (ikon ≡▶) untuk melihat error.'}}),240000))]);
         if(r.error)throw new Error('Gagal membaca '+f.name+': '+(r.error.message||r.error));
         const bin=atob(r.data.b64),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);parts.push(u);
-        size=r.data.size;off=r.data.next;out.lastChild&&0;
+        size=r.data.size;off=r.data.next;log('&nbsp;&nbsp;… '+(off/1048576).toFixed(1)+' / '+(size/1048576).toFixed(1)+' MB');
         if(r.data.done)break;}
-      const file=new File(parts,f.name);
+      const file=new File(parts,fname);
       log('⚙️ Memproses sebagai <b>'+DRIVE_LABEL[f.kind]+'</b> …');
       const sid=DRIVE_STATUS[f.kind]||('status-'+f.kind),st=document.getElementById(sid);if(st)st.innerHTML='';
       const ev={target:{files:[file],value:''}};
