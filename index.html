@@ -7921,12 +7921,16 @@ function dcsDownload(){
   const m=document.getElementById('dcsMonth').value,st=document.getElementById('dcsStore').value;if(!m)return;
   const btn=document.getElementById('dcsBtn'),old=btn.innerHTML;btn.disabled=true;btn.textContent='Menyiapkan…';
   const go=()=>{try{
-    const C=dcsCols(S),sc=C.sc;
+    // kolom dideteksi dari baris BULAN TERPILIH (bukan baris pertama seluruh data) — nama kolom bisa beda antar file/bulan
+    const scG=_dcsC.sc,MR=[];
+    for(const r of S){const d=sdDay(r[scG.date]);if(!d||d.slice(0,7)!==m)continue;MR.push(r);}
+    if(!MR.length){alert('Tidak ada transaksi untuk bulan ini.');return;}
+    const C=dcsCols(MR),sc=C.sc;
     let base=null;try{base=typeof sdBase==='function'?sdBase():null;}catch(_){}
     const pn=v=>{if(v===null||v===undefined||v==='')return 0;const n=parseFloat(String(v).replace(/[^\d.-]/g,''));return isNaN(n)?0:n;};
     const H=['tgl_trs','plu','desc','nama kategori','price','qty','dh_spesial','log_promo'],out=[];
-    for(const r of S){
-      const d=sdDay(r[sc.date]);if(!d||d.slice(0,7)!==m)continue;
+    for(const r of MR){
+      const d=sdDay(r[sc.date]||r[scG.date]);if(!d)continue;
       if(st!=='ALL'&&(!sc.store||String(r[sc.store]||'').trim()!==st))continue;
       const plu=String(r[sc.plu]==null?'':r[sc.plu]).trim().replace(/\.0+$/,'');
       const qty=C.qty?pn(r[C.qty]):1;
