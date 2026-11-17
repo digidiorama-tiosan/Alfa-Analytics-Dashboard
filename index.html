@@ -6700,6 +6700,19 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
     </div>
   </div>
 
+  <!-- ── Download Transaksi DCS per bulan ── -->
+  <div class="chart-card" id="dcsCard" style="margin-bottom:20px">
+    <div class="chart-header"><div><div class="chart-title">⬇️ Download Detail Transaksi (format DCS) per Bulan</div>
+      <div class="chart-subtitle">Kolom sesuai Template Upload Transaksi DCS: tgl_trs · plu · desc · nama kategori · price · qty · dh_spesial · log_promo</div></div></div>
+    <div class="store-filter-bar" style="flex-wrap:wrap;gap:8px;margin-bottom:8px">
+      <span class="filter-label">Bulan</span><select class="filter-select" id="dcsMonth" onchange="dcsInfo()" style="min-width:140px"></select>
+      <span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select" id="dcsStore" onchange="dcsInfo()" style="min-width:160px"></select>
+      <button class="btn-dl" onclick="dcsDownload()" id="dcsBtn"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button>
+      <span id="dcsInfo" style="font-size:11.5px;color:var(--text2);margin-left:6px"></span>
+    </div>
+    <div style="font-size:11px;color:var(--text3);line-height:1.5">Semua baris transaksi bulan itu diekspor apa adanya (termasuk baris promo 0 dan void/retur), sesuai catatan template. desc &amp; nama kategori diambil dari data sales; bila kosong diisi dari Product Master. price = harga satuan; bila kolom harga tidak ada, dihitung dari Net Sales ÷ qty. Lebih dari 1 juta baris otomatis dipecah ke sheet berikutnya.</div>
+  </div>
+
   <!-- Report Preview Cards -->
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px">
     <div class="chart-card" style="text-align:center;padding:24px">
@@ -7444,7 +7457,7 @@ function renderPanel(id) {
     case 'data-mgmt': renderDataMgmt(); (function(){const s=document.getElementById('promoDefSel');if(s)s.value=localStorage.getItem('pfPromoDef')||'type';})(); break;
     case 'store-map': renderStoreMap(); break;
     case 'target-actuals': renderTargetActuals(); break;
-    case 'report-all': renderReportAll(); break;
+    case 'report-all': renderReportAll(); try{dcsInit();}catch(e){console.warn('dcs',e);} break;
   }
 }
 
@@ -7864,6 +7877,79 @@ function renderStoreDaily(){
   document.getElementById('ddStoresTh').style.display=multi?'':'none';
   _ddLast={rows,multi,sv,mv,tot,avg,dow};
 }
+
+// ── Download Detail Transaksi format DCS per bulan ──
+let _dcsC=null;
+function dcsCols(S){
+  const keys=Object.keys(S[0]||{}),nz=k=>String(k).toLowerCase().replace(/[^a-z0-9]/g,'');
+  const fk=c=>{for(const x of c){const f=keys.find(k=>nz(k)===nz(x));if(f)return f;}return null;};
+  const sc=sColDetect(S);
+  return {sc,keys,
+    desc:fk(['desc','descp','description','deskripsi','namabarang','nama_barang','itemname','item_name','productname','namaproduk','itemdesc','namaitem']),
+    cat:fk(['nama kategori','namakategori','nama_kategori','kategori','category','categoryname']),
+    price:fk(['price','harga','harga_jual','hargajual','selling_price','unit_price','unitprice']),
+    qty:fk(['qty','quantity','jumlah','qtyunit','qty_unit','qtysls','qtysold'])||sc.qty,
+    dh:sc.dhSp,log:sc.logPromo,net:pfNetFn(S)};
+}
+function dcsInit(){
+  const S=(typeof uploads!=='undefined'&&Array.isArray(uploads.sales))?uploads.sales:null;
+  const ms=document.getElementById('dcsMonth'),ss=document.getElementById('dcsStore');if(!ms)return;
+  if(!S||!S.length){ms.innerHTML='<option value="">— belum ada data sales —</option>';ss.innerHTML='';document.getElementById('dcsInfo').textContent='Upload data sales di Data Management.';return;}
+  if(!_dcsC||_dcsC.src!==S||_dcsC.n!==S.length){
+    const sc=sColDetect(S);if(!sc.date){document.getElementById('dcsInfo').textContent='Kolom tanggal tidak ditemukan di data sales.';return;}
+    const cnt={},stc={};
+    for(const r of S){const d=sdDay(r[sc.date]);if(!d)continue;const m=d.slice(0,7);cnt[m]=(cnt[m]||0)+1;if(sc.store){const st=String(r[sc.store]||'').trim();if(st){const k=m+'|'+st;stc[k]=(stc[k]||0)+1;}}}
+    _dcsC={src:S,n:S.length,sc,cnt,stc};
+  }
+  const MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const months=Object.keys(_dcsC.cnt).sort();const cur=ms.value;
+  ms.innerHTML=months.map(m=>`<option value="${m}">${MN[+m.slice(5,7)-1]} ${m.slice(0,4)}</option>`).join('');
+  ms.value=months.includes(cur)?cur:months[months.length-1];
+  const stores=[...new Set(Object.keys(_dcsC.stc).map(k=>k.split('|')[1]))].sort(),cs=ss.value;
+  ss.innerHTML='<option value="ALL">Semua Toko</option>'+stores.map(s=>`<option value="${s}">${s}</option>`).join('');
+  ss.value=stores.includes(cs)?cs:'ALL';
+  dcsInfo();
+}
+function dcsInfo(){
+  if(!_dcsC)return;const m=document.getElementById('dcsMonth').value,st=document.getElementById('dcsStore').value;
+  const n=st==='ALL'?(_dcsC.cnt[m]||0):(_dcsC.stc[m+'|'+st]||0);
+  document.getElementById('dcsInfo').textContent=n.toLocaleString('en-US')+' baris transaksi';
+}
+function dcsDownload(){
+  const S=(typeof uploads!=='undefined'&&Array.isArray(uploads.sales))?uploads.sales:null;
+  if(!S||!S.length||!_dcsC){alert('Belum ada data sales.');return;}
+  const m=document.getElementById('dcsMonth').value,st=document.getElementById('dcsStore').value;if(!m)return;
+  const btn=document.getElementById('dcsBtn'),old=btn.innerHTML;btn.disabled=true;btn.textContent='Menyiapkan…';
+  const go=()=>{try{
+    const C=dcsCols(S),sc=C.sc;
+    let base=null;try{base=typeof sdBase==='function'?sdBase():null;}catch(_){}
+    const pn=v=>{if(v===null||v===undefined||v==='')return 0;const n=parseFloat(String(v).replace(/[^\d.-]/g,''));return isNaN(n)?0:n;};
+    const H=['tgl_trs','plu','desc','nama kategori','price','qty','dh_spesial','log_promo'],out=[];
+    for(const r of S){
+      const d=sdDay(r[sc.date]);if(!d||d.slice(0,7)!==m)continue;
+      if(st!=='ALL'&&(!sc.store||String(r[sc.store]||'').trim()!==st))continue;
+      const plu=String(r[sc.plu]==null?'':r[sc.plu]).trim().replace(/\.0+$/,'');
+      const qty=C.qty?pn(r[C.qty]):1;
+      let desc=C.desc?String(r[C.desc]||'').trim():'',cat=C.cat?String(r[C.cat]||'').trim():'';
+      if((!desc||!cat)&&base&&base.A&&plu){const a=base.A(mkPlu(plu));if(!desc)desc=a.desc||'';if(!cat)cat=a.cat||'';}
+      let price=C.price?pn(r[C.price]):0;
+      if(!C.price){const net=C.net(r);price=qty?Math.round(net/qty*100)/100:net;}
+      out.push([d,plu,desc,cat,price,qty,C.dh?pn(r[C.dh]):0,C.log?String(r[C.log]==null?'':r[C.log]):'']);
+    }
+    if(!out.length){alert('Tidak ada transaksi untuk pilihan ini.');return;}
+    const wb=XLSX.utils.book_new(),CH=1000000;
+    for(let i=0,k=1;i<out.length;i+=CH,k++){
+      const ws=XLSX.utils.aoa_to_sheet([H].concat(out.slice(i,i+CH)));
+      ws['!cols']=[{wch:12},{wch:12},{wch:34},{wch:22},{wch:10},{wch:7},{wch:11},{wch:40}];
+      XLSX.utils.book_append_sheet(wb,ws,k===1?'Transaksi':'Transaksi '+k);
+    }
+    XLSX.writeFile(wb,'Transaksi_DCS_'+m+(st==='ALL'?'':'_'+st)+'.xlsx',{compression:true});
+    const miss=[!C.price&&'price (dihitung dari Net Sales ÷ qty)',!C.dh&&'dh_spesial (diisi 0)',!C.log&&'log_promo (dikosongkan)'].filter(Boolean);
+    if(miss.length)setTimeout(()=>alert('Kolom berikut tidak ada di data sales:\n• '+miss.join('\n• ')),300);
+  }catch(e){console.error(e);alert('Gagal membuat file: '+e.message);}finally{btn.disabled=false;btn.innerHTML=old;}};
+  setTimeout(()=>{if(typeof XLSX==='undefined')ensureLib('xlsx').then(go).catch(()=>{btn.disabled=false;btn.innerHTML=old;alert('Gagal memuat pustaka Excel.');});else go();},30);
+}
+
 function ddExport(){
   const L=_ddLast;if(!L||!L.rows.length){alert('Belum ada data harian.');return;}
   const go=()=>{
