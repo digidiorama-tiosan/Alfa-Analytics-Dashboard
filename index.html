@@ -7073,6 +7073,16 @@ function pfSalesKeyFn(rows){
     const y=+getYearFromRow(r,sc)||0,m=+getMonthFromRow(r,sc)||0;return y&&m?y+'-'+String(m).padStart(2,'0'):'';
   }catch(_){return '';}};
 }
+// Angka panjang (mis. nomor kartu member 16 digit) yang di Excel tampil '9.991E+15':
+// pakai nilai angkanya (digit penuh), bukan teks tampilan — kalau tidak, ribuan member jadi satu.
+function pfFixSciCells(sh){
+  if(!sh)return sh;let n=0;
+  for(const k in sh){if(k[0]==='!')continue;const c=sh[k];
+    if(c&&c.t==='n'&&typeof c.v==='number'&&Math.abs(c.v)>=1e11&&Number.isFinite(c.v)&&(/e\+/i.test(String(c.w||''))||String(c.w||'').replace(/[^0-9]/g,'').length<String(Math.round(Math.abs(c.v))).length)){
+      c.w=Math.round(c.v).toLocaleString('fullwide',{useGrouping:false});n++;}}
+  if(n)console.log('[pfFixSciCells] angka panjang dipulihkan:',n);
+  return sh;
+}
 function pfFixHeaderRows(rows){
   if(!Array.isArray(rows)||!rows.length)return rows;
   const bad=r=>{const ks=Object.keys(r||{});return ks.length&&ks.filter(k=>/^__EMPTY/i.test(k)).length>=ks.length*0.5;};
@@ -11012,6 +11022,7 @@ function processFile(file, key) {
         // Mengembalikan { rows, headerRow } — rows sudah pakai header yang benar.
         const HEADER_KEYS = ['plu','desc','kategori','category','qty','price','harga','net','tgl','tanggal','date','kode','member','item','barang','ppn','cost'];
         function sheetToRowsSmart(sh) {
+          pfFixSciCells(sh);
           const aoa = XLSX.utils.sheet_to_json(sh, { header:1, defval:'', raw:false, blankrows:false });
           if (!aoa || !aoa.length) return [];
           let best = 0, bestHits = -1;
@@ -11180,7 +11191,7 @@ function processFile(file, key) {
           let found = false;
           for (const shName of workbook.SheetNames) {
             if (shName === sheetName) continue;
-            const altRows = XLSX.utils.sheet_to_json(workbook.Sheets[shName], { defval:'', raw:false });
+            pfFixSciCells(workbook.Sheets[shName]);const altRows = XLSX.utils.sheet_to_json(workbook.Sheets[shName], { defval:'', raw:false });
             if (altRows && altRows.length > 0) {
               sheetName = shName;
               rows.push(...altRows);
@@ -11325,7 +11336,32 @@ function normalizeSalesDates(rows) {
   if (fixed) console.log('[normalizeSalesDates] filled '+fixed+' rows into "'+primary+'" from alternates:', alts);
 }
 
+// Nomor member di data sales sering sudah terpotong Excel (digit ke-16 jadi 0).
+// Pulihkan dari Data Member (kolom Account Card, teks 16 digit) dengan mencocokkan 15 digit pertama.
+// Hanya diganti bila cocok dengan TEPAT SATU kartu; selain itu dibiarkan apa adanya.
+function pfFixMemberIds(){
+  const S=(typeof uploads!=='undefined'&&Array.isArray(uploads.sales))?uploads.sales:null;
+  const M=(typeof uploads!=='undefined'&&Array.isArray(uploads.member))?uploads.member:null;
+  if(!S||!S.length||!M||!M.length)return 0;
+  const nz=k=>String(k).toLowerCase().replace(/[^a-z0-9]/g,'');
+  const mk=Object.keys(M[0]||{}),cc=mk.find(k=>['accountcard','cardno','cardnumber','nokartu','kartu','card'].includes(nz(k)));
+  if(!cc)return 0;
+  const sig=S.length+'|'+M.length;if(pfFixMemberIds._sig===sig&&pfFixMemberIds._s===S&&pfFixMemberIds._m===M)return 0;
+  const by=new Map();
+  for(const r of M){const c=String(r[cc]==null?'':r[cc]).trim().replace(/\.0+$/,'');if(!/^\d{16}$/.test(c))continue;const k=c.slice(0,15);by.set(k,by.has(k)&&by.get(k)!==c?null:c);}
+  const sk=Object.keys(S[0]||{}),cand=['members','member_id','no_member','nomember','no_kartu','nokartu','card_no','card_number','kode_member','kd_member','id_member','member_code'];
+  let col=null;for(const c of cand){col=sk.find(k=>nz(k)===nz(c));if(col)break;}
+  if(!col)return 0;
+  let n=0,miss=0;
+  for(const r of S){const v=String(r[col]==null?'':r[col]).trim().replace(/\.0+$/,'');
+    if(!/^\d{16}$/.test(v)||v[15]!=='0')continue;
+    const f=by.get(v.slice(0,15));if(f){if(f!==v){r[col]=f;n++;}}else miss++;}
+  pfFixMemberIds._sig=sig;pfFixMemberIds._s=S;pfFixMemberIds._m=M;
+  console.log('[pfFixMemberIds] nomor member dipulihkan:',n,'· tidak ditemukan/ambigu di Data Member:',miss);
+  return n;
+}
 function rebuildDashboard() {
+  try{pfFixMemberIds();}catch(e){console.warn('[pfFixMemberIds]',e);}
   if (!uploads.sales) {
     D = JSON.parse(JSON.stringify(SAMPLE));
     alert('No sales data uploaded — using the built-in sample data.');
