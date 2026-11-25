@@ -22263,7 +22263,7 @@ async function downloadMcKinseyPPTX(){
 
   // Core chunked publisher — sizes each request to ~220KB and retries / shrinks
   // on failure, so big or wide datasets (34k+ rows) upload reliably.
-  async function sbPublishKind(kind, rows, filename, onProgress){
+  async function sbPublishKind(kind, rows, filename, onProgress, extraMeta){
     const avg = _approxRowBytes(rows);
     const TARGET = 220000;                                   // ~220KB per request
     let per = Math.max(40, Math.min(1500, Math.floor(TARGET/avg)));
@@ -22283,10 +22283,12 @@ async function downloadMcKinseyPPTX(){
       if(onProgress) onProgress(Math.min(i, rows.length), rows.length);
     }
     // 3) write the meta row LAST (small payload) — fires realtime for everyone
-    const { error:me } = await sbc.from('datasets').upsert({
+    const _meta={
       kind, rows: [], filename: filename||'', row_count: rows.length, chunk_count: seq,
       uploaded_by: (pfSession&&pfSession.email)||'', updated_at: new Date().toISOString()
-    }, { onConflict:'kind' });
+    };
+    let { error:me } = await sbc.from('datasets').upsert(Object.assign({},_meta,extraMeta||{}), { onConflict:'kind' });
+    if(me && extraMeta){ ({ error:me } = await sbc.from('datasets').upsert(_meta, { onConflict:'kind' })); }
     if(me) throw me;
     _lastPushAt = Date.now();
   }
@@ -22295,17 +22297,22 @@ async function downloadMcKinseyPPTX(){
   async function sbPublishSales(rows, filename, onProgress, onlyMonths){
     const kf=pfSalesKeyFn(rows),groups=new Map();
     for(let i=0;i<rows.length;i++){const k=kf(rows[i]);const m=k?k.slice(0,7):'0000-00';let g=groups.get(m);if(!g){g=[];groups.set(m,g);}g.push(rows[i]);}
-    let srv=[];try{const {data}=await sbc.from('datasets').select('kind,row_count');srv=(data||[]).filter(d=>d.kind==='sales'||/^sales@/.test(d.kind));}catch(_){}
+    // sidik isi per bulan: bulan dikirim ulang bila JUMLAH BARIS atau ISI berubah (mis. nomor member diperbaiki)
+    const sigOf=g=>{let h=5381;const sc=sColDetect(g),mc=Object.keys(g[0]||{}).find(k=>/^(members|member_id|no_member|no_kartu|card_no|kode_member)$/i.test(k));
+      for(const r of g){const t=(sc.plu?r[sc.plu]:'')+'|'+(sc.net?r[sc.net]:'')+'|'+(sc.qty?r[sc.qty]:'')+'|'+(mc?r[mc]:'');for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;}
+      return g.length+':'+(h>>>0).toString(36);};
+    let srv=[];try{let q=await sbc.from('datasets').select('kind,row_count,sig');if(q.error)q=await sbc.from('datasets').select('kind,row_count');const data=q.data;srv=(data||[]).filter(d=>d.kind==='sales'||/^sales@/.test(d.kind));}catch(_){}
     const legacy=srv.filter(d=>d.kind==='sales'||/^sales@\d{4}$/.test(d.kind)).map(d=>d.kind);
-    const srvCnt={};srv.forEach(d=>{srvCnt[d.kind]=d.row_count;});
+    const srvCnt={},srvSig={};srv.forEach(d=>{srvCnt[d.kind]=d.row_count;srvSig[d.kind]=d.sig||'';});
+    const sigs=new Map();groups.forEach((g,m)=>sigs.set(m,sigOf(g)));
     const todo=[...groups.entries()].filter(([m,g])=>{
       if(legacy.length)return true;
       if(onlyMonths&&onlyMonths.size)return onlyMonths.has(m);
-      return srvCnt['sales@'+m]!==g.length;
+      return srvCnt['sales@'+m]!==g.length||srvSig['sales@'+m]!==sigs.get(m);
     }).sort((x,y)=>x[0].localeCompare(y[0]));
     const total=todo.reduce((s,[,g])=>s+g.length,0);let sent=0;const done=[];
     for(const [m,g] of todo){
-      await sbPublishKind('sales@'+m, g, filename, onProgress?(d)=>onProgress(sent+d,total):null);
+      await sbPublishKind('sales@'+m, g, filename, onProgress?(d)=>onProgress(sent+d,total):null, {sig:sigs.get(m)});
       sent+=g.length;done.push(m==='0000-00'?'tanpa tanggal':m);
     }
     for(const k of legacy){ try{ await sbc.from('dataset_chunks').delete().eq('kind',k); await sbc.from('datasets').delete().eq('kind',k); }catch(_){} }
