@@ -5684,7 +5684,7 @@ window.addEventListener('load', function(){ window.__libs.warm(['xlsx']); });
   </div>
 </div>
 <div id="panel-stamp-sales" class="panel">
-  <div class="page-header"><div><div class="page-title">Digital Stamp — Sales Performance</div><div class="page-subtitle">Exclude: minyak goreng, beras, susu bayi, rokok · dibandingkan dengan periode sebelum campaign (jumlah hari sama)</div></div><button class="btn-dl" onclick="merExport('stsp')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button></div>
+  <div class="page-header"><div><div class="page-title">Digital Stamp — Sales Performance</div><div class="page-subtitle">Exclude: beras, gula, lentil, loose product, minyak kedelai (1120), susu bayi · dibandingkan dengan periode sebelum campaign (jumlah hari sama)</div></div><button class="btn-dl" onclick="merExport('stsp')"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1v10M4 7l4 4 4-4"/><rect x="1" y="12" width="14" height="3" rx="1"/></svg> Download Excel</button></div>
   <div id="stspNoData" class="insight-box" style="display:none"><span class="insight-icon">🚫</span><div class="insight-text">Belum ada data sales dalam periode campaign (25 Okt 2026 – 15 Jan 2027).</div></div>
   <div id="stspMain" style="display:none">
     <div class="store-filter-bar" style="margin-bottom:14px;flex-wrap:wrap"><span class="filter-label">Dari</span><input type="date" class="filter-select st-from" onchange="stSetF('from',this.value)"><span class="filter-label">s.d.</span><input type="date" class="filter-select st-to" onchange="stSetF('to',this.value)"><span class="filter-label" style="margin-left:8px">Toko</span><select class="filter-select st-store" onchange="stSetF('store',this.value)" style="min-width:190px"></select><span class="st-info" style="font-size:11.5px;color:var(--text3);margin-left:auto"></span></div>
@@ -13989,7 +13989,12 @@ function merMasterList(){
 const ST_CFG={start:'2026-10-25',end:'2027-01-15',min:700,g15:'800010',g30:'800011',
   bspot:new Set(Array.from({length:23},(_,i)=>String(400000+i))),
   names:Object.fromEntries('400013 BSPOT ICE BLEND TOFFEE NUT FRP|400015 BSPOT ICE BLEND VANILLA FRAPPE|400011 BSPOT ICE BLEND SLT CRMEL FRP|400006 BSPOT HOT SALTED CARAMEL LATTE|400010 BSPOT ICED LATTE|400007 BSPOT HOT VANILLA LATTE|400000 BSPOT ESPRESSO SINGLE|400018 BSPOT ICED HAZELNUT LATTE|400017 BSPOT HOT TOFFEE NUT LATTE|400016 BSPOT ICED VANILLA LATTE|400012 BSPOT ICED SALTED CARAMEL LATTE|400009 BSPOT ICED CAPPUCINO|400003 BSPOT HOT CAFFE LATTE|400002 BSPOT HOT AMERICANO|400004 BSPOT HOT CAPPUCINO|400005 BSPOT HOT HAZELNUT LATTE|400001 BSPOT EXTRA SHOT ESPRESSO|400008 BSPOT ICED AMERICANO|400014 BSPOT ICED TOFFEE NUT LATTE|400022 BSPOT EXTRA PUMP SALTED CARAMEL|400020 BSPOT EXTRA PUMP VANILLA|400019 BSPOT EXTRA PUMP HAZELNUT|400021 BSPOT EXTRA PUMP TOFFEE NUT|800010 PLU K GIFT CONTAINER BOX SET|800011 PLU K GIFT COOKING WARE SET'.split('|').map(s=>[s.slice(0,6),s.slice(7)])),
-  exRe:/(cooking|edible|soybean|soyabean|soya|palm|mustard|sunflower|rice\s*bran|vegetable|canola|olive)\s*oil|minyak\s*goreng|beras|\brice\b|susu\s*bayi|baby\s*milk|infant|baby\s*formula|rokok|cigar|tobacco|kretek/i};
+  // Kategori exclude resmi (dari tim analis, 26 Nov 2026) — berdasarkan KODE kategori:
+  // 1111 Loose Product, 1112 Lentile, 1114 Sugar, 1115–1118 Rice, 1120 Soyabean Cooking Oil, 2612–2619 Baby Milk. 1113 Flour TIDAK di-exclude.
+  exCodes:new Set(['1111','1112','1114','1115','1116','1117','1118','1120','2612','2613','2615','2616','2617','2618','2619']),
+  exNames:new Set(['LOOSE PRODUCT','LENTILE','SUGAR','BASMATI RICE','CHINIGURA RICE','MINIKET RICE','OTHERS RICE','SOYABEAN COOKING OIL','INFANT MILK PREMIUM','INFANT MILK SUPER PREMIUM','FOLLOW ON MILK PREMIUM','FOLLOW ON MILK SUPER PREMIUM','GROWING UP MILK MAINSTREAM','GROWING UP MILK PREMIUM','GROWING UP MILK SUPER PREMIUM']),
+  // cadangan bila kolom kode & nama kategori tidak ada (cocokkan deskripsi item)
+  exRe:/(?<!puff\s)\brice\b|beras|infant\s*milk|follow\s*on\s*milk|growing\s*up\s*milk|susu\s*bayi|baby\s*formula|rokok|cigar|tobacco|kretek/i};
 let _stCache=null;const _stF={from:null,to:null,store:'ALL'};
 function stAdd(d,n){const x=new Date(d+'T00:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10);}
 function stDiff(a,b){return Math.round((new Date(b+'T00:00:00Z')-new Date(a+'T00:00:00Z'))/864e5);}
@@ -14014,13 +14019,21 @@ function stBuild(){
   const pick=c=>{for(const x of c){const f=keys.find(k=>nrm(k)===nrm(x));if(f)return f;}for(const x of c){const f=keys.find(k=>nrm(k).includes(nrm(x)));if(f)return f;}return null;};
   const cMem=pick(['members','member_id','memberid','no_member','nomember','card_no','no_kartu','kode_member']);
   const cDesc=keys.find(k=>/^(desc|descp|description|deskripsi|namabarang|itemname|productname|namaproduk|itemdesc)$/.test(nrm(k)));
+  // Batas Tk 700 = total bayar di struk (harga jual termasuk PPN, setelah diskon), dikurangi item exclude
+  const cPrice=pick(['price','harga','harga_jual','hargajual','selling_price','unit_price']),cDisc=keys.find(k=>/^(disc|diskon|discount)$/.test(nrm(k))),cDec=keys.find(k=>nrm(k)==='dec');
+  const cKasir=keys.find(k=>/^(kodekasir|kdkasir|kasir|cashier|cashiercode|cashierid|nokasir|idkasir)$/.test(nrm(k)));
+  const payOf=(r,net,qty)=>{if(!cPrice)return net;const pr=parseN(r[cPrice]);if(!pr)return net;const dc=cDisc?parseN(r[cDisc]):0,de=cDec?parseN(r[cDec]):0;return (pr*qty-dc)*(de===0?1:1/1000);};
   const cCat=pick(['nama kategori','namakategori','nama_kategori','kategori','category']);
   const cu=sc.cogs&&/avg/i.test(sc.cogs),lo=stAdd(ST_CFG.start,-90),hi=ST_CFG.end;
   const okMem=v=>{if(v==null)return '';const s=String(v).trim().replace(/\.0+$/,'');return s&&s!=='0'&&s!=='-'&&!/^(null|nan|none)$/i.test(s)?s:'';};
   const exC=new Map(),exCats=new Map(),desc=new Map(),T=new Map(),bs=new Map(),memLast=new Map(),catA=new Map(),catC=new Map();
   const catOf=(plu,r)=>{if(catC.has(plu))return catC.get(plu);const mi=am&&am.map.get(plu);let c=String((mi&&mi.category)||(cCat?r[cCat]:'')||'').trim();if(merBad(c))c='(Tanpa Kategori)';catC.set(plu,c);return c;};
+  const cKatCode=keys.find(k=>/^(kategori|kodekategori|kdkategori|categorycode|catcode)$/.test(nrm(k)));
   const isEx=(plu,r)=>{if(exC.has(plu))return exC.get(plu);const mi=am&&am.map.get(plu);let c=(mi&&mi.category)||(cCat?String(r[cCat]||''):'');c=String(c).trim();
-    const e=c?ST_CFG.exRe.test(c):(cDesc?ST_CFG.exRe.test(String(r[cDesc]||'')):false);exC.set(plu,e?(c||'(deskripsi item)'):false);return exC.get(plu);};
+    const code=cKatCode?String(r[cKatCode]??'').trim().replace(/\.0+$/,''):'';
+    const cu=c.toUpperCase().replace(/^\d+\s*[-–]\s*/,'').trim();
+    const e=/^\d{4}$/.test(code)?ST_CFG.exCodes.has(code):(cu?ST_CFG.exNames.has(cu):(cDesc?ST_CFG.exRe.test(String(r[cDesc]||'')):false));
+    exC.set(plu,e?(c||code||'(deskripsi item)'):false);return exC.get(plu);};
   let lastD=null,firstD=null;
   for(const r of rows){
     if(sc.type){const t=String(r[sc.type]??'').trim().toUpperCase();if(/^(R|X|V|LX|LV|L X|L V)$/.test(t))continue;}
@@ -14030,7 +14043,7 @@ function stBuild(){
     const plu=mkPlu(r[sc.plu]);if(!plu)continue;
     const st=sc.store?merStore(r[sc.store]):'ALL',net=parseN(r[sc.net]),qty=sc.qty?parseN(r[sc.qty]):0;
     const cg=sc.cogs?(cu?parseN(r[sc.cogs])*qty:parseN(r[sc.cogs])):0;
-    const k=st+'|'+(sc.bon?String(r[sc.bon]??'').trim():'')+'|'+d;
+    const k=st+'|'+(cKasir?String(r[cKasir]??'').trim()+'/':'')+(sc.bon?String(r[sc.bon]??'').trim():'')+'|'+d;
     let t=T.get(k);if(!t){t={d,st,bon:sc.bon?String(r[sc.bon]??'').trim():'',mem:'',net:0,gm:0,netX:0,gmX:0,elig:0,bs:0,g15:0,g30:0,items:0,pl:new Map()};T.set(k,t);}
     if(!t.mem&&cMem)t.mem=okMem(r[cMem]);
     t.net+=net;t.gm+=net-cg;
@@ -14039,7 +14052,7 @@ function stBuild(){
     const ex=isEx(plu,r);
     t.items+=qty;t.pl.set(plu,(t.pl.get(plu)||0)+net);
     {const cat=catOf(plu,r),ck=d+'|'+st+'|'+cat;let ca=catA.get(ck);if(!ca){ca={d,st,cat,net:0,qty:0,ex:!!ex};catA.set(ck,ca);}ca.net+=net;ca.qty+=qty;}
-    if(ex){exCats.set(ex,(exCats.get(ex)||0)+net);}else{t.netX+=net;t.gmX+=net-cg;t.elig+=net;}
+    if(ex){exCats.set(ex,(exCats.get(ex)||0)+net);}else{t.netX+=net;t.gmX+=net-cg;t.elig+=payOf(r,net,qty);}
     if(ST_CFG.bspot.has(plu)){t.bs+=qty;const bk=d+'|'+st+'|'+plu;let b=bs.get(bk);if(!b){b={d,st,plu,net:0,qty:0,keys:new Set()};bs.set(bk,b);}b.net+=net;b.qty+=qty;b.keys.add(k);}
     if(cDesc&&!desc.has(plu)){const ds=String(r[cDesc]||'').trim();if(ds)desc.set(plu,ds);}
     if(d>=ST_CFG.start){if(!lastD||d>lastD)lastD=d;}else if(!firstD||d<firstD)firstD=d;
@@ -14089,7 +14102,7 @@ function renderStampOverview(){
   merSet('stov-get',stF0(get));merSet('stov-get-sub',S.pLbl);merSet('stov-red',stF0(red));merSet('stov-red-sub','≈ '+stF0(red/15)+' setara tebus 15');
   merSet('stov-rate',stP(get?red/get*100:null));merSet('stov-mg',stF0(mg.size));merSet('stov-mg-sub','member unik dapat ≥1 stamp');merSet('stov-mr',stF0(mr.size));merSet('stov-mr-sub',mg.size?stP(mr.size/mg.size*100,1)+' dari member get':'—');
   const ex=[...B.exCats.entries()].sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
-  document.getElementById('stovRule').innerHTML='<strong>Rumus:</strong> Stamp per struk = FLOOR(belanja eligible ÷ Tk 700), hanya struk member · Bonus +1 di toko Gulshan bila struk ≥ Tk 700 berisi ≥2 item BeanSpot'+(B.gul.size?' ('+[...B.gul].map(merEsc).join(', ')+')':' <span style="color:#d29922">(toko Gulshan tidak ditemukan di Store Master)</span>')+' · Stamp Redeem = Qty 800010 ×15 + Qty 800011 ×30 · Void/retur tidak dihitung.<br><strong>Item dikecualikan terdeteksi:</strong> '+(ex.length?ex.slice(0,12).map(merEsc).join(', ')+(ex.length>12?' … (+'+(ex.length-12)+')':''):'<span style="color:#d29922">tidak ada — cek nama kategori di Product Master</span>')+(B.hasMem?'':' <br><span style="color:#f85149">Kolom Member ID tidak ditemukan di data sales.</span>');
+  document.getElementById('stovRule').innerHTML='<strong>Rumus:</strong> Stamp per struk = FLOOR(total bayar struk di luar item exclude ÷ Tk 700; harga di struk termasuk PPN · exclude: beras, gula, lentil, loose product, minyak kedelai 1120, susu bayi), hanya struk member · Bonus +1 di toko Gulshan bila struk ≥ Tk 700 berisi ≥2 item BeanSpot'+(B.gul.size?' ('+[...B.gul].map(merEsc).join(', ')+')':' <span style="color:#d29922">(toko Gulshan tidak ditemukan di Store Master)</span>')+' · Stamp Redeem = Qty 800010 ×15 + Qty 800011 ×30 · Void/retur tidak dihitung.<br><strong>Item dikecualikan terdeteksi:</strong> '+(ex.length?ex.slice(0,12).map(merEsc).join(', ')+(ex.length>12?' … (+'+(ex.length-12)+')':''):'<span style="color:#d29922">tidak ada — cek nama kategori di Product Master</span>')+(B.hasMem?'':' <br><span style="color:#f85149">Kolom Member ID tidak ditemukan di data sales.</span>');
   const days=stDays(S.from,S.to),lab=days.map(d=>stLbl(d).replace(/ \d{4}$/,''));
   stLine('stovGetChart',lab,days.map(d=>(day.get(d)||{}).g||0),'#58a6ff','Stamp Get');
   stLine('stovRedChart',lab,days.map(d=>(day.get(d)||{}).r||0),'#3fb950','Stamp Redeem');
@@ -14127,7 +14140,7 @@ function renderStampSales(){
   document.getElementById('stspBodyFoot').innerHTML='<tr style="font-weight:700"><td colspan="2">TOTAL / RATA-RATA</td><td class="right">'+stF0(a.net)+'</td><td class="right">'+stF0(p.net)+'</td><td class="right">'+stGs(stG(a.net,p.net))+'</td><td class="right">'+stF0(a.spd)+'</td><td class="right">'+stF0(p.spd)+'</td><td class="right">'+(a.stdHi==null?'—':a.stdHi.toFixed(1))+'</td><td class="right">'+(p.stdHi==null?'—':p.stdHi.toFixed(1))+'</td><td class="right">'+stGs(stG(a.stdHi,p.stdHi))+'</td></tr>';
   merPager('stspPg','stsp',rows.length,30,'renderStampSales');
   const r1=v=>v==null?'':Math.round(v*10)/10,r0=v=>v==null?'':Math.round(v);
-  _merLast.stsp={name:'Stamp_SalesPerformance_'+S.from+'_'+S.to,rows:[['Actual',S.pLbl,'Pembanding',stLbl(pFrom)+' – '+stLbl(pTo),'Toko',S.sLbl],['Exclude: minyak goreng, beras, susu bayi, rokok'],[],
+  _merLast.stsp={name:'Stamp_SalesPerformance_'+S.from+'_'+S.to,rows:[['Actual',S.pLbl,'Pembanding',stLbl(pFrom)+' – '+stLbl(pTo),'Toko',S.sLbl],['Exclude: beras, gula, lentil, loose product, minyak kedelai (1120), susu bayi'],[],
     ['Indikator','Actual','Pembanding','Growth %'],['Sales',r0(a.net),r0(p.net),r1(stG(a.net,p.net))],['GM %',r1(a.gmp),r1(p.gmp),''],['SPD',r0(a.spd),r0(p.spd),r1(stG(a.spd,p.spd))],['Struk',a.str,p.str,r1(stG(a.str,p.str))],['STD',r1(a.std),r1(p.std),r1(stG(a.std,p.std))],['APC',r0(a.apc),r0(p.apc),r1(stG(a.apc,p.apc))],['Struk < 700',a.lo,p.lo,r1(stG(a.lo,p.lo))],['Struk ≥ 700',a.hi,p.hi,r1(stG(a.hi,p.hi))],[],
     ['Kode Toko','Nama Toko','Sales Actual','Sales Pembanding','Growth %','SPD Actual','SPD Pembanding','STD ≥700 Actual','STD ≥700 Pembanding','Growth STD ≥700 %']].concat(rows.map(r=>[r.st,stNm(B,r.st),r0(r.a.net),r0(r.p.net),r1(stG(r.a.net,r.p.net)),r0(r.a.spd),r0(r.p.spd),r1(r.a.stdHi),r1(r.p.stdHi),r1(stG(r.a.stdHi,r.p.stdHi))]))};
 }
@@ -14217,7 +14230,7 @@ function stExportStruk(){
   const nm=new Map();try{const mr=Array.isArray(uploads.member)?uploads.member:[];if(mr.length){const ks=Object.keys(mr[0]),f=re=>ks.find(k=>re.test(k.toLowerCase().replace(/[^a-z]/g,'')));const ci=f(/^memberid$/)||f(/memberid/),cn=f(/^membername$/)||f(/name|nama/);if(ci&&cn)mr.forEach(r=>{const id=String(r[ci]??'').trim().replace(/\.0+$/,'');if(id)nm.set(id,String(r[cn]||'').trim());});}}catch(_){}
   const L=B.txns.filter(t=>S.inR(t)&&t.stamp>0).sort((x,y)=>x.d.localeCompare(y.d)||x.st.localeCompare(y.st)||String(x.mem).localeCompare(String(y.mem)));
   if(!L.length){alert('Tidak ada struk member yang memenuhi syarat stamp pada filter ini.');return;}
-  const rows=[['DETAIL STRUK MEMBER — MEMENUHI SYARAT DIGITAL STAMP'],['Periode',S.pLbl,'Toko',S.sLbl],['Syarat: struk member, belanja eligible ≥ Tk 700 (exclude minyak goreng, beras, susu bayi, rokok) · Stamp = FLOOR(eligible ÷ 700) + bonus BeanSpot Gulshan'],[],
+  const rows=[['DETAIL STRUK MEMBER — MEMENUHI SYARAT DIGITAL STAMP'],['Periode',S.pLbl,'Toko',S.sLbl],['Syarat: struk member, belanja eligible ≥ Tk 700 (exclude beras, gula, lentil, loose product, minyak kedelai (1120), susu bayi) · Stamp = FLOOR(eligible ÷ 700) + bonus BeanSpot Gulshan'],[],
     ['Tanggal','Kode Toko','Nama Toko','No Struk','Member ID','Nama Member','Total Belanja (Tk)','Belanja Item Dikecualikan + Hadiah (Tk)','Belanja Eligible (Tk)','Stamp','Bonus BeanSpot','Total Stamp']];
   let tn=0,te=0,ts=0;const mem=new Set();
   L.forEach(t=>{tn+=t.net;te+=t.elig;ts+=t.stamp;mem.add(t.mem);rows.push([t.d,t.st,stNm(B,t.st),t.bon,t.mem,nm.get(t.mem)||'',Math.round(t.net),Math.round(t.net-t.elig),Math.round(t.elig),t.base,t.bonus,t.stamp]);});
@@ -18443,7 +18456,7 @@ async function generatePdfReport() {
       body += '<div style="padding:30px 36px;background:#0d1117;min-height:100vh">'+headerRow('🎟️ Campaign: Digital Stamp — '+dl(X.from)+' s.d. '+dl(X.to))+
         '<div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap">'+kpiBox('Stamp Get',n0(X.get),'#58a6ff')+kpiBox('Stamp Redeem',n0(X.red),'#3fb950')+kpiBox('Redemption Rate',X.rate==null?'—':X.rate.toFixed(2)+'%','#f0a733')+kpiBox('Member Get / Redeem',n0(X.mg)+' / '+n0(X.mr),'#a371f7')+kpiBox('Tebus 15 / 30',n0(X.g15)+' / '+n0(X.g30),'#f778ba')+'</div>'+
         '<div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap">'+kpiBox('Sales from Stamp Get','Tk '+n0(X.sNet),'#58a6ff')+kpiBox('Potensial Tebus 30 / 15',n0(X.p30)+' / '+n0(X.p15),'#3fb950')+'</div>'+
-        '<div style="font-size:10px;color:#8b949e;margin-bottom:8px">Sales Performance vs '+dl(X.pFrom)+' – '+dl(X.pTo)+' ('+X.n+' hari sebelum campaign) · exclude minyak, beras, susu bayi, rokok</div>'+
+        '<div style="font-size:10px;color:#8b949e;margin-bottom:8px">Sales Performance vs '+dl(X.pFrom)+' – '+dl(X.pTo)+' ('+X.n+' hari sebelum campaign) · exclude minyak, beras, gula, lentil, loose product, minyak kedelai (1120), susu bayi</div>'+
         '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px;border:1px solid #21262d"><thead><tr><th style="'+th+';text-align:left">Indikator</th><th style="'+th+'">Pembanding</th><th style="'+th+'">Actual</th><th style="'+th+'">Growth</th></tr></thead><tbody>'+
         [['Sales',X.p.net,X.a.net],['SPD',X.p.spd,X.a.spd],['Struk',X.p.str,X.a.str],['STD',X.p.std,X.a.std],['APC',X.p.apc,X.a.apc],['Struk ≥ Tk 700',X.p.hi,X.a.hi]].map((r,i)=>'<tr style="background:'+(i%2?'#161b22':'transparent')+'"><td style="padding:6px 10px;color:#e6edf3">'+r[0]+'</td><td style="'+td+'">'+n0(r[1])+'</td><td style="'+td+';color:#58a6ff">'+n0(r[2])+'</td><td style="'+td+'">'+gp(r[2],r[1])+'</td></tr>').join('')+'</tbody></table>'+
         '<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#484f58;margin-bottom:6px">Rekap Mingguan</div><table style="width:100%;border-collapse:collapse;font-size:11px;border:1px solid #21262d"><thead><tr><th style="'+th+';text-align:left">Minggu</th><th style="'+th+'">Stamp Get</th><th style="'+th+'">Tebus 15</th><th style="'+th+'">Tebus 30</th></tr></thead><tbody>'+
